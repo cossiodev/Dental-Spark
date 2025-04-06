@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { authService, AUTH_EVENTS } from '@/lib/services/auth-service';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -12,6 +12,20 @@ import useAuthDebug from '@/lib/hooks/useAuthDebug';
 // Componente DevTools para React Developer Tools
 // Nombrar componentes con DevTools facilita su identificación en la extensión
 const AuthDebugDevTools: React.FC = () => {
+  // No renderizar durante SSR
+  const [isBrowser, setIsBrowser] = useState(false);
+  
+  // Establecer isBrowser a true cuando estamos en el navegador
+  useEffect(() => {
+    setIsBrowser(true);
+  }, []);
+  
+  // Si estamos en SSR, no renderizamos nada
+  if (!isBrowser) {
+    return null;
+  }
+  
+  // El resto del componente no cambia
   const [expanded, setExpanded] = useState(false);
   const [activeTab, setActiveTab] = useState<string>('status');
   

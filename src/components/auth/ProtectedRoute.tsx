@@ -18,12 +18,16 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
     checkAuth 
   } = useAuthDebug();
 
-  // Determinar si estamos en modo desarrollo
-  const isDevelopment = import.meta.env.DEV || window.location.hostname === 'localhost';
+  // Determinar si estamos en modo desarrollo y en navegador (no SSR)
+  const isDevelopment = typeof window !== 'undefined' && 
+    (import.meta.env.DEV || window.location.hostname === 'localhost');
 
   // Verificar autenticación al cargar
   useEffect(() => {
-    checkAuth();
+    // Solo ejecutar en el cliente, no durante SSR
+    if (typeof window !== 'undefined') {
+      checkAuth();
+    }
   }, [checkAuth]);
 
   // Mostrar indicador de carga mientras se verifica la autenticación

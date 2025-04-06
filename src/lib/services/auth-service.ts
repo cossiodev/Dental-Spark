@@ -38,30 +38,52 @@ export function emitAuthEvent(type: string, data?: any) {
   
   console.log(`[Auth Event] ${type}`, detail);
   
-  // Emitir evento personalizado
-  try {
-    const event = new CustomEvent('react-auth-event', { detail });
-    window.dispatchEvent(event);
-    
-    // Actualizar estado de depuración global
-    if (!window.__DENTAL_SPARK_DEBUG__) {
-      window.__DENTAL_SPARK_DEBUG__ = {};
+  // Solo ejecutar en el navegador, no durante SSR
+  if (typeof window !== 'undefined') {
+    // Emitir evento personalizado
+    try {
+      const event = new CustomEvent('react-auth-event', { detail });
+      window.dispatchEvent(event);
+      
+      // Actualizar estado de depuración global
+      if (!window.__DENTAL_SPARK_DEBUG__) {
+        window.__DENTAL_SPARK_DEBUG__ = {};
+      }
+      
+      if (!window.__DENTAL_SPARK_DEBUG__.auth) {
+        window.__DENTAL_SPARK_DEBUG__.auth = {
+          events: [],
+          bypassEnabled: false,
+          lastEvent: null,
+          lastError: null,
+          session: null
+        };
+      }
+      
+      window.__DENTAL_SPARK_DEBUG__.auth.lastEvent = detail;
+      window.__DENTAL_SPARK_DEBUG__.auth.events = 
+        [detail, ...(window.__DENTAL_SPARK_DEBUG__.auth.events || [])].slice(0, 50);
+    } catch (e) {
+      console.error('Error emitiendo evento de autenticación', e);
     }
-    
-    if (!window.__DENTAL_SPARK_DEBUG__.auth) {
-      window.__DENTAL_SPARK_DEBUG__.auth = {
-        events: [],
-        bypassEnabled: false
-      };
-    }
-    
-    window.__DENTAL_SPARK_DEBUG__.auth.lastEvent = detail;
-    window.__DENTAL_SPARK_DEBUG__.auth.events = 
-      [detail, ...(window.__DENTAL_SPARK_DEBUG__.auth.events || [])].slice(0, 50);
-  } catch (e) {
-    console.error('Error emitiendo evento de autenticación', e);
   }
 }
+
+// Helper para acceder a window.__DENTAL_SPARK_DEBUG__ de forma segura
+const getDebugState = () => {
+  if (typeof window === 'undefined') return {};
+  if (!window.__DENTAL_SPARK_DEBUG__) window.__DENTAL_SPARK_DEBUG__ = {};
+  if (!window.__DENTAL_SPARK_DEBUG__.auth) {
+    window.__DENTAL_SPARK_DEBUG__.auth = {
+      events: [],
+      bypassEnabled: false,
+      lastEvent: null,
+      lastError: null,
+      session: null
+    };
+  }
+  return window.__DENTAL_SPARK_DEBUG__.auth;
+};
 
 // Servicio de autenticación
 export const authService = {
@@ -84,7 +106,10 @@ export const authService = {
           code: error.code, 
           status: error.status 
         });
-        window.__DENTAL_SPARK_DEBUG__.auth.lastError = error;
+        
+        if (typeof window !== 'undefined') {
+          getDebugState().lastError = error;
+        }
         
         // Traducir errores comunes de Supabase
         if (error.message === "Invalid login credentials") {
@@ -103,7 +128,11 @@ export const authService = {
       if (!data.user) {
         const noUserError = new Error('No se pudo obtener información del usuario');
         emitAuthEvent(AUTH_EVENTS.LOGIN_FAILURE, { error: noUserError.message });
-        window.__DENTAL_SPARK_DEBUG__.auth.lastError = noUserError;
+        
+        if (typeof window !== 'undefined') {
+          getDebugState().lastError = noUserError;
+        }
+        
         throw noUserError;
       }
 
@@ -113,7 +142,9 @@ export const authService = {
         sessionExpiresAt: data.session?.expires_at
       });
       
-      window.__DENTAL_SPARK_DEBUG__.auth.session = data.session;
+      if (typeof window !== 'undefined') {
+        getDebugState().session = data.session;
+      }
       
       // Verificar si el usuario es parte del staff
       console.log('Verificando si el usuario es miembro del staff...');
@@ -245,7 +276,11 @@ export const authService = {
         message: 'Error crítico en proceso de autenticación', 
         error 
       });
-      window.__DENTAL_SPARK_DEBUG__.auth.lastError = error;
+      
+      if (typeof window !== 'undefined') {
+        getDebugState().lastError = error;
+      }
+      
       throw error;
     }
   },
@@ -260,7 +295,11 @@ export const authService = {
         throw error;
       }
       console.log('Sesión cerrada correctamente');
-      window.__DENTAL_SPARK_DEBUG__.auth.session = null;
+      
+      if (typeof window !== 'undefined') {
+        getDebugState().session = null;
+      }
+      
       return true;
     } catch (error) {
       console.error('Error al cerrar sesión:', error);
@@ -286,7 +325,9 @@ export const authService = {
           userId: data.session.user.id,
           expiresAt: data.session.expires_at
         });
-        window.__DENTAL_SPARK_DEBUG__.auth.session = data.session;
+        if (typeof window !== 'undefined') {
+          getDebugState().session = data.session;
+        }
       } else {
         emitAuthEvent(AUTH_EVENTS.SESSION_INVALID, { message: 'No hay sesión activa' });
       }
@@ -313,7 +354,9 @@ export const authService = {
           userId: data.session?.user.id,
           expiresAt: data.session?.expires_at
         });
-        window.__DENTAL_SPARK_DEBUG__.auth.session = data.session;
+        if (typeof window !== 'undefined') {
+          getDebugState().session = data.session;
+        }
       } else {
         emitAuthEvent(AUTH_EVENTS.SESSION_INVALID, { message: 'Sesión no válida o expirada' });
       }
@@ -374,7 +417,7 @@ export const authService = {
   
   // Método para depuración - activar bypass de autenticación
   enableDebugMode: (bypass: boolean = false) => {
-    window.__DENTAL_SPARK_DEBUG__.auth.bypassEnabled = bypass;
+    getDebugState().bypassEnabled = bypass;
     emitAuthEvent('auth:debug_mode', { bypass });
     console.warn(`🔧 Modo depuración ${bypass ? 'ACTIVADO' : 'DESACTIVADO'}`);
     if (bypass) {
@@ -385,7 +428,7 @@ export const authService = {
   
   // Método para obtener estado de depuración
   getDebugState: () => {
-    return window.__DENTAL_SPARK_DEBUG__?.auth || null;
+    return getDebugState();
   },
   
   // Solicitar cambio de contraseña
@@ -415,7 +458,11 @@ export const authService = {
           code: error.code, 
           status: error.status 
         });
-        window.__DENTAL_SPARK_DEBUG__.auth.lastError = error;
+        
+        if (typeof window !== 'undefined') {
+          getDebugState().lastError = error;
+        }
+        
         throw error;
       }
       
@@ -429,7 +476,11 @@ export const authService = {
         message: 'Error solicitando restablecimiento', 
         error 
       });
-      window.__DENTAL_SPARK_DEBUG__.auth.lastError = error;
+      
+      if (typeof window !== 'undefined') {
+        getDebugState().lastError = error;
+      }
+      
       throw error;
     }
   },
@@ -452,7 +503,11 @@ export const authService = {
           code: error.code, 
           status: error.status 
         });
-        window.__DENTAL_SPARK_DEBUG__.auth.lastError = error;
+        
+        if (typeof window !== 'undefined') {
+          getDebugState().lastError = error;
+        }
+        
         throw error;
       }
       
@@ -466,7 +521,11 @@ export const authService = {
         message: 'Error actualizando contraseña', 
         error 
       });
-      window.__DENTAL_SPARK_DEBUG__.auth.lastError = error;
+      
+      if (typeof window !== 'undefined') {
+        getDebugState().lastError = error;
+      }
+      
       throw error;
     }
   },

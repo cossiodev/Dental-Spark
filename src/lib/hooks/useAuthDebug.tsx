@@ -2,6 +2,22 @@ import { useState, useEffect, useCallback } from 'react';
 import { authService } from '@/lib/services/auth-service';
 import { supabase } from '@/integrations/supabase/client';
 
+// Helper para acceder a window.__DENTAL_SPARK_DEBUG__ de forma segura
+const getDebugState = () => {
+  if (typeof window === 'undefined') return {};
+  if (!window.__DENTAL_SPARK_DEBUG__) window.__DENTAL_SPARK_DEBUG__ = {};
+  if (!window.__DENTAL_SPARK_DEBUG__.auth) {
+    window.__DENTAL_SPARK_DEBUG__.auth = {
+      events: [],
+      bypassEnabled: false,
+      lastEvent: null,
+      lastError: null,
+      session: null
+    };
+  }
+  return window.__DENTAL_SPARK_DEBUG__.auth;
+};
+
 /**
  * Hook personalizado para integrar la depuración de autenticación con React Developer Tools
  */
@@ -17,6 +33,9 @@ const useAuthDebug = () => {
 
   // Inicializar el estado de depuración global si no existe
   useEffect(() => {
+    // No ejecutar durante SSR
+    if (typeof window === 'undefined') return;
+    
     if (!window.__DENTAL_SPARK_DEBUG__) {
       window.__DENTAL_SPARK_DEBUG__ = {};
     }
@@ -34,6 +53,9 @@ const useAuthDebug = () => {
 
   // Función para escuchar eventos de autenticación
   useEffect(() => {
+    // No ejecutar durante SSR
+    if (typeof window === 'undefined') return;
+    
     const handleAuthEvent = (event: any) => {
       const { detail } = event;
       
@@ -58,12 +80,13 @@ const useAuthDebug = () => {
     window.addEventListener('react-auth-event', handleAuthEvent);
     
     // Obtener estado inicial
-    if (window.__DENTAL_SPARK_DEBUG__?.auth) {
-      const { bypassEnabled, lastEvent, lastError, events = [], session } = window.__DENTAL_SPARK_DEBUG__.auth;
+    const debugState = getDebugState();
+    if (debugState) {
+      const { bypassEnabled, lastEvent, lastError, events = [], session } = debugState;
       setBypassActive(!!bypassEnabled);
       setLastEvent(lastEvent);
       setLastError(lastError);
-      setEvents(events);
+      setEvents(events || []);
       setSession(session);
       
       if (session) {
@@ -82,7 +105,7 @@ const useAuthDebug = () => {
     setIsLoading(true);
     try {
       // Verificar si el bypass está activo
-      const bypassEnabled = window.__DENTAL_SPARK_DEBUG__?.auth?.bypassEnabled;
+      const bypassEnabled = typeof window !== 'undefined' ? getDebugState().bypassEnabled : false;
       if (bypassEnabled) {
         setIsAuthenticated(true);
         setBypassActive(true);
@@ -119,8 +142,8 @@ const useAuthDebug = () => {
     const newState = !bypassActive;
     setBypassActive(newState);
     
-    if (window.__DENTAL_SPARK_DEBUG__ && window.__DENTAL_SPARK_DEBUG__.auth) {
-      window.__DENTAL_SPARK_DEBUG__.auth.bypassEnabled = newState;
+    if (typeof window !== 'undefined') {
+      getDebugState().bypassEnabled = newState;
     }
     
     return authService.enableDebugMode(newState);
@@ -131,6 +154,16 @@ const useAuthDebug = () => {
     setIsLoading(true);
     await checkAuth();
     setIsLoading(false);
+  }, [checkAuth]);
+
+  // Ejecutar checkAuth en el cliente, no durante SSR
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      checkAuth();
+    } else {
+      // Durante SSR, establecer isLoading en false para evitar estado de carga infinito
+      setIsLoading(false);
+    }
   }, [checkAuth]);
 
   return {
