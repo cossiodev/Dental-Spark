@@ -85,3 +85,8 @@ Las contribuciones son bienvenidas. Por favor, siente libre de abrir un issue o 
 ## 📞 Contacto
 
 Para preguntas o soporte, por favor contacta a [tu-email@example.com](mailto:tu-email@example.com)
+
+## Documentación
+
+- [Producción](./docs/PRODUCCION.md) - Información sobre el despliegue a producción
+- [Depuración](./docs/DEBUG.md) - Herramientas de depuración para desarrollo

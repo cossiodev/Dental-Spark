@@ -1,49 +1,54 @@
 import { useState, useEffect, ReactNode } from "react";
-import { Navigate, useLocation } from "react-router-dom";
+import { Navigate } from "react-router-dom";
 import { authService } from "@/lib/services/auth-service";
 import { Loader2 } from "lucide-react";
+import AuthDebugDevTools from "@/components/debug/AuthDebugTools";
+import useAuthDebug from "@/lib/hooks/useAuthDebug";
 
 interface ProtectedRouteProps {
   children: ReactNode;
 }
 
 const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
-  const location = useLocation();
+  // Usar el hook de depuración para integración con React Developer Tools
+  const { 
+    isAuthenticated, 
+    isLoading, 
+    bypassActive,
+    checkAuth 
+  } = useAuthDebug();
 
+  // Determinar si estamos en modo desarrollo
+  const isDevelopment = import.meta.env.DEV || window.location.hostname === 'localhost';
+
+  // Verificar autenticación al cargar
   useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const authenticated = await authService.isAuthenticated();
-        setIsAuthenticated(authenticated);
-      } catch (error) {
-        console.error("Error verificando autenticación:", error);
-        setIsAuthenticated(false);
-      }
-    };
-
     checkAuth();
-  }, []);
+  }, [checkAuth]);
 
-  if (isAuthenticated === null) {
-    // Mostrar indicador de carga mientras se verifica la autenticación
+  // Mostrar indicador de carga mientras se verifica la autenticación
+  if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="flex flex-col items-center gap-2">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <p className="text-sm text-muted-foreground">Verificando credenciales...</p>
-        </div>
+      <div className="flex justify-center items-center h-screen">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <span className="ml-2 text-gray-600">Verificando autenticación...</span>
       </div>
     );
   }
 
-  // Redirigir a login si no está autenticado
-  if (!isAuthenticated) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
+  // Redireccionar al login si no está autenticado y no tiene bypass
+  if (!isAuthenticated && !bypassActive) {
+    return <Navigate to="/login" replace />;
   }
 
-  // Si está autenticado, renderizar los hijos
-  return <>{children}</>;
+  // Renderizar los componentes hijos si está autenticado o con bypass
+  return (
+    <>
+      {children}
+      {/* Mostrar herramientas de depuración solo en desarrollo */}
+      {isDevelopment && <AuthDebugDevTools />}
+    </>
+  );
 };
 
 export default ProtectedRoute; 
