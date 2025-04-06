@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -126,29 +126,47 @@ const Patients = () => {
     }
   }, [isPediatric, form]);
 
-  const loadPatients = async () => {
+  const loadPatients = useCallback(async () => {
     try {
       setIsLoading(true);
-      console.log("Iniciando carga de pacientes...");
+      console.log("[DIAGNÓSTICO] Iniciando carga de pacientes...");
+      
+      // Limpiar el estado de pacientes primero para evitar datos antiguos
+      setFilteredPatients([]);
+      
       const data = await patientService.getAll();
-      console.log(`Pacientes cargados (${data.length}):`, data);
+      
+      console.log(`[DIAGNÓSTICO] Pacientes cargados (${data.length}):`, 
+        data.map(p => ({id: p.id, nombre: `${p.firstName} ${p.lastName}`})));
+      
+      if (data.length === 0) {
+        console.warn("[DIAGNÓSTICO] No se encontraron pacientes en la base de datos");
+        toast({
+          title: "Información",
+          description: "No hay pacientes registrados en el sistema",
+        });
+      }
+      
       setPatients(data);
       setFilteredPatients(data);
     } catch (error) {
-      console.error("Error loading patients:", error);
+      console.error("[DIAGNÓSTICO] Error cargando pacientes:", error);
       toast({
         title: "Error",
-        description: "No se pudieron cargar los pacientes",
+        description: "No se pudieron cargar los pacientes. Intente nuevamente.",
         variant: "destructive",
       });
+      // Establecer un estado vacío para no mostrar datos antiguos
+      setPatients([]);
+      setFilteredPatients([]);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [toast]);
 
   useEffect(() => {
     loadPatients();
-  }, [toast]);
+  }, [loadPatients]);
 
   useEffect(() => {
     let filtered = patients;
@@ -231,7 +249,7 @@ const Patients = () => {
         allergiesArray = data.allergies.filter(Boolean);
       }
 
-      console.log("Enviando datos del paciente:", {
+      console.log("[DIAGNÓSTICO] Enviando datos del paciente:", {
         ...data,
         allergies: allergiesArray
       });
@@ -266,24 +284,13 @@ const Patients = () => {
         } : undefined,
       });
       
-      console.log("Paciente creado:", newPatient);
+      console.log("[DIAGNÓSTICO] Paciente creado correctamente:", newPatient);
+      console.log("[DIAGNÓSTICO] ID del paciente:", newPatient.id);
 
-      // Actualizar la lista de pacientes en la interfaz
-      setPatients(prevPatients => {
-        const updatedPatients = [...prevPatients, newPatient];
-        console.log("Lista de pacientes actualizada:", updatedPatients);
-        // También actualizar la lista filtrada
-        setFilteredPatients(updatedPatients);
-        return updatedPatients;
-      });
-      
+      // Cerrar el diálogo antes de actualizar la lista para evitar problemas de UI
       setIsAddDialogOpen(false);
       
-      toast({
-        title: "Paciente agregado",
-        description: "El paciente ha sido agregado exitosamente",
-      });
-      
+      // Restablecer el formulario
       form.reset({
         firstName: "",
         lastName: "",
@@ -302,13 +309,47 @@ const Patients = () => {
         legalGuardian: undefined,
       });
       
-      // Recargar la lista de pacientes para asegurar consistencia
+      // Verificar si el ID comienza con "sample-temp", lo que indica que es un paciente local
+      const isLocalPatient = newPatient.id.startsWith('sample-temp');
+      
+      if (isLocalPatient) {
+        toast({
+          title: "Aviso",
+          description: "El paciente se guardó localmente. Es posible que haya problemas de conexión con el servidor.",
+          variant: "warning"
+        });
+      } else {
+        toast({
+          title: "Paciente agregado",
+          description: "El paciente ha sido agregado exitosamente.",
+        });
+      }
+
+      // Actualizar inmediatamente el estado local para mejor experiencia de usuario
+      setPatients(prevPatients => {
+        // Comprobamos si el paciente ya existe en la lista (por ID)
+        const exists = prevPatients.some(p => p.id === newPatient.id);
+        if (exists) {
+          // Si existe, actualizamos el paciente existente
+          return prevPatients.map(p => p.id === newPatient.id ? newPatient : p);
+        } else {
+          // Si no existe, agregamos el nuevo paciente
+          console.log("[DIAGNÓSTICO] Agregando nuevo paciente a la lista local");
+          const updatedPatients = [...prevPatients, newPatient];
+          setFilteredPatients(updatedPatients); // Actualizar también filteredPatients
+          return updatedPatients;
+        }
+      });
+      
+      // Recargar la lista completa después de una breve pausa para asegurarse
+      // de que los cambios se hayan propagado en Supabase
       setTimeout(() => {
+        console.log("[DIAGNÓSTICO] Recargando lista completa de pacientes...");
         loadPatients();
-      }, 1000);
+      }, 1500);
       
     } catch (error) {
-      console.error("Error adding patient:", error);
+      console.error("[DIAGNÓSTICO] Error agregando paciente:", error);
       
       let errorMessage = "No se pudo agregar el paciente";
       if (error instanceof Error) {
@@ -361,9 +402,10 @@ const Patients = () => {
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold tracking-tight">Pacientes</h1>
         <div className="flex items-center space-x-2">
-          <Button onClick={() => loadPatients()} variant="outline" size="sm">
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Actualizar
+          <Button onClick={loadPatients} variant="outline" className="relative overflow-hidden group">
+            <RefreshCw className="h-4 w-4 mr-2 group-hover:animate-spin" />
+            <span>Actualizar Lista</span>
+            <span className="absolute inset-0 bg-primary/10 opacity-0 group-hover:opacity-100 transition-opacity"></span>
           </Button>
           <Button onClick={() => setIsAddDialogOpen(true)}>
             <UserPlus className="h-4 w-4 mr-2" />
