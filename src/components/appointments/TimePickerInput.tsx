@@ -1,8 +1,13 @@
 import React, { useState } from 'react';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Clock, ChevronUp, ChevronDown } from "lucide-react";
+import { Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 interface TimePickerInputProps {
   value: string;
@@ -19,144 +24,144 @@ export function TimePickerInput({
   placeholder = "Seleccionar hora",
   disabled = false,
 }: TimePickerInputProps) {
-  const [hours, setHours] = useState(() => value ? parseInt(value.split(':')[0]) : 9);
-  const [minutes, setMinutes] = useState(() => value ? parseInt(value.split(':')[1]) : 0);
-  const [period, setPeriod] = useState<'AM' | 'PM'>(() => {
-    if (!value) return 'AM';
-    const hour = parseInt(value.split(':')[0]);
-    return hour >= 12 ? 'PM' : 'AM';
-  });
-
-  // Actualizar el valor cuando cambian las horas o minutos
-  React.useEffect(() => {
-    const formattedHours = period === 'PM' && hours !== 12 
-      ? hours + 12 
-      : (period === 'AM' && hours === 12 ? 0 : hours);
+  // Convertir el valor de hora en componentes
+  const parseTimeValue = (val: string) => {
+    if (!val) return { hour: 9, minute: 0, period: 'AM' };
     
-    const formattedTime = `${formattedHours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+    const [hourStr, minuteStr] = val.split(':');
+    let hour = parseInt(hourStr);
+    const minute = parseInt(minuteStr);
+    
+    const period = hour >= 12 ? 'PM' : 'AM';
+    
+    // Convertir a formato 12 horas
+    if (hour > 12) hour -= 12;
+    if (hour === 0) hour = 12;
+    
+    return { hour, minute, period };
+  };
+  
+  const { hour, minute, period } = parseTimeValue(value);
+  
+  // Genera las opciones para las horas (1-12)
+  const hourOptions = Array.from({ length: 12 }, (_, i) => i + 1);
+  
+  // Genera las opciones para los minutos (0, 15, 30, 45)
+  const minuteOptions = [0, 15, 30, 45];
+  
+  // Función para formatear la hora y enviarla al onChange
+  const handleTimeChange = (h: number, m: number, p: 'AM' | 'PM') => {
+    let hour24 = h;
+    
+    // Convertir a formato de 24 horas
+    if (p === 'PM' && h !== 12) hour24 += 12;
+    if (p === 'AM' && h === 12) hour24 = 0;
+    
+    const formattedTime = `${hour24.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
     onChange(formattedTime);
-  }, [hours, minutes, period, onChange]);
-
-  // Actualizar los estados cuando cambia el valor externamente
-  React.useEffect(() => {
-    if (value) {
-      const [hoursStr, minutesStr] = value.split(':');
-      const parsedHours = parseInt(hoursStr);
-      
-      if (parsedHours >= 12) {
-        setHours(parsedHours === 12 ? 12 : parsedHours - 12);
-        setPeriod('PM');
-      } else {
-        setHours(parsedHours === 0 ? 12 : parsedHours);
-        setPeriod('AM');
-      }
-      
-      setMinutes(parseInt(minutesStr));
-    }
-  }, [value]);
-
-  const incrementHours = () => {
-    setHours(prev => (prev % 12) + 1);
   };
-
-  const decrementHours = () => {
-    setHours(prev => prev === 1 ? 12 : prev - 1);
-  };
-
-  const incrementMinutes = () => {
-    setMinutes(prev => {
-      const newMinutes = (prev + 15) % 60;
-      if (newMinutes === 0 && prev !== 45) {
-        incrementHours();
-      }
-      return newMinutes;
-    });
-  };
-
-  const decrementMinutes = () => {
-    setMinutes(prev => {
-      const newMinutes = prev === 0 ? 45 : prev - 15;
-      if (newMinutes === 45 && prev === 0) {
-        decrementHours();
-      }
-      return newMinutes;
-    });
-  };
-
-  const togglePeriod = () => {
-    setPeriod(prev => prev === 'AM' ? 'PM' : 'AM');
-  };
-
+  
+  // Formatear la hora para mostrarla en el botón
+  const displayTime = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')} ${period}`;
+  
   return (
-    <div className={cn("flex flex-row items-center space-x-2", className)}>
-      <div className="relative flex items-center">
-        <Clock className="absolute left-3 h-4 w-4 text-muted-foreground" />
-        <div className="flex items-center border rounded-md">
-          <div className="flex flex-col items-center px-2 py-1 border-r">
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button
+          variant="outline"
+          disabled={disabled}
+          className={cn(
+            "w-full justify-start text-left font-normal",
+            !value && "text-muted-foreground",
+            className
+          )}
+        >
+          <Clock className="mr-2 h-4 w-4" />
+          {value ? displayTime : placeholder}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[280px] p-3" align="start">
+        <div className="grid gap-4">
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <div className="font-medium text-sm">Hora</div>
+              <div className="font-medium text-sm">Minutos</div>
+              <div className="font-medium text-sm">AM/PM</div>
+            </div>
+            <div className="flex justify-between">
+              <div className="w-[80px] border rounded-md overflow-hidden">
+                <div className="grid grid-cols-3 gap-1 p-1 h-[200px] overflow-y-auto">
+                  {hourOptions.map((h) => (
+                    <Button
+                      key={h}
+                      variant={h === hour ? "default" : "ghost"} 
+                      className="py-1 px-2 h-auto text-sm"
+                      onClick={() => handleTimeChange(h, minute, period)}
+                    >
+                      {h}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+              <div className="w-[80px] border rounded-md overflow-hidden">
+                <div className="grid grid-cols-2 gap-1 p-1 h-[200px] overflow-y-auto">
+                  {minuteOptions.map((m) => (
+                    <Button
+                      key={m}
+                      variant={m === minute ? "default" : "ghost"} 
+                      className="py-1 px-2 h-auto text-sm"
+                      onClick={() => handleTimeChange(hour, m, period)}
+                    >
+                      {m.toString().padStart(2, '0')}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+              <div className="w-[80px] border rounded-md overflow-hidden">
+                <div className="grid grid-cols-1 gap-1 p-1">
+                  <Button
+                    variant={period === 'AM' ? "default" : "ghost"} 
+                    className="py-2 h-auto text-sm"
+                    onClick={() => handleTimeChange(hour, minute, 'AM')}
+                  >
+                    AM
+                  </Button>
+                  <Button
+                    variant={period === 'PM' ? "default" : "ghost"} 
+                    className="py-2 h-auto text-sm"
+                    onClick={() => handleTimeChange(hour, minute, 'PM')}
+                  >
+                    PM
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="flex justify-between pt-2">
             <Button 
-              type="button" 
-              variant="ghost" 
-              size="sm" 
-              className="h-5 w-5 p-0" 
-              onClick={incrementHours}
-              disabled={disabled}
+              variant="outline" 
+              size="sm"
+              onClick={() => handleTimeChange(9, 0, 'AM')}
             >
-              <ChevronUp className="h-3 w-3" />
+              09:00 AM
             </Button>
-            <span className="mx-2 text-center w-6">
-              {hours.toString().padStart(2, '0')}
-            </span>
             <Button 
-              type="button" 
-              variant="ghost" 
-              size="sm" 
-              className="h-5 w-5 p-0" 
-              onClick={decrementHours}
-              disabled={disabled}
+              variant="outline" 
+              size="sm"
+              onClick={() => handleTimeChange(12, 0, 'PM')}
             >
-              <ChevronDown className="h-3 w-3" />
+              12:00 PM
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => handleTimeChange(5, 0, 'PM')}
+            >
+              05:00 PM
             </Button>
           </div>
-          
-          <div className="text-center mx-1">:</div>
-          
-          <div className="flex flex-col items-center px-2 py-1 border-r">
-            <Button 
-              type="button" 
-              variant="ghost" 
-              size="sm" 
-              className="h-5 w-5 p-0" 
-              onClick={incrementMinutes}
-              disabled={disabled}
-            >
-              <ChevronUp className="h-3 w-3" />
-            </Button>
-            <span className="mx-2 text-center w-6">
-              {minutes.toString().padStart(2, '0')}
-            </span>
-            <Button 
-              type="button" 
-              variant="ghost" 
-              size="sm" 
-              className="h-5 w-5 p-0" 
-              onClick={decrementMinutes}
-              disabled={disabled}
-            >
-              <ChevronDown className="h-3 w-3" />
-            </Button>
-          </div>
-          
-          <Button
-            type="button"
-            variant="ghost"
-            className="h-full px-3 rounded-l-none"
-            onClick={togglePeriod}
-            disabled={disabled}
-          >
-            {period}
-          </Button>
         </div>
-      </div>
-    </div>
+      </PopoverContent>
+    </Popover>
   );
 } 
