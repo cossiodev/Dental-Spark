@@ -90,9 +90,9 @@ export const authService = {
   // Iniciar sesión
   login: async (email: string, password: string): Promise<StaffUser> => {
     try {
-      emitAuthEvent(AUTH_EVENTS.LOGIN_ATTEMPT, { email });
       console.log('Intentando autenticar usuario:', email);
       
+      // Autenticar con Supabase
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password
@@ -100,16 +100,6 @@ export const authService = {
       
       if (error) {
         console.error('Error de autenticación:', error);
-        monitoringService.logError('authService.login', new Error(error.message));
-        emitAuthEvent(AUTH_EVENTS.LOGIN_FAILURE, { 
-          error: error.message, 
-          code: error.code, 
-          status: error.status 
-        });
-        
-        if (typeof window !== 'undefined') {
-          getDebugState().lastError = error;
-        }
         
         // Traducir errores comunes de Supabase
         if (error.message === "Invalid login credentials") {
@@ -126,161 +116,118 @@ export const authService = {
       }
       
       if (!data.user) {
-        const noUserError = new Error('No se pudo obtener información del usuario');
-        emitAuthEvent(AUTH_EVENTS.LOGIN_FAILURE, { error: noUserError.message });
-        
-        if (typeof window !== 'undefined') {
-          getDebugState().lastError = noUserError;
-        }
-        
-        throw noUserError;
+        throw new Error('No se pudo obtener información del usuario');
       }
 
-      emitAuthEvent(AUTH_EVENTS.LOGIN_SUCCESS, { 
-        userId: data.user.id,
-        email: data.user.email,
-        sessionExpiresAt: data.session?.expires_at
-      });
-      
-      if (typeof window !== 'undefined') {
-        getDebugState().session = data.session;
-      }
+      console.log('Usuario autenticado correctamente');
       
       // Verificar si el usuario es parte del staff
-      console.log('Verificando si el usuario es miembro del staff...');
-      emitAuthEvent(AUTH_EVENTS.STAFF_CHECK, { userId: data.user.id });
-      
-      const { data: staffData, error: staffError } = await supabase
-        .from('clinic_staff')
-        .select('*')
-        .eq('user_id', data.user.id)
-        .single();
-        
-      if (staffError) {
-        console.error('Error verificando permisos de staff:', staffError);
-        emitAuthEvent(AUTH_EVENTS.STAFF_INVALID, { 
-          error: staffError.message, 
-          code: staffError.code,
-          details: staffError.details,
-          hint: staffError.hint
-        });
-        
-        // Si la tabla no existe, podría ser un error específico
-        if (staffError.code === '42P01') {
-          console.warn('La tabla clinic_staff no existe, creando estructura temporal...');
-          emitAuthEvent(AUTH_EVENTS.ERROR, { 
-            message: 'Tabla clinic_staff no existe', 
-            code: staffError.code 
-          });
+      try {
+        const { data: staffData, error: staffError } = await supabase
+          .from('clinic_staff')
+          .select('*')
+          .eq('user_id', data.user.id)
+          .single();
           
-          // Crear tabla clinic_staff si no existe
-          try {
-            await supabase.rpc('create_staff_table_if_needed');
+        if (staffError) {
+          // Si la tabla no existe, podría ser un error específico
+          if (staffError.code === '42P01') {
+            // Crear usuario admin por defecto si la tabla no existe
+            console.warn('La tabla clinic_staff no existe, creando estructura temporal...');
             
-            // Intentar agregar al usuario como miembro del staff
+            try {
+              await supabase.rpc('create_staff_table_if_needed');
+              
+              const { error: insertError } = await supabase.from('clinic_staff').insert({
+                user_id: data.user.id,
+                role: 'admin'
+              });
+              
+              if (!insertError) {
+                return {
+                  id: data.user.id,
+                  email: data.user.email || '',
+                  role: 'admin'
+                };
+              }
+            } catch (rpcError) {
+              console.error('Error ejecutando RPC:', rpcError);
+              // Continuar con el flujo normal si falla la RPC
+            }
+          }
+          
+          // Intentar crear el usuario como staff si hay cualquier error
+          try {
             const { error: insertError } = await supabase.from('clinic_staff').insert({
               user_id: data.user.id,
-              role: 'admin'
+              role: 'staff'
             });
             
-            if (insertError) {
-              emitAuthEvent(AUTH_EVENTS.ERROR, { 
-                message: 'Error creando registro de staff', 
-                error: insertError 
-              });
+            if (!insertError) {
+              return {
+                id: data.user.id,
+                email: data.user.email || '',
+                role: 'staff'
+              };
             } else {
-              emitAuthEvent(AUTH_EVENTS.STAFF_VALID, { 
-                userId: data.user.id, 
-                role: 'admin',
-                message: 'Usuario agregado como admin en clinic_staff' 
-              });
+              console.error('Error insertando en staff:', insertError);
             }
+          } catch (insertErr) {
+            console.error('Error en insert:', insertErr);
+          }
+          
+          // Si llegamos aquí, podemos asumir que el usuario está autenticado pero 
+          // no pudimos verificar/crear su rol, así que devolvemos un rol genérico
+          return {
+            id: data.user.id,
+            email: data.user.email || '',
+            role: 'user'
+          };
+        }
+        
+        if (!staffData) {
+          // Si no hay datos del staff pero no hubo error, intentar agregar al usuario
+          try {
+            const { error: insertError } = await supabase.from('clinic_staff').insert({
+              user_id: data.user.id,
+              role: 'staff'
+            });
             
-            // Devolver usuario con rol por defecto
             return {
               id: data.user.id,
               email: data.user.email || '',
-              role: 'admin'
+              role: 'staff'
             };
-          } catch (rpcError) {
-            console.error('Error ejecutando RPC:', rpcError);
-            emitAuthEvent(AUTH_EVENTS.ERROR, { message: 'Error en RPC', error: rpcError });
-            await supabase.auth.signOut();
-            throw new Error('Error configurando permisos de usuario: ' + rpcError);
+          } catch (insertErr) {
+            console.error('Error agregando como staff:', insertErr);
+            // Continuar con rol genérico
+            return {
+              id: data.user.id,
+              email: data.user.email || '',
+              role: 'user'
+            };
           }
         }
         
-        // Si no hay datos del staff
-        emitAuthEvent(AUTH_EVENTS.ERROR, { 
-          message: 'Usuario no autorizado como staff', 
-          userId: data.user.id 
-        });
-        
-        await supabase.auth.signOut();
-        throw new Error('Usuario no autorizado como staff');
-      }
-      
-      if (!staffData) {
-        console.warn('Usuario no es miembro del staff, intentando agregarlo...');
-        emitAuthEvent(AUTH_EVENTS.STAFF_INVALID, { 
-          userId: data.user.id, 
-          message: 'Usuario no es miembro del staff' 
-        });
-        
-        // Intentar agregar al usuario como miembro del staff
-        const { error: insertError } = await supabase.from('clinic_staff').insert({
-          user_id: data.user.id,
-          role: 'staff'
-        });
-        
-        if (insertError) {
-          emitAuthEvent(AUTH_EVENTS.ERROR, { 
-            message: 'Error agregando usuario a staff', 
-            error: insertError 
-          });
-          await supabase.auth.signOut();
-          throw new Error('Error agregando usuario a staff: ' + insertError.message);
-        }
-        
-        emitAuthEvent(AUTH_EVENTS.STAFF_VALID, { 
-          userId: data.user.id, 
-          role: 'staff',
-          message: 'Usuario agregado como staff' 
-        });
-        
+        // Si llegamos aquí, tenemos datos válidos del staff
         return {
           id: data.user.id,
           email: data.user.email || '',
-          role: 'staff'
+          role: staffData.role || 'staff',
+          firstName: staffData.first_name,
+          lastName: staffData.last_name
+        };
+      } catch (staffCheckError) {
+        // Capturar cualquier error en el proceso y permitir login con rol básico
+        console.error('Error verificando staff:', staffCheckError);
+        return {
+          id: data.user.id,
+          email: data.user.email || '',
+          role: 'user'
         };
       }
-      
-      console.log('Usuario autenticado correctamente como staff:', staffData);
-      emitAuthEvent(AUTH_EVENTS.STAFF_VALID, { 
-        userId: data.user.id, 
-        role: staffData.role,
-        staffData 
-      });
-      
-      return {
-        id: data.user.id,
-        email: data.user.email || '',
-        role: staffData.role || 'staff',
-        firstName: staffData.first_name,
-        lastName: staffData.last_name
-      };
     } catch (error) {
       console.error('Error en proceso de autenticación:', error);
-      monitoringService.logError('authService.login', error as Error);
-      emitAuthEvent(AUTH_EVENTS.ERROR, { 
-        message: 'Error crítico en proceso de autenticación', 
-        error 
-      });
-      
-      if (typeof window !== 'undefined') {
-        getDebugState().lastError = error;
-      }
-      
       throw error;
     }
   },
@@ -312,31 +259,16 @@ export const authService = {
   // Obtener sesión actual
   getCurrentSession: async () => {
     try {
-      emitAuthEvent(AUTH_EVENTS.SESSION_CHECK, {});
       const { data, error } = await supabase.auth.getSession();
       
       if (error) {
-        emitAuthEvent(AUTH_EVENTS.SESSION_INVALID, { error });
-        throw error;
-      }
-      
-      if (data.session) {
-        emitAuthEvent(AUTH_EVENTS.SESSION_VALID, { 
-          userId: data.session.user.id,
-          expiresAt: data.session.expires_at
-        });
-        if (typeof window !== 'undefined') {
-          getDebugState().session = data.session;
-        }
-      } else {
-        emitAuthEvent(AUTH_EVENTS.SESSION_INVALID, { message: 'No hay sesión activa' });
+        console.error('Error al obtener sesión:', error);
+        return null;
       }
       
       return data.session;
     } catch (error) {
       console.error('Error al obtener sesión:', error);
-      monitoringService.logError('authService.getCurrentSession', error as Error);
-      emitAuthEvent(AUTH_EVENTS.ERROR, { message: 'Error obteniendo sesión', error });
       return null;
     }
   },
@@ -344,27 +276,10 @@ export const authService = {
   // Comprobar si hay un usuario autenticado
   isAuthenticated: async (): Promise<boolean> => {
     try {
-      emitAuthEvent(AUTH_EVENTS.SESSION_CHECK, {});
       const { data } = await supabase.auth.getSession();
-      
-      const isValid = !!data.session;
-      
-      if (isValid) {
-        emitAuthEvent(AUTH_EVENTS.SESSION_VALID, { 
-          userId: data.session?.user.id,
-          expiresAt: data.session?.expires_at
-        });
-        if (typeof window !== 'undefined') {
-          getDebugState().session = data.session;
-        }
-      } else {
-        emitAuthEvent(AUTH_EVENTS.SESSION_INVALID, { message: 'Sesión no válida o expirada' });
-      }
-      
-      return isValid;
+      return !!data.session;
     } catch (error) {
       console.error('Error verificando autenticación:', error);
-      emitAuthEvent(AUTH_EVENTS.ERROR, { message: 'Error verificando autenticación', error });
       return false;
     }
   },

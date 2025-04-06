@@ -1,89 +1,40 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { authService } from "@/lib/services/auth-service";
 import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Loader2, AlertTriangle } from "lucide-react";
-import AuthDebugDevTools from '@/components/debug/AuthDebugTools';
-import useAuthDebug from '@/lib/hooks/useAuthDebug';
 import { Alert, AlertDescription } from "@/components/ui/alert";
-
-// Esquema de validación para el formulario
-const loginSchema = z.object({
-  email: z.string().email({ message: "Correo electrónico inválido" }),
-  password: z.string().min(6, { message: "La contraseña debe tener al menos 6 caracteres" }),
-});
-
-type LoginFormValues = z.infer<typeof loginSchema>;
 
 const Login = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  
-  // Integrar hook de depuración para React Developer Tools
-  const { isLoading: authLoading, isAuthenticated, bypassActive } = useAuthDebug();
-  
-  // Determinar si estamos en modo desarrollo
-  const isDevelopment = import.meta.env.DEV || window.location.hostname === 'localhost';
 
-  useEffect(() => {
-    // Si ya está autenticado, redirigir al dashboard
-    if (isAuthenticated || bypassActive) {
-      navigate('/dashboard');
-    }
-  }, [isAuthenticated, bypassActive, navigate]);
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError("");
 
-  // Configurar react-hook-form con zod
-  const form = useForm<LoginFormValues>({
-    resolver: zodResolver(loginSchema),
-    defaultValues: {
-      email: "",
-      password: "",
-    },
-    mode: "onSubmit" // Solo validar al enviar el formulario
-  });
-
-  const onSubmit = async (values: LoginFormValues) => {
-    setError(""); // Limpiar errores previos
-    
     try {
-      await authService.login(values.email, values.password);
-      
-      toast({
-        title: "Inicio de sesión exitoso",
-        description: "Bienvenido al sistema Dental Spark",
-      });
-      
+      await authService.login(email, password);
       navigate("/");
     } catch (error) {
       console.error("Error de inicio de sesión:", error);
-      
-      let errorMessage = "Credenciales inválidas o usuario no autorizado";
+      let errorMessage = "Credenciales inválidas. Por favor verifique su correo y contraseña.";
       if (error instanceof Error) {
         errorMessage = error.message;
       }
-      
       setError(errorMessage);
-      
-      // Solo mostrar toast para errores que no sean de credenciales
-      if (!errorMessage.includes("Invalid login credentials")) {
-        toast({
-          title: "Error de inicio de sesión",
-          description: errorMessage,
-          variant: "destructive",
-        });
-      }
+    } finally {
+      setIsLoading(false);
     }
   };
-
-  const isLoading = form.formState.isSubmitting;
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gradient-to-b from-blue-50 to-blue-100">
@@ -93,67 +44,57 @@ const Login = () => {
           <CardDescription>Ingrese sus credenciales para acceder al sistema</CardDescription>
         </CardHeader>
         <CardContent>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              {error && (
-                <Alert variant="destructive" className="mb-4">
-                  <AlertTriangle className="h-4 w-4 mr-2" />
-                  <AlertDescription>
-                    {error}
-                  </AlertDescription>
-                </Alert>
+          <form onSubmit={handleLogin} className="space-y-6">
+            {error && (
+              <Alert variant="destructive" className="mb-4">
+                <AlertTriangle className="h-4 w-4 mr-2" />
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
+            
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium" htmlFor="email">
+                  Correo electrónico
+                </label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="correo@ejemplo.com"
+                  required
+                  disabled={isLoading}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium" htmlFor="password">
+                  Contraseña
+                </label>
+                <Input
+                  id="password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  required
+                  disabled={isLoading}
+                />
+              </div>
+            </div>
+
+            <Button type="submit" className="w-full" disabled={isLoading}>
+              {isLoading ? (
+                <span className="flex items-center justify-center">
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Iniciando sesión...
+                </span>
+              ) : (
+                "Iniciar sesión"
               )}
-              
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Correo electrónico</FormLabel>
-                    <FormControl>
-                      <Input 
-                        placeholder="correo@ejemplo.com" 
-                        type="email" 
-                        disabled={isLoading}
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="password"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Contraseña</FormLabel>
-                    <FormControl>
-                      <Input 
-                        placeholder="Contraseña" 
-                        type="password" 
-                        disabled={isLoading}
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? (
-                  <span className="flex items-center">
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Iniciando sesión...
-                  </span>
-                ) : (
-                  "Iniciar sesión"
-                )}
-              </Button>
-            </form>
-          </Form>
+            </Button>
+          </form>
           
           <div className="mt-6 text-center text-sm">
             <p>
@@ -167,9 +108,6 @@ const Login = () => {
           </div>
         </CardContent>
       </Card>
-      
-      {/* Mostrar herramientas de depuración en desarrollo */}
-      {isDevelopment && <AuthDebugDevTools />}
     </div>
   );
 };
