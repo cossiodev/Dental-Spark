@@ -1,68 +1,57 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { InventoryItem } from "../models/types";
 
-// Datos de muestra para usar cuando la conexión a Supabase falla
+// Datos de muestra para cuando hay problemas de conexión con Supabase
 const SAMPLE_INVENTORY_ITEMS: InventoryItem[] = [
   {
     id: "sample-1",
     name: "Guantes de látex",
-    category: "Materiales",
-    quantity: 5,
-    unit: "cajas",
-    minQuantity: 10,
-    price: 15.99,
+    category: "Protección",
+    quantity: 150,
+    unit_price: 15.99,
     supplier: "Dental Supplies Inc.",
-    lastRestocked: new Date().toISOString(),
-    createdAt: new Date().toISOString()
+    min_stock_level: 50,
+    last_restock_date: new Date().toISOString(),
+    description: "Guantes de látex talla M",
+    location: "Estantería A, Nivel 2"
   },
   {
     id: "sample-2",
     name: "Anestesia local",
-    category: "Medicamentos",
-    quantity: 3,
-    unit: "cajas",
-    minQuantity: 8,
-    price: 45.50,
-    supplier: "MediDent",
-    lastRestocked: new Date().toISOString(),
-    createdAt: new Date().toISOString()
+    category: "Medicamento",
+    quantity: 35,
+    unit_price: 45.50,
+    supplier: "MedDental",
+    min_stock_level: 20,
+    last_restock_date: new Date().toISOString(),
+    description: "Lidocaína 2%, 50 ampolletas",
+    location: "Gabinete médico, Sección C"
   }
 ];
+
+// Registro de modo producción
+console.log('🔴 Servicio de inventario ejecutándose en modo PRODUCCIÓN con Supabase Live');
+console.log(`🔵 URL de Supabase: ${supabase.supabaseUrl}`);
 
 export const inventoryService = {
   getAll: async (): Promise<InventoryItem[]> => {
     try {
-      console.log("Intentando obtener todos los items de inventario...");
-      const { data: items, error } = await supabase
+      console.log('Intentando obtener inventario desde Supabase...');
+      const { data, error } = await supabase
         .from('inventory')
         .select('*');
 
       if (error) {
-        console.error('Error obteniendo inventario:', error);
-        console.log("Retornando datos de muestra para inventario");
+        console.error('Error al obtener inventario:', error.message);
+        console.warn('Devolviendo datos de muestra debido a error de conexión');
         return SAMPLE_INVENTORY_ITEMS;
       }
 
-      if (!items || items.length === 0) {
-        console.log("No se encontraron items de inventario, retornando datos de muestra");
-        return SAMPLE_INVENTORY_ITEMS;
-      }
-
-      console.log(`Obtenidos ${items.length} items de inventario`);
-      return items.map(item => ({
-        id: item.id,
-        name: item.name,
-        category: item.category,
-        quantity: item.quantity,
-        unit: item.unit,
-        minQuantity: item.min_quantity,
-        price: item.price,
-        supplier: item.supplier,
-        lastRestocked: item.last_restocked,
-        createdAt: item.created_at
-      }));
-    } catch (error) {
-      console.error('Error al obtener inventario:', error);
+      console.log(`Inventario obtenido correctamente. ${data.length} items encontrados.`);
+      return data as InventoryItem[];
+    } catch (err) {
+      console.error('Error inesperado al obtener inventario:', err);
+      console.warn('Devolviendo datos de muestra debido a error de conexión');
       return SAMPLE_INVENTORY_ITEMS;
     }
   },
