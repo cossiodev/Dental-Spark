@@ -1,73 +1,87 @@
-# Welcome to your Lovable project
+# Dental Spark - Sistema de Gestión de Clínicas Dentales
 
-## Project info
+Un sistema completo de gestión para clínicas dentales que permite administrar pacientes, citas, tratamientos, inventario, odontogramas y facturación.
 
-**URL**: https://lovable.dev/projects/dc8a59aa-66a4-4e7d-9a60-ea26d1fbc06c
+## 🚀 Características
 
-## How can I edit this code?
+- **Dashboard**: Visualización completa de la actividad de la clínica
+- **Pacientes**: Gestión completa de historiales clínicos
+- **Citas**: Programación y seguimiento de citas
+- **Tratamientos**: Registro y seguimiento de tratamientos dentales
+- **Odontograma**: Registro visual del estado dental de pacientes
+- **Inventario**: Control de insumos y materiales
+- **Facturación**: Gestión de pagos y facturas
+- **Reportes**: Análisis e informes de actividad
 
-There are several ways of editing your application.
+## 💻 Tecnologías Utilizadas
 
-**Use Lovable**
+- **Frontend**: React, TypeScript, Vite, Shadcn/UI, TailwindCSS
+- **Backend**: Supabase (PostgreSQL, Auth, Storage)
+- **Gráficos**: ChartJS
+- **Iconos**: Lucide Icons
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/dc8a59aa-66a4-4e7d-9a60-ea26d1fbc06c) and start prompting.
+## 🛠️ Instalación
 
-Changes made via Lovable will be committed automatically to this repo.
+Sigue estos pasos para configurar el proyecto en tu entorno local:
 
-**Use your preferred IDE**
+1. Clona el repositorio:
+   ```bash
+   git clone https://github.com/tu-usuario/dental-spark.git
+   cd dental-spark
+   ```
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+2. Instala las dependencias:
+   ```bash
+   npm install
+   ```
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+3. Configura Supabase:
+   - Crea una cuenta en [Supabase](https://supabase.com)
+   - Crea un nuevo proyecto
+   - Ejecuta el script SQL incluido en `SQL_para_Supabase.sql` en la consola SQL de Supabase
+   - Copia las credenciales de API de Supabase
 
-Follow these steps:
+4. Configura las variables de entorno:
+   - Crea un archivo `.env` basado en `.env.example`
+   - Añade tus credenciales de Supabase
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+5. Inicia el servidor de desarrollo:
+   ```bash
+   npm run dev
+   ```
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+## 🔧 Configuración de Base de Datos
 
-# Step 3: Install the necessary dependencies.
-npm i
+Para configurar la base de datos y las políticas de seguridad, ejecuta el script SQL proporcionado en `SQL_para_Supabase.sql`. Este script:
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
+1. Crea todas las tablas necesarias
+2. Configura las políticas de Row Level Security (RLS)
+3. Establece las relaciones entre tablas
+4. Proporciona funciones para la creación de usuarios
 
-**Edit a file directly in GitHub**
+## 👥 Roles de Usuario
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+El sistema admite cuatro tipos de usuarios:
 
-**Use GitHub Codespaces**
+- **Admin**: Acceso completo a todas las funciones
+- **Doctor**: Acceso a pacientes, tratamientos y odontogramas
+- **Staff**: Acceso a citas, inventario y facturación
+- **Paciente**: Acceso limitado a sus propios datos
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+## 📄 Licencia
 
-## What technologies are used for this project?
+Este proyecto está bajo la Licencia MIT. Ver el archivo `LICENSE` para más detalles.
 
-This project is built with:
+## 👏 Contribuciones
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+Las contribuciones son bienvenidas. Por favor, siente libre de abrir un issue o enviar un pull request.
 
-## How can I deploy this project?
+1. Haz fork del proyecto
+2. Crea tu rama de características (`git checkout -b feature/amazing-feature`)
+3. Haz commit de tus cambios (`git commit -m 'Add some amazing feature'`)
+4. Haz push a la rama (`git push origin feature/amazing-feature`)
+5. Abre un Pull Request
 
-Simply open [Lovable](https://lovable.dev/projects/dc8a59aa-66a4-4e7d-9a60-ea26d1fbc06c) and click on Share -> Publish.
+## 📞 Contacto
 
-## Can I connect a custom domain to my Lovable project?
-
-Yes it is!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+Para preguntas o soporte, por favor contacta a [tu-email@example.com](mailto:tu-email@example.com)
