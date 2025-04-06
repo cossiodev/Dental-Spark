@@ -209,14 +209,7 @@ export const patientService = {
           medical_history: patient.medicalHistory || null,
           allergies: Array.isArray(patient.allergies) ? patient.allergies : [],
           is_child: patient.isPediatric || false,
-          // Importante: legal_guardian debe ser un objeto JSONB válido para Supabase
-          // Necesitamos asegurar que sea un objeto plano sin referencias circulares
-          legal_guardian: patient.legalGuardian ? {
-            name: patient.legalGuardian.name,
-            relationship: patient.legalGuardian.relationship,
-            phone: patient.legalGuardian.phone,
-            email: patient.legalGuardian.email || null
-          } : null,
+          // Eliminamos el campo legal_guardian ya que no existe en la estructura actual de la tabla
           // Añadir última visita si existe
           last_visit: null // Inicialmente sin última visita
         };
@@ -227,100 +220,49 @@ export const patientService = {
         
         // Verificar token anónimo (solo los primeros caracteres por seguridad)
         const anonKey = supabase.supabaseKey;
-        console.log('[DIAGNÓSTICO] Token anónimo (primeros 10 caracteres):', anonKey.substring(0, 10) + '...');
+        const maskedKey = anonKey.length > 8 ? `${anonKey.substring(0, 8)}...` : anonKey;
+        console.log('[DIAGNÓSTICO] Token anónimo (primeros caracteres):', maskedKey);
         
-        // Intentar la inserción con reintentos en caso de fallo
-        let retryCount = 0;
-        const maxRetries = 2;
-        let data = null;
-        let error = null;
+        // Intentar insertar al paciente
+        console.log('[DIAGNÓSTICO] Ejecutando inserción en Supabase...');
         
-        while (retryCount <= maxRetries) {
-          if (retryCount > 0) {
-            console.log(`[DIAGNÓSTICO] Reintento ${retryCount} de ${maxRetries}...`);
-            await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
-          }
-          
-          try {
-            // IMPORTANTE: Usar .insert directamente sin parámetros innecesarios
-            const result = await supabase
-              .from('patients')
-              .insert(insertData)
-              .select();  // No limitar a single() para evitar errores si no devuelve exactamente un registro
-            
-            console.log('[DIAGNÓSTICO] Resultado de inserción:', result);
-            
-            if (result.error) {
-              error = result.error;
-              console.error(`[DIAGNÓSTICO] Error en intento ${retryCount}:`, error);
-              
-              // Errores fatales que no deberían reintentarse
-              if (error.code === '404' || error.code === '403' || error.code === '42501') {
-                console.error(`[DIAGNÓSTICO] Error crítico (${error.code}), no se reintentará:`, error);
-                break;
-              }
-            } else {
-              data = result.data;
-              if (data && data.length > 0) {
-                console.log('[DIAGNÓSTICO] Paciente creado exitosamente con ID:', data[0].id);
-                break;
-              } else {
-                console.warn('[DIAGNÓSTICO] No se recibieron datos en la respuesta pero no hubo error');
-              }
-            }
-          } catch (e) {
-            console.error('[DIAGNÓSTICO] Error no manejado en la llamada a Supabase:', e);
-            error = e;
-          }
-          
-          retryCount++;
-        }
-
+        const { data, error } = await supabase
+          .from('patients')
+          .insert(insertData)
+          .select();
+        
         if (error) {
           console.error('[DIAGNÓSTICO] Error final al crear paciente en Supabase:', error);
-          console.log('[DIAGNÓSTICO] Detalle del error:', error.details, error.hint, error.code);
-          
-          // Registrar el error
-          monitoringService.logError('patientService.create', new Error(`${error.code || 'UNKNOWN'} - ${error.message || 'Error desconocido'}`));
-          
-          // Verificar si el error es de permisos
-          if (error.code === '403' || error.code === '42501' || (error.message && error.message.includes('permission'))) {
-            throw new Error(`Error de permisos al crear paciente. Verifique las políticas de seguridad en Supabase.`);
-          }
-          
-          // Verificar si el error es de formato de datos
-          if (error.code === '23502' || (error.message && error.message.includes('violates not-null constraint'))) {
-            throw new Error(`Error de validación: Falta un campo requerido. ${error.message}`);
-          }
-          
-          // En caso de cualquier error, usar datos de ejemplo
-          console.log('[DIAGNÓSTICO] Devolviendo datos de ejemplo para el paciente como fallback');
-          
-          // Crear un paciente de ejemplo con los datos proporcionados
-          const samplePatient: Patient = {
-            id: `sample-temp-${Date.now()}`,
-            firstName: patient.firstName,
-            lastName: patient.lastName,
-            email: patient.email || '',
-            phone: patient.phone || '',
-            dateOfBirth: patient.dateOfBirth || '',
-            gender: patient.gender || '',
-            address: patient.address || '',
-            city: patient.city || '',
-            postalCode: patient.postalCode || '',
-            insurance: patient.insurance || '',
-            insuranceNumber: patient.insuranceNumber || '',
-            medicalHistory: patient.medicalHistory || '',
-            allergies: patient.allergies || [],
-            isPediatric: patient.isPediatric || false,
-            legalGuardian: patient.legalGuardian,
-            createdAt: new Date().toISOString()
-          };
-          
-          return samplePatient;
+          throw error;
         }
 
-        if (!data || data.length === 0) {
+        if (data && data.length > 0) {
+          console.log('[DIAGNÓSTICO] Paciente creado exitosamente con ID:', data[0].id);
+          const patientRecord = data[0] as unknown as PatientRecord;
+          
+          // Construir y devolver el objeto paciente
+          return {
+            id: patientRecord.id,
+            firstName: patientRecord.first_name,
+            lastName: patientRecord.last_name,
+            email: patientRecord.email || '',
+            phone: patientRecord.phone || '',
+            dateOfBirth: patientRecord.date_of_birth || '',
+            gender: patientRecord.gender || '',
+            address: patientRecord.address || '',
+            city: patientRecord.city || '',
+            postalCode: patientRecord.postal_code || '',
+            insurance: patientRecord.insurance,
+            insuranceNumber: patientRecord.insurance_number,
+            medicalHistory: patientRecord.medical_history,
+            allergies: patientRecord.allergies || [],
+            lastVisit: patientRecord.last_visit,
+            isPediatric: patientRecord.is_child || false,
+            legalGuardian: undefined,
+            treatingDoctor: undefined, // No tenemos el doctor aquí ya que acabamos de crear el paciente
+            createdAt: patientRecord.created_at
+          };
+        } else {
           console.warn('[DIAGNÓSTICO] No se recibieron datos al crear el paciente, pero tampoco se reportó un error');
           // Crear un paciente de ejemplo con los datos proporcionados
           return {
@@ -339,37 +281,10 @@ export const patientService = {
             medicalHistory: patient.medicalHistory || '',
             allergies: patient.allergies || [],
             isPediatric: patient.isPediatric || false,
-            legalGuardian: patient.legalGuardian,
+            legalGuardian: undefined,
             createdAt: new Date().toISOString()
           };
         }
-
-        console.log('[DIAGNÓSTICO] Paciente creado exitosamente:', data[0]);
-        
-        const patientRecord = data[0] as unknown as PatientRecord;
-        
-        // Construir y devolver el objeto paciente
-        return {
-          id: patientRecord.id,
-          firstName: patientRecord.first_name,
-          lastName: patientRecord.last_name,
-          email: patientRecord.email || '',
-          phone: patientRecord.phone || '',
-          dateOfBirth: patientRecord.date_of_birth || '',
-          gender: patientRecord.gender || '',
-          address: patientRecord.address || '',
-          city: patientRecord.city || '',
-          postalCode: patientRecord.postal_code || '',
-          insurance: patientRecord.insurance,
-          insuranceNumber: patientRecord.insurance_number,
-          medicalHistory: patientRecord.medical_history,
-          allergies: patientRecord.allergies || [],
-          lastVisit: patientRecord.last_visit,
-          isPediatric: patientRecord.is_child || false,
-          legalGuardian: patientRecord.legal_guardian ? patientRecord.legal_guardian : undefined,
-          treatingDoctor: undefined, // No tenemos el doctor aquí ya que acabamos de crear el paciente
-          createdAt: patientRecord.created_at
-        };
       } catch (error) {
         console.error('[DIAGNÓSTICO] Error al crear paciente:', error);
         monitoringService.logError('patientService.create', error as Error);
