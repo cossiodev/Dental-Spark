@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { InventoryItem } from "../models/types";
+import { monitoringService } from "./monitoring-service";
 
 // Datos de muestra para cuando hay problemas de conexión con Supabase
 const SAMPLE_INVENTORY_ITEMS: InventoryItem[] = [
@@ -33,64 +34,87 @@ const SAMPLE_INVENTORY_ITEMS: InventoryItem[] = [
 console.log('🔴 Servicio de inventario ejecutándose en modo PRODUCCIÓN con Supabase Live');
 console.log(`🔵 URL de Supabase: ${supabase.supabaseUrl}`);
 
+// Función auxiliar para medir tiempo de ejecución
+const measureTime = async <T>(fn: () => Promise<T>, endpoint: string): Promise<T> => {
+  const startTime = performance.now();
+  try {
+    const result = await fn();
+    const endTime = performance.now();
+    monitoringService.logApiCall(endpoint, endTime - startTime, true);
+    return result;
+  } catch (error) {
+    const endTime = performance.now();
+    monitoringService.logApiCall(endpoint, endTime - startTime, false);
+    monitoringService.logError(endpoint, error as Error);
+    throw error;
+  }
+};
+
 export const inventoryService = {
   getAll: async (): Promise<InventoryItem[]> => {
-    try {
-      console.log('Intentando obtener inventario desde Supabase...');
-      const { data, error } = await supabase
-        .from('inventory')
-        .select('*');
+    return measureTime(async () => {
+      try {
+        console.log('Intentando obtener inventario desde Supabase...');
+        const { data, error } = await supabase
+          .from('inventory')
+          .select('*');
 
-      if (error) {
-        console.error('Error al obtener inventario:', error.message);
+        if (error) {
+          console.error('Error al obtener inventario:', error.message);
+          console.warn('Devolviendo datos de muestra debido a error de conexión');
+          monitoringService.logError('inventoryService.getAll', new Error(error.message));
+          return SAMPLE_INVENTORY_ITEMS;
+        }
+
+        console.log(`Inventario obtenido correctamente. ${data.length} items encontrados.`);
+        return data as InventoryItem[];
+      } catch (err) {
+        console.error('Error inesperado al obtener inventario:', err);
         console.warn('Devolviendo datos de muestra debido a error de conexión');
+        monitoringService.logError('inventoryService.getAll', err as Error);
         return SAMPLE_INVENTORY_ITEMS;
       }
-
-      console.log(`Inventario obtenido correctamente. ${data.length} items encontrados.`);
-      return data as InventoryItem[];
-    } catch (err) {
-      console.error('Error inesperado al obtener inventario:', err);
-      console.warn('Devolviendo datos de muestra debido a error de conexión');
-      return SAMPLE_INVENTORY_ITEMS;
-    }
+    }, 'inventoryService.getAll');
   },
 
   create: async (item: Omit<InventoryItem, 'id' | 'createdAt'>): Promise<InventoryItem> => {
-    try {
-      const { data, error } = await supabase
-        .from('inventory')
-        .insert({
-          name: item.name,
-          category: item.category,
-          quantity: item.quantity,
-          unit: item.unit,
-          min_quantity: item.minQuantity,
-          price: item.price,
-          supplier: item.supplier,
-          last_restocked: item.lastRestocked
-        })
-        .select()
-        .single();
+    return measureTime(async () => {
+      try {
+        const { data, error } = await supabase
+          .from('inventory')
+          .insert({
+            name: item.name,
+            category: item.category,
+            quantity: item.quantity,
+            unit: item.unit,
+            min_quantity: item.minQuantity,
+            price: item.price,
+            supplier: item.supplier,
+            last_restocked: item.lastRestocked
+          })
+          .select()
+          .single();
 
-      if (error) throw error;
+        if (error) throw error;
 
-      return {
-        id: data.id,
-        name: data.name,
-        category: data.category,
-        quantity: data.quantity,
-        unit: data.unit,
-        minQuantity: data.min_quantity,
-        price: data.price,
-        supplier: data.supplier,
-        lastRestocked: data.last_restocked,
-        createdAt: data.created_at
-      };
-    } catch (error) {
-      console.error('Error al crear item de inventario:', error);
-      throw error;
-    }
+        return {
+          id: data.id,
+          name: data.name,
+          category: data.category,
+          quantity: data.quantity,
+          unit: data.unit,
+          minQuantity: data.min_quantity,
+          price: data.price,
+          supplier: data.supplier,
+          lastRestocked: data.last_restocked,
+          createdAt: data.created_at
+        };
+      } catch (error) {
+        console.error('Error al crear item de inventario:', error);
+        monitoringService.logError('inventoryService.create', error as Error);
+        throw error;
+      }
+    }, 'inventoryService.create');
   },
 
   update: async (id: string, item: Partial<Omit<InventoryItem, 'id' | 'createdAt'>>): Promise<InventoryItem> => {
