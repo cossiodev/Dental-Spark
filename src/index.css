@@ -1,0 +1,152 @@
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 195 30% 98%;
+    --foreground: 195 10% 20%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 195 10% 20%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 195 10% 20%;
+
+    --primary: 187 56% 56%;
+    --primary-foreground: 187 10% 10%;
+
+    --secondary: 187 85% 28%;
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 210 25% 96%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+
+    --accent: 187 85% 28%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 187 56% 56%;
+
+    --radius: 0.5rem;
+
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 187 56% 56%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 187 56% 56%;
+  }
+
+  .dark {
+    --background: 195 30% 8%;
+    --foreground: 195 10% 90%;
+
+    --card: 195 30% 10%;
+    --card-foreground: 195 10% 90%;
+
+    --popover: 195 30% 10%;
+    --popover-foreground: 195 10% 90%;
+
+    --primary: 187 56% 56%;
+    --primary-foreground: 195 10% 10%;
+
+    --secondary: 187 85% 28%;
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 195 30% 15%;
+    --muted-foreground: 195 10% 70%;
+
+    --accent: 187 85% 28%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 62.8% 50.6%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 195 30% 20%;
+    --input: 195 30% 20%;
+    --ring: 187 56% 56%;
+
+    --sidebar-background: 195 30% 10%;
+    --sidebar-foreground: 195 10% 90%;
+    --sidebar-primary: 187 56% 56%;
+    --sidebar-primary-foreground: 195 10% 10%;
+    --sidebar-accent: 195 30% 15%;
+    --sidebar-accent-foreground: 195 10% 90%;
+    --sidebar-border: 195 30% 20%;
+    --sidebar-ring: 187 56% 56%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Odontogram specific styles */
+.tooth {
+  fill: white;
+  stroke: #ccc;
+  stroke-width: 1;
+}
+
+.tooth-selected {
+  stroke: #4cc2d0;
+  stroke-width: 2;
+}
+
+.tooth-treated {
+  fill: #e0f7fa;
+}
+
+.tooth-extraction {
+  fill: #ffcdd2;
+}
+
+.tooth-caries {
+  fill: #fff9c4;
+}
+
+.tooth-crown {
+  fill: #c8e6c9;
+}
+
+.tooth-root-canal {
+  fill: #bbdefb;
+}
+
+.tooth-implant {
+  fill: #d1c4e9;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: hsl(var(--muted));
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--primary));
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--secondary));
+}
