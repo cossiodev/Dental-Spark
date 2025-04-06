@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { authService } from "@/lib/services/auth-service";
 import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
@@ -173,6 +173,11 @@ const Login = () => {
           <div className="mt-6 text-center text-sm">
             <p>
               ¿No tiene una cuenta? Por favor contacte al administrador del sistema.
+            </p>
+            <p className="mt-2">
+              <Link to="/forgot-password" className="text-primary hover:underline">
+                ¿Olvidó su contraseña?
+              </Link>
             </p>
           </div>
         </CardContent>

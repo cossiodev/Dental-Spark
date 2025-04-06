@@ -10,7 +10,7 @@ export interface StaffUser {
   lastName?: string;
 }
 
-// Eventos para depuración en React Developer Tools
+// Definición de eventos de autenticación
 export const AUTH_EVENTS = {
   LOGIN_ATTEMPT: 'auth:login_attempt',
   LOGIN_SUCCESS: 'auth:login_success',
@@ -22,52 +22,45 @@ export const AUTH_EVENTS = {
   STAFF_CHECK: 'auth:staff_check',
   STAFF_VALID: 'auth:staff_valid',
   STAFF_INVALID: 'auth:staff_invalid',
-  ERROR: 'auth:error'
+  ERROR: 'auth:error',
+  PASSWORD_RESET_REQUEST: 'auth:password_reset_request',
+  PASSWORD_RESET_SUCCESS: 'auth:password_reset_success',
+  PASSWORD_RESET_FAILURE: 'auth:password_reset_failure',
+  PASSWORD_UPDATE_SUCCESS: 'auth:password_update_success',
+  PASSWORD_UPDATE_FAILURE: 'auth:password_update_failure'
 };
 
-// Función para enviar eventos al objeto window para React Developer Tools
-const emitAuthEvent = (eventName: string, data: any) => {
-  // Emitir evento para React Developer Tools
-  window.dispatchEvent(new CustomEvent('react-auth-event', { 
-    detail: { 
-      type: eventName, 
-      timestamp: new Date().toISOString(), 
-      data 
-    } 
-  }));
+// Emitir eventos de autenticación para depuración
+export function emitAuthEvent(type: string, data?: any) {
+  const timestamp = new Date().toISOString();
+  const detail = { type, timestamp, data };
   
-  // También añadir al objeto window para inspección directa
-  if (!window.__DENTAL_SPARK_DEBUG__) {
-    window.__DENTAL_SPARK_DEBUG__ = {
-      auth: {
+  console.log(`[Auth Event] ${type}`, detail);
+  
+  // Emitir evento personalizado
+  try {
+    const event = new CustomEvent('react-auth-event', { detail });
+    window.dispatchEvent(event);
+    
+    // Actualizar estado de depuración global
+    if (!window.__DENTAL_SPARK_DEBUG__) {
+      window.__DENTAL_SPARK_DEBUG__ = {};
+    }
+    
+    if (!window.__DENTAL_SPARK_DEBUG__.auth) {
+      window.__DENTAL_SPARK_DEBUG__.auth = {
         events: [],
-        lastEvent: null,
-        lastError: null,
-        session: null
-      }
-    };
+        bypassEnabled: false
+      };
+    }
+    
+    window.__DENTAL_SPARK_DEBUG__.auth.lastEvent = detail;
+    window.__DENTAL_SPARK_DEBUG__.auth.events = 
+      [detail, ...(window.__DENTAL_SPARK_DEBUG__.auth.events || [])].slice(0, 50);
+  } catch (e) {
+    console.error('Error emitiendo evento de autenticación', e);
   }
-  
-  // Guardar evento en el historial
-  window.__DENTAL_SPARK_DEBUG__.auth.events.push({
-    type: eventName,
-    timestamp: new Date().toISOString(),
-    data
-  });
-  
-  // Actualizar último evento
-  window.__DENTAL_SPARK_DEBUG__.auth.lastEvent = {
-    type: eventName,
-    timestamp: new Date().toISOString(),
-    data
-  };
-  
-  // Imprimir información para DevTools
-  console.group(`🔐 Auth Event: ${eventName}`);
-  console.log('Data:', data);
-  console.log('Timestamp:', new Date().toISOString());
-  console.groupEnd();
-};
+}
 
 // Servicio de autenticación
 export const authService = {
@@ -380,7 +373,90 @@ export const authService = {
   // Método para obtener estado de depuración
   getDebugState: () => {
     return window.__DENTAL_SPARK_DEBUG__?.auth || null;
-  }
+  },
+  
+  // Solicitar cambio de contraseña
+  requestPasswordReset: async (email: string): Promise<boolean> => {
+    try {
+      emitAuthEvent(AUTH_EVENTS.PASSWORD_RESET_REQUEST, { email });
+      console.log('Solicitando restablecimiento de contraseña para:', email);
+      
+      // Configurar la URL de redirección según el entorno
+      const isDev = import.meta.env.DEV || window.location.hostname === 'localhost';
+      const baseUrl = isDev 
+        ? window.location.origin 
+        : 'https://dental-spark.vercel.app';
+      
+      const redirectTo = `${baseUrl}/reset-password`;
+      
+      // Enviar email de recuperación
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo
+      });
+      
+      if (error) {
+        console.error('Error solicitando restablecimiento:', error);
+        monitoringService.logError('authService.requestPasswordReset', new Error(error.message));
+        emitAuthEvent(AUTH_EVENTS.PASSWORD_RESET_FAILURE, { 
+          error: error.message, 
+          code: error.code, 
+          status: error.status 
+        });
+        window.__DENTAL_SPARK_DEBUG__.auth.lastError = error;
+        throw error;
+      }
+      
+      emitAuthEvent(AUTH_EVENTS.PASSWORD_RESET_SUCCESS, { email });
+      console.log('Email de recuperación enviado a:', email);
+      return true;
+    } catch (error) {
+      console.error('Error solicitando restablecimiento:', error);
+      monitoringService.logError('authService.requestPasswordReset', error as Error);
+      emitAuthEvent(AUTH_EVENTS.ERROR, { 
+        message: 'Error solicitando restablecimiento', 
+        error 
+      });
+      window.__DENTAL_SPARK_DEBUG__.auth.lastError = error;
+      throw error;
+    }
+  },
+  
+  // Actualizar contraseña con un token
+  updatePasswordWithToken: async (newPassword: string): Promise<boolean> => {
+    try {
+      emitAuthEvent(AUTH_EVENTS.PASSWORD_UPDATE_REQUEST, {});
+      console.log('Actualizando contraseña con token...');
+      
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword
+      });
+      
+      if (error) {
+        console.error('Error actualizando contraseña:', error);
+        monitoringService.logError('authService.updatePasswordWithToken', new Error(error.message));
+        emitAuthEvent(AUTH_EVENTS.PASSWORD_UPDATE_FAILURE, { 
+          error: error.message, 
+          code: error.code, 
+          status: error.status 
+        });
+        window.__DENTAL_SPARK_DEBUG__.auth.lastError = error;
+        throw error;
+      }
+      
+      emitAuthEvent(AUTH_EVENTS.PASSWORD_UPDATE_SUCCESS, {});
+      console.log('Contraseña actualizada correctamente');
+      return true;
+    } catch (error) {
+      console.error('Error actualizando contraseña:', error);
+      monitoringService.logError('authService.updatePasswordWithToken', error as Error);
+      emitAuthEvent(AUTH_EVENTS.ERROR, { 
+        message: 'Error actualizando contraseña', 
+        error 
+      });
+      window.__DENTAL_SPARK_DEBUG__.auth.lastError = error;
+      throw error;
+    }
+  },
 };
 
 // Declarar el tipo para la ventana extendida con datos de depuración

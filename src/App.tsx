@@ -17,6 +17,8 @@ import Communication from "@/pages/Communication";
 import Settings from "@/pages/Settings";
 import NotFound from "@/pages/NotFound";
 import Login from "@/pages/Login";
+import ForgotPassword from "@/pages/ForgotPassword";
+import ResetPassword from "@/pages/ResetPassword";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -47,8 +49,10 @@ const App = () => {
         <Toaster />
         <Sonner />
         <Routes>
-          {/* Ruta pública de login */}
+          {/* Rutas públicas de autenticación */}
           <Route path="/login" element={<Login />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
           
           {/* Rutas protegidas */}
           <Route
