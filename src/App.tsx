@@ -16,108 +16,156 @@ import Reports from "@/pages/Reports";
 import Communication from "@/pages/Communication";
 import Settings from "@/pages/Settings";
 import NotFound from "@/pages/NotFound";
+import Login from "@/pages/Login";
+import ProtectedRoute from "@/components/auth/ProtectedRoute";
+import { useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 const queryClient = new QueryClient();
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    {/* Fixed: Properly wrap the entire app with TooltipProvider */}
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <Routes>
-        <Route
-          path="/"
-          element={
-            <SidebarLayout>
-              <Dashboard />
-            </SidebarLayout>
-          }
-        />
-        <Route
-          path="/patients"
-          element={
-            <SidebarLayout>
-              <Patients />
-            </SidebarLayout>
-          }
-        />
-        <Route
-          path="/patients/:id"
-          element={
-            <SidebarLayout>
-              <PatientDetails />
-            </SidebarLayout>
-          }
-        />
-        <Route
-          path="/appointments"
-          element={
-            <SidebarLayout>
-              <Appointments />
-            </SidebarLayout>
-          }
-        />
-        <Route
-          path="/treatments"
-          element={
-            <SidebarLayout>
-              <Treatments />
-            </SidebarLayout>
-          }
-        />
-        <Route
-          path="/odontogram"
-          element={
-            <SidebarLayout>
-              <Odontogram />
-            </SidebarLayout>
-          }
-        />
-        <Route
-          path="/billing"
-          element={
-            <SidebarLayout>
-              <Billing />
-            </SidebarLayout>
-          }
-        />
-        <Route
-          path="/inventory"
-          element={
-            <SidebarLayout>
-              <Inventory />
-            </SidebarLayout>
-          }
-        />
-        <Route
-          path="/reports"
-          element={
-            <SidebarLayout>
-              <Reports />
-            </SidebarLayout>
-          }
-        />
-        <Route
-          path="/communication"
-          element={
-            <SidebarLayout>
-              <Communication />
-            </SidebarLayout>
-          }
-        />
-        <Route
-          path="/settings"
-          element={
-            <SidebarLayout>
-              <Settings />
-            </SidebarLayout>
-          }
-        />
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+const App = () => {
+  // Configurar listener para cambios de autenticación
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN') {
+        console.log('Usuario autenticado:', session?.user?.email);
+      } else if (event === 'SIGNED_OUT') {
+        console.log('Usuario desconectado');
+        // Redirigir a /login en caso de cierre de sesión
+        window.location.href = '/login';
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <Routes>
+          {/* Ruta pública de login */}
+          <Route path="/login" element={<Login />} />
+          
+          {/* Rutas protegidas */}
+          <Route
+            path="/"
+            element={
+              <ProtectedRoute>
+                <SidebarLayout>
+                  <Dashboard />
+                </SidebarLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/patients"
+            element={
+              <ProtectedRoute>
+                <SidebarLayout>
+                  <Patients />
+                </SidebarLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/patients/:id"
+            element={
+              <ProtectedRoute>
+                <SidebarLayout>
+                  <PatientDetails />
+                </SidebarLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/appointments"
+            element={
+              <ProtectedRoute>
+                <SidebarLayout>
+                  <Appointments />
+                </SidebarLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/treatments"
+            element={
+              <ProtectedRoute>
+                <SidebarLayout>
+                  <Treatments />
+                </SidebarLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/odontogram"
+            element={
+              <ProtectedRoute>
+                <SidebarLayout>
+                  <Odontogram />
+                </SidebarLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/billing"
+            element={
+              <ProtectedRoute>
+                <SidebarLayout>
+                  <Billing />
+                </SidebarLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/inventory"
+            element={
+              <ProtectedRoute>
+                <SidebarLayout>
+                  <Inventory />
+                </SidebarLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/reports"
+            element={
+              <ProtectedRoute>
+                <SidebarLayout>
+                  <Reports />
+                </SidebarLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/communication"
+            element={
+              <ProtectedRoute>
+                <SidebarLayout>
+                  <Communication />
+                </SidebarLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/settings"
+            element={
+              <ProtectedRoute>
+                <SidebarLayout>
+                  <Settings />
+                </SidebarLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </TooltipProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default App;

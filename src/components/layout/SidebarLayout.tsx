@@ -1,4 +1,3 @@
-
 import { useState, ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -17,9 +16,11 @@ import {
   Settings,
   Stethoscope,
   Users,
-  X
+  X,
+  LogOut
 } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { authService } from "@/lib/services/auth-service";
 
 interface SidebarItemProps {
   icon: ReactNode;
@@ -105,6 +106,10 @@ const SidebarLayout = ({ children }: SidebarLayoutProps) => {
     if (isMobile) {
       setMobileOpen(false);
     }
+  };
+
+  const handleLogout = async () => {
+    await authService.logout();
   };
 
   return (
@@ -206,6 +211,15 @@ const SidebarLayout = ({ children }: SidebarLayoutProps) => {
                   />
                 ))}
               </SidebarSection>
+
+              <div className="mt-auto pt-4 border-t">
+                <SidebarItem
+                  icon={<LogOut className="h-5 w-5" />}
+                  label={collapsed && !isMobile ? "" : "Cerrar sesión"}
+                  onClick={handleLogout}
+                  path="#"
+                />
+              </div>
             </div>
           </div>
         </div>
