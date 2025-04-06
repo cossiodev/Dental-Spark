@@ -9,9 +9,10 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Loader2 } from "lucide-react";
+import { Loader2, AlertTriangle } from "lucide-react";
 import AuthDebugDevTools from '@/components/debug/AuthDebugTools';
 import useAuthDebug from '@/lib/hooks/useAuthDebug';
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 // Esquema de validación para el formulario
 const loginSchema = z.object({
@@ -24,9 +25,6 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 const Login = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
-  const [isLoading, setIsLoading] = useState(false);
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   
   // Integrar hook de depuración para React Developer Tools
@@ -49,11 +47,12 @@ const Login = () => {
       email: "",
       password: "",
     },
+    mode: "onSubmit" // Solo validar al enviar el formulario
   });
 
   const onSubmit = async (values: LoginFormValues) => {
-    setIsLoading(true);
-
+    setError(""); // Limpiar errores previos
+    
     try {
       await authService.login(values.email, values.password);
       
@@ -71,15 +70,20 @@ const Login = () => {
         errorMessage = error.message;
       }
       
-      toast({
-        title: "Error de inicio de sesión",
-        description: errorMessage,
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
+      setError(errorMessage);
+      
+      // Solo mostrar toast para errores que no sean de credenciales
+      if (!errorMessage.includes("Invalid login credentials")) {
+        toast({
+          title: "Error de inicio de sesión",
+          description: errorMessage,
+          variant: "destructive",
+        });
+      }
     }
   };
+
+  const isLoading = form.formState.isSubmitting;
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gradient-to-b from-blue-50 to-blue-100">
@@ -92,24 +96,12 @@ const Login = () => {
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               {error && (
-                <div className="bg-red-50 p-4 rounded-md">
-                  <div className="flex">
-                    <div className="flex-shrink-0">
-                      <ExclamationTriangleIcon
-                        className="h-5 w-5 text-red-400"
-                        aria-hidden="true"
-                      />
-                    </div>
-                    <div className="ml-3">
-                      <h3 className="text-sm font-medium text-red-800">
-                        Error al iniciar sesión
-                      </h3>
-                      <div className="mt-2 text-sm text-red-700">
-                        <p>{error}</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                <Alert variant="destructive" className="mb-4">
+                  <AlertTriangle className="h-4 w-4 mr-2" />
+                  <AlertDescription>
+                    {error}
+                  </AlertDescription>
+                </Alert>
               )}
               
               <FormField
@@ -122,10 +114,8 @@ const Login = () => {
                       <Input 
                         placeholder="correo@ejemplo.com" 
                         type="email" 
-                        disabled={isLoading} 
-                        {...field} 
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
+                        disabled={isLoading}
+                        {...field}
                       />
                     </FormControl>
                     <FormMessage />
@@ -143,10 +133,8 @@ const Login = () => {
                       <Input 
                         placeholder="Contraseña" 
                         type="password" 
-                        disabled={isLoading} 
-                        {...field} 
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
+                        disabled={isLoading}
+                        {...field}
                       />
                     </FormControl>
                     <FormMessage />
@@ -157,10 +145,7 @@ const Login = () => {
               <Button type="submit" className="w-full" disabled={isLoading}>
                 {isLoading ? (
                   <span className="flex items-center">
-                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     Iniciando sesión...
                   </span>
                 ) : (

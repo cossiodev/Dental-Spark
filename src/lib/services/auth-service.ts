@@ -84,6 +84,18 @@ export const authService = {
           status: error.status 
         });
         window.__DENTAL_SPARK_DEBUG__.auth.lastError = error;
+        
+        // Traducir errores comunes de Supabase
+        if (error.message === "Invalid login credentials") {
+          throw new Error("Credenciales inválidas. Por favor verifique su correo y contraseña.");
+        } else if (error.message.includes("Email not confirmed")) {
+          throw new Error("Correo electrónico no confirmado. Por favor verifique su bandeja de entrada.");
+        } else if (error.message.includes("too many requests")) {
+          throw new Error("Demasiados intentos fallidos. Por favor intente nuevamente más tarde.");
+        } else if (error.message.includes("rate limit")) {
+          throw new Error("Límite de intentos excedido. Por favor espere unos minutos.");
+        }
+        
         throw error;
       }
       
