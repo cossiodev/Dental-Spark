@@ -129,63 +129,129 @@ export const patientService = {
     }, 'patientService.getAll');
   },
 
-  getById: async (id: string): Promise<Patient> => {
-    try {
-      console.log(`Intentando obtener paciente con ID ${id}...`);
-      
-      const { data: patient, error } = await supabase
-        .from('patients')
-        .select('*, treating_doctor:doctors(id, first_name, last_name, specialization)')
-        .eq('id', id)
-        .single();
+  getById: async (id: string): Promise<Patient | null> => {
+    return measureTime(async () => {
+      try {
+        console.log(`[DIAGNÓSTICO] Obteniendo paciente con ID: ${id}`);
+        
+        // Realizar la consulta a Supabase
+        const { data, error } = await supabase
+          .from('patients')
+          .select(`
+            *,
+            doctors:treating_doctor_id (
+              id, 
+              first_name, 
+              last_name, 
+              specialization
+            )
+          `)
+          .eq('id', id)
+          .single();
+        
+        if (error) {
+          console.error(`[DIAGNÓSTICO] Error al obtener paciente con ID ${id}:`, error);
+          
+          // Si el error es de relación de clave externa, intentamos obtener solo los datos del paciente sin el doctor
+          if (error.message && (
+              error.message.includes('foreign key') || 
+              error.message.includes('relationship') || 
+              error.message.includes('does not exist')
+            )) {
+            console.log('[DIAGNÓSTICO] Intentando obtener paciente sin relación con doctor...');
+            
+            // Consulta simplificada sin la relación con doctors
+            const { data: patientOnly, error: patientError } = await supabase
+              .from('patients')
+              .select('*')
+              .eq('id', id)
+              .single();
+            
+            if (patientError) {
+              console.error('[DIAGNÓSTICO] Error al obtener datos básicos del paciente:', patientError);
+              return null;
+            }
+            
+            if (!patientOnly) {
+              console.warn('[DIAGNÓSTICO] No se encontró el paciente');
+              return null;
+            }
+            
+            console.log('[DIAGNÓSTICO] Datos de paciente obtenidos correctamente (sin doctor)');
+            
+            // Convertir el resultado a nuestro modelo Patient
+            return {
+              id: patientOnly.id,
+              firstName: patientOnly.first_name,
+              lastName: patientOnly.last_name,
+              email: patientOnly.email || '',
+              phone: patientOnly.phone || '',
+              dateOfBirth: patientOnly.date_of_birth || '',
+              gender: patientOnly.gender || '',
+              address: patientOnly.address || '',
+              city: patientOnly.city || '',
+              postalCode: patientOnly.postal_code || '',
+              insurance: patientOnly.insurance || '',
+              insuranceNumber: patientOnly.insurance_number || '',
+              medicalHistory: patientOnly.medical_history || '',
+              allergies: patientOnly.allergies || [],
+              lastVisit: patientOnly.last_visit || '',
+              isPediatric: patientOnly.is_child || false,
+              legalGuardian: undefined, // Manejamos la ausencia del campo
+              treatingDoctor: undefined, // No se pudo obtener el doctor
+              createdAt: patientOnly.created_at
+            };
+          }
+          
+          return null;
+        }
+        
+        if (!data) {
+          console.warn('[DIAGNÓSTICO] No se encontró el paciente');
+          return null;
+        }
 
-      if (error) {
-        console.error(`Error al obtener paciente con ID ${id}:`, error);
+        const patientRecord = data as unknown as PatientRecord;
+        
+        const treatingDoctor = patientRecord.treating_doctor ? 
+          (Array.isArray(patientRecord.treating_doctor) && patientRecord.treating_doctor.length > 0 
+            ? patientRecord.treating_doctor[0] 
+            : patientRecord.treating_doctor) 
+          : null;
+        
+        return {
+          id: patientRecord.id,
+          firstName: patientRecord.first_name,
+          lastName: patientRecord.last_name,
+          email: patientRecord.email || '',
+          phone: patientRecord.phone || '',
+          dateOfBirth: patientRecord.date_of_birth || '',
+          gender: patientRecord.gender || '',
+          address: patientRecord.address || '',
+          city: patientRecord.city || '',
+          postalCode: patientRecord.postal_code || '',
+          insurance: patientRecord.insurance,
+          insuranceNumber: patientRecord.insurance_number,
+          medicalHistory: patientRecord.medical_history,
+          allergies: patientRecord.allergies || [],
+          lastVisit: patientRecord.last_visit,
+          isPediatric: patientRecord.is_child || false,
+          legalGuardian: patientRecord.legal_guardian ? JSON.parse(JSON.stringify(patientRecord.legal_guardian)) : undefined,
+          treatingDoctor: treatingDoctor ? {
+            id: treatingDoctor.id,
+            firstName: treatingDoctor.first_name,
+            lastName: treatingDoctor.last_name,
+            specialization: treatingDoctor.specialization
+          } : undefined,
+          createdAt: patientRecord.created_at
+        };
+      } catch (error) {
+        console.error(`Error al obtener paciente:`, error);
+        // Devolver un paciente de ejemplo
         console.log('Devolviendo datos de ejemplo de paciente');
-        // Devolver un paciente de ejemplo que coincida con el ID o el primero si no hay coincidencia
         return SAMPLE_PATIENTS.find(p => p.id === id) || SAMPLE_PATIENTS[0];
       }
-
-      const patientRecord = patient as unknown as PatientRecord;
-      
-      const treatingDoctor = patientRecord.treating_doctor ? 
-        (Array.isArray(patientRecord.treating_doctor) && patientRecord.treating_doctor.length > 0 
-          ? patientRecord.treating_doctor[0] 
-          : patientRecord.treating_doctor) 
-        : null;
-      
-      return {
-        id: patientRecord.id,
-        firstName: patientRecord.first_name,
-        lastName: patientRecord.last_name,
-        email: patientRecord.email || '',
-        phone: patientRecord.phone || '',
-        dateOfBirth: patientRecord.date_of_birth || '',
-        gender: patientRecord.gender || '',
-        address: patientRecord.address || '',
-        city: patientRecord.city || '',
-        postalCode: patientRecord.postal_code || '',
-        insurance: patientRecord.insurance,
-        insuranceNumber: patientRecord.insurance_number,
-        medicalHistory: patientRecord.medical_history,
-        allergies: patientRecord.allergies || [],
-        lastVisit: patientRecord.last_visit,
-        isPediatric: patientRecord.is_child || false,
-        legalGuardian: patientRecord.legal_guardian ? JSON.parse(JSON.stringify(patientRecord.legal_guardian)) : undefined,
-        treatingDoctor: treatingDoctor ? {
-          id: treatingDoctor.id,
-          firstName: treatingDoctor.first_name,
-          lastName: treatingDoctor.last_name,
-          specialization: treatingDoctor.specialization
-        } : undefined,
-        createdAt: patientRecord.created_at
-      };
-    } catch (error) {
-      console.error(`Error al obtener paciente:`, error);
-      // Devolver un paciente de ejemplo
-      console.log('Devolviendo datos de ejemplo de paciente');
-      return SAMPLE_PATIENTS.find(p => p.id === id) || SAMPLE_PATIENTS[0];
-    }
+    }, 'patientService.getById');
   },
 
   create: async (patient: Omit<Patient, 'id'>): Promise<Patient> => {

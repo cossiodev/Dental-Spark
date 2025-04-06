@@ -105,4 +105,9 @@ CREATE POLICY "Allow anonymous insert during dev"
   WITH CHECK (true);
 
 -- 6. Verificar configuración
-SELECT 'Configuración completada. Por favor revisa las políticas RLS en Supabase.' as message; 
+SELECT 'Configuración completada. Por favor revisa las políticas RLS en Supabase.' as message;
+
+-- 7. Actualizar la estructura de la tabla de pacientes
+ALTER TABLE patients 
+DROP COLUMN legal_guardian,
+ADD COLUMN legal_guardian JSONB; 

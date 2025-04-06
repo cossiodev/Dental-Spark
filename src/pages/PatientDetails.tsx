@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -54,6 +54,7 @@ import {
   Treatment, 
   Invoice
 } from "@/lib/data-service";
+import { Spinner } from "@/components/ui/spinner";
 
 const patientFormSchema = z.object({
   firstName: z.string().min(1, "El nombre es requerido"),
@@ -75,13 +76,16 @@ type PatientFormValues = z.infer<typeof patientFormSchema>;
 
 const PatientDetails = () => {
   const { id } = useParams<{ id: string }>();
+  const [patient, setPatient] = useState<Patient | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState("perfil");
+  const navigate = useNavigate();
   const { toast } = useToast();
 
-  const [patient, setPatient] = useState<Patient | null>(null);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [treatments, setTreatments] = useState<Treatment[]>([]);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
   const form = useForm<PatientFormValues>({
@@ -104,10 +108,51 @@ const PatientDetails = () => {
   });
 
   useEffect(() => {
+    const loadPatient = async () => {
+      if (!id) {
+        setError("ID de paciente no válido");
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        console.log(`[DIAGNÓSTICO] Solicitando datos del paciente con ID: ${id}`);
+        setIsLoading(true);
+        const patientData = await patientService.getById(id);
+        
+        if (!patientData) {
+          console.error('[DIAGNÓSTICO] Paciente no encontrado');
+          setError("No se encontró el paciente solicitado");
+          setPatient(null);
+          toast({
+            title: "Error",
+            description: "No se pudo encontrar el paciente solicitado",
+            variant: "destructive"
+          });
+        } else {
+          console.log(`[DIAGNÓSTICO] Paciente cargado correctamente: ${patientData.firstName} ${patientData.lastName}`);
+          setPatient(patientData);
+          setError(null);
+        }
+      } catch (err) {
+        console.error('[DIAGNÓSTICO] Error al cargar el paciente:', err);
+        setError("Error al cargar los datos del paciente");
+        toast({
+          title: "Error",
+          description: "Ocurrió un error al cargar los datos del paciente",
+          variant: "destructive"
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadPatient();
+  }, [id, toast]);
+
+  useEffect(() => {
     const loadData = async () => {
       try {
-        setIsLoading(true);
-        
         if (!id) {
           toast({
             title: "Error",
@@ -117,33 +162,15 @@ const PatientDetails = () => {
           return;
         }
         
-        const [patientData, appointmentsData, treatmentsData, invoicesData] = await Promise.all([
-          patientService.getById(id),
+        const [appointmentsData, treatmentsData, invoicesData] = await Promise.all([
           appointmentService.getByPatientId(id),
           treatmentService.getByPatientId(id),
           invoiceService.getByPatientId(id),
         ]);
         
-        setPatient(patientData);
         setAppointments(appointmentsData);
         setTreatments(treatmentsData);
         setInvoices(invoicesData);
-        
-        form.reset({
-          firstName: patientData.firstName,
-          lastName: patientData.lastName,
-          email: patientData.email,
-          phone: patientData.phone,
-          dateOfBirth: patientData.dateOfBirth,
-          gender: patientData.gender,
-          address: patientData.address,
-          city: patientData.city,
-          postalCode: patientData.postalCode,
-          insurance: patientData.insurance || "",
-          insuranceNumber: patientData.insuranceNumber || "",
-          medicalHistory: patientData.medicalHistory || "",
-          allergies: patientData.allergies,
-        });
       } catch (error) {
         console.error("Error loading patient details:", error);
         toast({
@@ -151,13 +178,11 @@ const PatientDetails = () => {
           description: "No se pudieron cargar los detalles del paciente",
           variant: "destructive",
         });
-      } finally {
-        setIsLoading(false);
       }
     };
 
     loadData();
-  }, [id, toast, form]);
+  }, [id, toast]);
 
   const handleUpdatePatient = async (data: PatientFormValues) => {
     try {
@@ -202,6 +227,38 @@ const PatientDetails = () => {
       });
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <Spinner size="lg" />
+      </div>
+    );
+  }
+
+  if (error || !patient) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <Card className="p-6">
+          <CardHeader>
+            <CardTitle className="text-xl text-red-600">
+              {error || "No se pudo cargar el paciente"}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-muted-foreground">
+              No se pudo encontrar el paciente con el ID especificado o ha ocurrido un error al cargar sus datos.
+            </p>
+          </CardContent>
+          <CardFooter>
+            <Button onClick={() => navigate("/pacientes")}>
+              Volver a la lista de pacientes
+            </Button>
+          </CardFooter>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -443,202 +500,192 @@ const PatientDetails = () => {
         </Dialog>
       </div>
 
-      {isLoading ? (
-        <Card>
-          <CardContent>Cargando detalles del paciente...</CardContent>
-        </Card>
-      ) : patient ? (
-        <Tabs defaultValue="profile" className="space-y-4">
-          <TabsList>
-            <TabsTrigger value="profile">Perfil</TabsTrigger>
-            <TabsTrigger value="appointments">Citas</TabsTrigger>
-            <TabsTrigger value="treatments">Tratamientos</TabsTrigger>
-            <TabsTrigger value="invoices">Facturas</TabsTrigger>
-          </TabsList>
+      <Tabs defaultValue="profile" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="profile">Perfil</TabsTrigger>
+          <TabsTrigger value="appointments">Citas</TabsTrigger>
+          <TabsTrigger value="treatments">Tratamientos</TabsTrigger>
+          <TabsTrigger value="invoices">Facturas</TabsTrigger>
+        </TabsList>
 
-          <TabsContent value="profile" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Información del Paciente</CardTitle>
-                <CardDescription>
-                  Detalles personales del paciente
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <div className="font-medium">Nombre</div>
-                    <div>{patient.firstName} {patient.lastName}</div>
-                  </div>
-                  <div>
-                    <div className="font-medium">Email</div>
-                    <div>{patient.email}</div>
-                  </div>
-                  <div>
-                    <div className="font-medium">Teléfono</div>
-                    <div>{patient.phone}</div>
-                  </div>
-                  <div>
-                    <div className="font-medium">Fecha de Nacimiento</div>
-                    <div>{format(new Date(patient.dateOfBirth), "dd/MM/yyyy")}</div>
-                  </div>
-                  <div>
-                    <div className="font-medium">Género</div>
-                    <div>{patient.gender}</div>
-                  </div>
-                  <div>
-                    <div className="font-medium">Dirección</div>
-                    <div>{patient.address}, {patient.city}, {patient.postalCode}</div>
-                  </div>
-                  <div>
-                    <div className="font-medium">Doctor asignado</div>
-                    <div>{patient.treatingDoctor ? `Dr. ${patient.treatingDoctor.firstName} ${patient.treatingDoctor.lastName}` : "No asignado"}</div>
-                  </div>
-                  <div>
-                    <div className="font-medium">Seguro</div>
-                    <div>{patient.insurance || "N/A"}</div>
-                  </div>
-                  <div>
-                    <div className="font-medium">Número de Seguro</div>
-                    <div>{patient.insuranceNumber || "N/A"}</div>
-                  </div>
+        <TabsContent value="profile" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Información del Paciente</CardTitle>
+              <CardDescription>
+                Detalles personales del paciente
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <div className="font-medium">Nombre</div>
+                  <div>{patient.firstName} {patient.lastName}</div>
                 </div>
                 <div>
-                  <div className="font-medium">Historial Médico</div>
-                  <div>{patient.medicalHistory || "N/A"}</div>
+                  <div className="font-medium">Email</div>
+                  <div>{patient.email}</div>
                 </div>
                 <div>
-                  <div className="font-medium">Alergias</div>
-                  <div>
-                    {patient.allergies.length > 0 ? (
-                      patient.allergies.join(", ")
-                    ) : (
-                      "N/A"
-                    )}
-                  </div>
+                  <div className="font-medium">Teléfono</div>
+                  <div>{patient.phone}</div>
                 </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
+                <div>
+                  <div className="font-medium">Fecha de Nacimiento</div>
+                  <div>{format(new Date(patient.dateOfBirth), "dd/MM/yyyy")}</div>
+                </div>
+                <div>
+                  <div className="font-medium">Género</div>
+                  <div>{patient.gender}</div>
+                </div>
+                <div>
+                  <div className="font-medium">Dirección</div>
+                  <div>{patient.address}, {patient.city}, {patient.postalCode}</div>
+                </div>
+                <div>
+                  <div className="font-medium">Doctor asignado</div>
+                  <div>{patient.treatingDoctor ? `Dr. ${patient.treatingDoctor.firstName} ${patient.treatingDoctor.lastName}` : "No asignado"}</div>
+                </div>
+                <div>
+                  <div className="font-medium">Seguro</div>
+                  <div>{patient.insurance || "N/A"}</div>
+                </div>
+                <div>
+                  <div className="font-medium">Número de Seguro</div>
+                  <div>{patient.insuranceNumber || "N/A"}</div>
+                </div>
+              </div>
+              <div>
+                <div className="font-medium">Historial Médico</div>
+                <div>{patient.medicalHistory || "N/A"}</div>
+              </div>
+              <div>
+                <div className="font-medium">Alergias</div>
+                <div>
+                  {patient.allergies.length > 0 ? (
+                    patient.allergies.join(", ")
+                  ) : (
+                    "N/A"
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-          <TabsContent value="appointments" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Citas</CardTitle>
-                <CardDescription>
-                  Citas programadas para este paciente
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {appointments.length === 0 ? (
-                  <div>No hay citas programadas para este paciente.</div>
-                ) : (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Fecha</TableHead>
-                        <TableHead>Hora</TableHead>
-                        <TableHead>Doctor</TableHead>
-                        <TableHead>Estado</TableHead>
+        <TabsContent value="appointments" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Citas</CardTitle>
+              <CardDescription>
+                Citas programadas para este paciente
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {appointments.length === 0 ? (
+                <div>No hay citas programadas para este paciente.</div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Fecha</TableHead>
+                      <TableHead>Hora</TableHead>
+                      <TableHead>Doctor</TableHead>
+                      <TableHead>Estado</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {appointments.map(appointment => (
+                      <TableRow key={appointment.id}>
+                        <TableCell>{format(new Date(appointment.date), "dd/MM/yyyy")}</TableCell>
+                        <TableCell>{appointment.startTime} - {appointment.endTime}</TableCell>
+                        <TableCell>{appointment.doctorName}</TableCell>
+                        <TableCell>
+                          <Badge variant="secondary">{appointment.status}</Badge>
+                        </TableCell>
                       </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {appointments.map(appointment => (
-                        <TableRow key={appointment.id}>
-                          <TableCell>{format(new Date(appointment.date), "dd/MM/yyyy")}</TableCell>
-                          <TableCell>{appointment.startTime} - {appointment.endTime}</TableCell>
-                          <TableCell>{appointment.doctorName}</TableCell>
-                          <TableCell>
-                            <Badge variant="secondary">{appointment.status}</Badge>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-          <TabsContent value="treatments" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Tratamientos</CardTitle>
-                <CardDescription>
-                  Tratamientos realizados a este paciente
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {treatments.length === 0 ? (
-                  <div>No hay tratamientos registrados para este paciente.</div>
-                ) : (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Fecha</TableHead>
-                        <TableHead>Tipo</TableHead>
-                        <TableHead>Descripción</TableHead>
-                        <TableHead>Costo</TableHead>
+        <TabsContent value="treatments" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Tratamientos</CardTitle>
+              <CardDescription>
+                Tratamientos realizados a este paciente
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {treatments.length === 0 ? (
+                <div>No hay tratamientos registrados para este paciente.</div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Fecha</TableHead>
+                      <TableHead>Tipo</TableHead>
+                      <TableHead>Descripción</TableHead>
+                      <TableHead>Costo</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {treatments.map(treatment => (
+                      <TableRow key={treatment.id}>
+                        <TableCell>{format(new Date(treatment.startDate), "dd/MM/yyyy")}</TableCell>
+                        <TableCell>{treatment.type}</TableCell>
+                        <TableCell>{treatment.description}</TableCell>
+                        <TableCell>${treatment.cost.toFixed(2)}</TableCell>
                       </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {treatments.map(treatment => (
-                        <TableRow key={treatment.id}>
-                          <TableCell>{format(new Date(treatment.startDate), "dd/MM/yyyy")}</TableCell>
-                          <TableCell>{treatment.type}</TableCell>
-                          <TableCell>{treatment.description}</TableCell>
-                          <TableCell>${treatment.cost.toFixed(2)}</TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-          <TabsContent value="invoices" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Facturas</CardTitle>
-                <CardDescription>
-                  Facturas generadas para este paciente
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {invoices.length === 0 ? (
-                  <div>No hay facturas generadas para este paciente.</div>
-                ) : (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Fecha</TableHead>
-                        <TableHead>Total</TableHead>
-                        <TableHead>Estado</TableHead>
+        <TabsContent value="invoices" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Facturas</CardTitle>
+              <CardDescription>
+                Facturas generadas para este paciente
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {invoices.length === 0 ? (
+                <div>No hay facturas generadas para este paciente.</div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Fecha</TableHead>
+                      <TableHead>Total</TableHead>
+                      <TableHead>Estado</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {invoices.map(invoice => (
+                      <TableRow key={invoice.id}>
+                        <TableCell>{format(new Date(invoice.date), "dd/MM/yyyy")}</TableCell>
+                        <TableCell>${invoice.total.toFixed(2)}</TableCell>
+                        <TableCell>
+                          <Badge variant="secondary">{invoice.status}</Badge>
+                        </TableCell>
                       </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {invoices.map(invoice => (
-                        <TableRow key={invoice.id}>
-                          <TableCell>{format(new Date(invoice.date), "dd/MM/yyyy")}</TableCell>
-                          <TableCell>${invoice.total.toFixed(2)}</TableCell>
-                          <TableCell>
-                            <Badge variant="secondary">{invoice.status}</Badge>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
-      ) : (
-        <Card>
-          <CardContent>Paciente no encontrado.</CardContent>
-        </Card>
-      )}
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
