@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
@@ -46,6 +45,9 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { appointmentService, patientService } from "@/lib/data-service";
 import type { Appointment, Patient } from "@/lib/models/types";
+
+// Importar el nuevo componente TimePickerInput
+import { TimePickerInput } from "@/components/appointments/TimePickerInput";
 
 // Helper function to format date
 const formatDate = (dateString: string) => {
@@ -300,33 +302,19 @@ const Appointments = () => {
                     <Label htmlFor="startTime" className="font-medium">
                       Hora de Inicio *
                     </Label>
-                    <div className="flex items-center border rounded-md focus-within:ring-1 focus-within:ring-ring">
-                      <Clock className="ml-2 h-4 w-4 text-muted-foreground" />
-                      <Input 
-                        id="startTime" 
-                        type="time" 
-                        className="border-0 focus-visible:ring-0" 
-                        value={formData.startTime}
-                        onChange={(e) => handleChange("startTime", e.target.value)}
-                        required
-                      />
-                    </div>
+                    <TimePickerInput
+                      value={formData.startTime}
+                      onChange={(value) => handleChange("startTime", value)}
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="endTime" className="font-medium">
                       Hora de Fin *
                     </Label>
-                    <div className="flex items-center border rounded-md focus-within:ring-1 focus-within:ring-ring">
-                      <Clock className="ml-2 h-4 w-4 text-muted-foreground" />
-                      <Input 
-                        id="endTime" 
-                        type="time" 
-                        className="border-0 focus-visible:ring-0" 
-                        value={formData.endTime}
-                        onChange={(e) => handleChange("endTime", e.target.value)}
-                        required
-                      />
-                    </div>
+                    <TimePickerInput
+                      value={formData.endTime}
+                      onChange={(value) => handleChange("endTime", value)}
+                    />
                   </div>
                 </div>
                 <div className="space-y-2">
