@@ -39,7 +39,7 @@ import {
 } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Check, Edit, FileText, Plus } from "lucide-react";
+import { Check, Edit, FileText, Plus, X } from "lucide-react";
 import { format } from "date-fns";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -106,6 +106,27 @@ const PatientDetails = () => {
       allergies: [],
     },
   });
+
+  useEffect(() => {
+    if (patient) {
+      console.log("[DIAGNÓSTICO] Actualizando formulario con datos del paciente:", patient);
+      form.reset({
+        firstName: patient.firstName || '',
+        lastName: patient.lastName || '',
+        email: patient.email || '',
+        phone: patient.phone || '',
+        dateOfBirth: patient.dateOfBirth || '',
+        gender: patient.gender || '',
+        address: patient.address || '',
+        city: patient.city || '',
+        postalCode: patient.postalCode || '',
+        insurance: patient.insurance || '',
+        insuranceNumber: patient.insuranceNumber || '',
+        medicalHistory: patient.medicalHistory || '',
+        allergies: patient.allergies || [],
+      });
+    }
+  }, [patient, form]);
 
   useEffect(() => {
     const loadPatient = async () => {
@@ -185,44 +206,58 @@ const PatientDetails = () => {
   }, [id, toast]);
 
   const handleUpdatePatient = async (data: PatientFormValues) => {
+    if (!patient) return;
+
     try {
-      if (!id) {
-        toast({
-          title: "Error",
-          description: "ID de paciente inválido",
-          variant: "destructive",
-        });
-        return;
-      }
-      
-      const updatedPatient = await patientService.update(id, {
+      console.log("[DIAGNÓSTICO] Actualizando paciente con ID:", patient.id);
+      console.log("[DIAGNÓSTICO] Datos a actualizar:", data);
+
+      // Mostrar toast de carga
+      toast({
+        title: "Actualizando paciente",
+        description: "Guardando información del paciente...",
+      });
+
+      // Preparar los datos para actualización
+      const updatedPatient: Partial<Patient> = {
         firstName: data.firstName,
         lastName: data.lastName,
-        email: data.email,
-        phone: data.phone,
-        dateOfBirth: data.dateOfBirth,
-        gender: data.gender,
-        address: data.address,
-        city: data.city,
-        postalCode: data.postalCode,
-        insurance: data.insurance || "",
-        insuranceNumber: data.insuranceNumber || "",
-        medicalHistory: data.medicalHistory || "",
-        allergies: data.allergies,
+        email: data.email || undefined,
+        phone: data.phone || undefined,
+        dateOfBirth: data.dateOfBirth || undefined,
+        gender: data.gender || undefined,
+        address: data.address || undefined,
+        city: data.city || undefined,
+        postalCode: data.postalCode || undefined,
+        insurance: data.insurance || undefined,
+        insuranceNumber: data.insuranceNumber || undefined,
+        medicalHistory: data.medicalHistory || undefined,
+        allergies: data.allergies || [],
+      };
+
+      // Actualizar el paciente
+      const updatedData = await patientService.update(patient.id, updatedPatient);
+      console.log("[DIAGNÓSTICO] Paciente actualizado:", updatedData);
+
+      // Actualizar el estado local con los datos actualizados
+      setPatient({
+        ...patient,
+        ...updatedData,
       });
-      
-      setPatient(updatedPatient);
+
+      // Cerrar el diálogo
       setIsEditDialogOpen(false);
-      
+
+      // Mostrar mensaje de éxito
       toast({
         title: "Paciente actualizado",
-        description: "Los detalles del paciente han sido actualizados exitosamente",
+        description: "La información del paciente ha sido actualizada correctamente",
       });
     } catch (error) {
-      console.error("Error updating patient:", error);
+      console.error("[DIAGNÓSTICO] Error al actualizar paciente:", error);
       toast({
         title: "Error",
-        description: "No se pudieron actualizar los detalles del paciente",
+        description: "No se pudo actualizar la información del paciente. Intente nuevamente.",
         variant: "destructive",
       });
     }
@@ -273,18 +308,16 @@ const PatientDetails = () => {
               Editar Paciente
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-[600px]">
+          <DialogContent className="max-w-3xl">
             <DialogHeader>
               <DialogTitle>Editar Detalles del Paciente</DialogTitle>
               <DialogDescription>
                 Actualice la información del paciente
               </DialogDescription>
             </DialogHeader>
+            
             <Form {...form}>
-              <form
-                onSubmit={form.handleSubmit(handleUpdatePatient)}
-                className="space-y-4"
-              >
+              <form onSubmit={form.handleSubmit(handleUpdatePatient)} className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
@@ -299,7 +332,7 @@ const PatientDetails = () => {
                       </FormItem>
                     )}
                   />
-
+                  
                   <FormField
                     control={form.control}
                     name="lastName"
@@ -313,9 +346,7 @@ const PatientDetails = () => {
                       </FormItem>
                     )}
                   />
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  
                   <FormField
                     control={form.control}
                     name="email"
@@ -323,16 +354,18 @@ const PatientDetails = () => {
                       <FormItem>
                         <FormLabel>Email</FormLabel>
                         <FormControl>
-                          <Input
-                            placeholder="correo@ejemplo.com"
-                            {...field}
+                          <Input 
+                            type="email" 
+                            placeholder="correo@ejemplo.com" 
+                            {...field} 
+                            value={field.value || ""}
                           />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
-
+                  
                   <FormField
                     control={form.control}
                     name="phone"
@@ -340,15 +373,13 @@ const PatientDetails = () => {
                       <FormItem>
                         <FormLabel>Teléfono</FormLabel>
                         <FormControl>
-                          <Input placeholder="Teléfono" {...field} />
+                          <Input placeholder="123-456-7890" {...field} value={field.value || ""} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  
                   <FormField
                     control={form.control}
                     name="dateOfBirth"
@@ -356,13 +387,17 @@ const PatientDetails = () => {
                       <FormItem>
                         <FormLabel>Fecha de Nacimiento</FormLabel>
                         <FormControl>
-                          <Input type="date" {...field} />
+                          <Input 
+                            type="date" 
+                            {...field} 
+                            value={field.value || ""}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
-
+                  
                   <FormField
                     control={form.control}
                     name="gender"
@@ -372,6 +407,7 @@ const PatientDetails = () => {
                         <Select
                           onValueChange={field.onChange}
                           defaultValue={field.value}
+                          value={field.value || ""}
                         >
                           <FormControl>
                             <SelectTrigger>
@@ -379,18 +415,17 @@ const PatientDetails = () => {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="male">Masculino</SelectItem>
-                            <SelectItem value="female">Femenino</SelectItem>
-                            <SelectItem value="other">Otro</SelectItem>
+                            <SelectItem value="Masculino">Masculino</SelectItem>
+                            <SelectItem value="Femenino">Femenino</SelectItem>
+                            <SelectItem value="Otro">Otro</SelectItem>
+                            <SelectItem value="Prefiero no decir">Prefiero no decir</SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  
                   <FormField
                     control={form.control}
                     name="address"
@@ -398,13 +433,13 @@ const PatientDetails = () => {
                       <FormItem>
                         <FormLabel>Dirección</FormLabel>
                         <FormControl>
-                          <Input placeholder="Dirección" {...field} />
+                          <Input placeholder="Calle Principal 123" {...field} value={field.value || ""} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
-
+                  
                   <FormField
                     control={form.control}
                     name="city"
@@ -412,15 +447,13 @@ const PatientDetails = () => {
                       <FormItem>
                         <FormLabel>Ciudad</FormLabel>
                         <FormControl>
-                          <Input placeholder="Ciudad" {...field} />
+                          <Input placeholder="Ciudad" {...field} value={field.value || ""} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  
                   <FormField
                     control={form.control}
                     name="postalCode"
@@ -428,29 +461,27 @@ const PatientDetails = () => {
                       <FormItem>
                         <FormLabel>Código Postal</FormLabel>
                         <FormControl>
-                          <Input placeholder="Código Postal" {...field} />
+                          <Input placeholder="12345" {...field} value={field.value || ""} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
-
+                  
                   <FormField
                     control={form.control}
                     name="insurance"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Seguro</FormLabel>
+                        <FormLabel>Seguro Médico</FormLabel>
                         <FormControl>
-                          <Input placeholder="Seguro" {...field} />
+                          <Input placeholder="Nombre del seguro" {...field} value={field.value || ""} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  
                   <FormField
                     control={form.control}
                     name="insuranceNumber"
@@ -458,14 +489,14 @@ const PatientDetails = () => {
                       <FormItem>
                         <FormLabel>Número de Seguro</FormLabel>
                         <FormControl>
-                          <Input placeholder="Número de Seguro" {...field} />
+                          <Input placeholder="Número de póliza" {...field} value={field.value || ""} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
                 </div>
-
+                
                 <FormField
                   control={form.control}
                   name="medicalHistory"
@@ -474,24 +505,60 @@ const PatientDetails = () => {
                       <FormLabel>Historial Médico</FormLabel>
                       <FormControl>
                         <Textarea
-                          placeholder="Historial Médico"
-                          rows={3}
+                          placeholder="Historial médico relevante"
+                          className="h-24"
                           {...field}
+                          value={field.value || ""}
                         />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-
+                
+                <FormField
+                  control={form.control}
+                  name="allergies"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Alergias</FormLabel>
+                      <div className="flex gap-2">
+                        <FormControl>
+                          <div className="border rounded-md p-3 flex flex-wrap gap-2 bg-background">
+                            {field.value && field.value.map((allergy, i) => (
+                              <Badge key={i} variant="secondary" className="flex items-center gap-1">
+                                {allergy}
+                                <X 
+                                  className="h-3 w-3 cursor-pointer" 
+                                  onClick={() => {
+                                    const newAllergies = [...field.value];
+                                    newAllergies.splice(i, 1);
+                                    field.onChange(newAllergies);
+                                  }}
+                                />
+                              </Badge>
+                            ))}
+                            <Input
+                              className="border-0 flex-1 min-w-[150px] p-0 text-sm focus-visible:ring-0"
+                              placeholder="Añadir alergia y presionar Enter"
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter' && e.currentTarget.value.trim()) {
+                                  e.preventDefault();
+                                  const newAllergies = [...(field.value || []), e.currentTarget.value.trim()];
+                                  field.onChange(newAllergies);
+                                  e.currentTarget.value = '';
+                                }
+                              }}
+                            />
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </div>
+                    </FormItem>
+                  )}
+                />
+                
                 <DialogFooter>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setIsEditDialogOpen(false)}
-                  >
-                    Cancelar
-                  </Button>
                   <Button type="submit">Guardar Cambios</Button>
                 </DialogFooter>
               </form>

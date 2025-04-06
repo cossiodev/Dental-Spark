@@ -359,119 +359,80 @@ export const patientService = {
     }, 'patientService.create');
   },
 
-  update: async (id: string, patient: Partial<Omit<Patient, 'id'>>): Promise<Patient> => {
-    try {
-      console.log(`Intentando actualizar paciente con ID ${id}...`);
-      
-      const updateData: any = {};
-      
-      if (patient.firstName !== undefined) updateData.first_name = patient.firstName;
-      if (patient.lastName !== undefined) updateData.last_name = patient.lastName;
-      if (patient.email !== undefined) updateData.email = patient.email;
-      if (patient.phone !== undefined) updateData.phone = patient.phone;
-      if (patient.dateOfBirth !== undefined) updateData.date_of_birth = patient.dateOfBirth;
-      if (patient.gender !== undefined) updateData.gender = patient.gender;
-      if (patient.address !== undefined) updateData.address = patient.address;
-      if (patient.city !== undefined) updateData.city = patient.city;
-      if (patient.postalCode !== undefined) updateData.postal_code = patient.postalCode;
-      if (patient.insurance !== undefined) updateData.insurance = patient.insurance;
-      if (patient.insuranceNumber !== undefined) updateData.insurance_number = patient.insuranceNumber;
-      if (patient.medicalHistory !== undefined) updateData.medical_history = patient.medicalHistory;
-      if (patient.allergies !== undefined) updateData.allergies = patient.allergies;
-      if (patient.lastVisit !== undefined) updateData.last_visit = patient.lastVisit;
-      if (patient.isPediatric !== undefined) updateData.is_child = patient.isPediatric;
-      if (patient.legalGuardian !== undefined) updateData.legal_guardian = patient.legalGuardian;
-      if (patient.treatingDoctor !== undefined) updateData.treating_doctor_id = patient.treatingDoctor.id;
-
-      const { data, error } = await supabase
-        .from('patients')
-        .update(updateData)
-        .eq('id', id)
-        .select('*, treating_doctor:doctors(id, first_name, last_name, specialization)')
-        .single();
-
-      if (error) {
-        console.error(`Error al actualizar paciente con ID ${id}:`, error);
-        console.log('Devolviendo datos de ejemplo para el paciente actualizado');
+  update: async (id: string, patient: Partial<Patient>): Promise<Patient> => {
+    return measureTime(async () => {
+      try {
+        console.log(`[DIAGNÓSTICO] Actualizando paciente con ID: ${id}`);
+        console.log(`[DIAGNÓSTICO] Datos para actualización:`, patient);
         
-        // Encontrar el paciente de ejemplo con el ID correspondiente o usar el primero
-        const basePatient = SAMPLE_PATIENTS.find(p => p.id === id) || SAMPLE_PATIENTS[0];
+        // Preparar los datos para actualización
+        const updateData: Record<string, any> = {};
         
-        // Crear un paciente actualizado combinando los datos originales con las actualizaciones
+        // Mapear campos del modelo a columnas de la base de datos
+        if (patient.firstName !== undefined) updateData.first_name = patient.firstName;
+        if (patient.lastName !== undefined) updateData.last_name = patient.lastName;
+        if (patient.email !== undefined) updateData.email = patient.email;
+        if (patient.phone !== undefined) updateData.phone = patient.phone;
+        if (patient.dateOfBirth !== undefined) updateData.date_of_birth = patient.dateOfBirth;
+        if (patient.gender !== undefined) updateData.gender = patient.gender;
+        if (patient.address !== undefined) updateData.address = patient.address;
+        if (patient.city !== undefined) updateData.city = patient.city;
+        if (patient.postalCode !== undefined) updateData.postal_code = patient.postalCode;
+        if (patient.insurance !== undefined) updateData.insurance = patient.insurance;
+        if (patient.insuranceNumber !== undefined) updateData.insurance_number = patient.insuranceNumber;
+        if (patient.medicalHistory !== undefined) updateData.medical_history = patient.medicalHistory;
+        if (patient.allergies !== undefined) updateData.allergies = patient.allergies;
+        if (patient.isPediatric !== undefined) updateData.is_child = patient.isPediatric;
+        
+        console.log(`[DIAGNÓSTICO] Datos preparados para Supabase:`, updateData);
+        
+        // Ejecutar la actualización
+        const { data, error } = await supabase
+          .from('patients')
+          .update(updateData)
+          .eq('id', id)
+          .select();
+        
+        if (error) {
+          console.error(`[DIAGNÓSTICO] Error al actualizar paciente:`, error);
+          throw error;
+        }
+        
+        if (!data || data.length === 0) {
+          console.error(`[DIAGNÓSTICO] No se recibieron datos al actualizar el paciente`);
+          throw new Error('No se recibieron datos al actualizar el paciente');
+        }
+        
+        console.log(`[DIAGNÓSTICO] Paciente actualizado exitosamente:`, data[0]);
+        
+        // Convertir el resultado a nuestro modelo
+        const patientRecord = data[0] as unknown as PatientRecord;
         return {
-          ...basePatient,
-          ...(patient.firstName !== undefined ? { firstName: patient.firstName } : {}),
-          ...(patient.lastName !== undefined ? { lastName: patient.lastName } : {}),
-          ...(patient.email !== undefined ? { email: patient.email } : {}),
-          ...(patient.phone !== undefined ? { phone: patient.phone } : {}),
-          ...(patient.dateOfBirth !== undefined ? { dateOfBirth: patient.dateOfBirth } : {}),
-          ...(patient.gender !== undefined ? { gender: patient.gender } : {}),
-          ...(patient.address !== undefined ? { address: patient.address } : {}),
-          ...(patient.city !== undefined ? { city: patient.city } : {}),
-          ...(patient.postalCode !== undefined ? { postalCode: patient.postalCode } : {}),
-          ...(patient.insurance !== undefined ? { insurance: patient.insurance } : {}),
-          ...(patient.insuranceNumber !== undefined ? { insuranceNumber: patient.insuranceNumber } : {}),
-          ...(patient.medicalHistory !== undefined ? { medicalHistory: patient.medicalHistory } : {}),
-          ...(patient.allergies !== undefined ? { allergies: patient.allergies } : {}),
-          ...(patient.lastVisit !== undefined ? { lastVisit: patient.lastVisit } : {}),
-          ...(patient.isPediatric !== undefined ? { isPediatric: patient.isPediatric } : {}),
-          ...(patient.legalGuardian !== undefined ? { legalGuardian: patient.legalGuardian } : {}),
-          ...(patient.treatingDoctor !== undefined ? { treatingDoctor: patient.treatingDoctor } : {})
+          id: patientRecord.id,
+          firstName: patientRecord.first_name,
+          lastName: patientRecord.last_name,
+          email: patientRecord.email || '',
+          phone: patientRecord.phone || '',
+          dateOfBirth: patientRecord.date_of_birth || '',
+          gender: patientRecord.gender || '',
+          address: patientRecord.address || '',
+          city: patientRecord.city || '',
+          postalCode: patientRecord.postal_code || '',
+          insurance: patientRecord.insurance,
+          insuranceNumber: patientRecord.insurance_number,
+          medicalHistory: patientRecord.medical_history,
+          allergies: patientRecord.allergies || [],
+          lastVisit: patientRecord.last_visit,
+          isPediatric: patientRecord.is_child || false,
+          legalGuardian: undefined,
+          treatingDoctor: undefined, // No incluimos el doctor ya que no lo actualizamos aquí
+          createdAt: patientRecord.created_at
         };
+      } catch (error) {
+        console.error(`[DIAGNÓSTICO] Error en patientService.update:`, error);
+        throw error;
       }
-
-      const patientRecord = data as unknown as PatientRecord;
-      
-      const treatingDoctor = patientRecord.treating_doctor ? 
-        (Array.isArray(patientRecord.treating_doctor) && patientRecord.treating_doctor.length > 0 
-          ? patientRecord.treating_doctor[0] 
-          : patientRecord.treating_doctor)
-        : null;
-      
-      console.log(`Paciente con ID ${id} actualizado exitosamente`);
-      
-      return {
-        id: patientRecord.id,
-        firstName: patientRecord.first_name,
-        lastName: patientRecord.last_name,
-        email: patientRecord.email || '',
-        phone: patientRecord.phone || '',
-        dateOfBirth: patientRecord.date_of_birth || '',
-        gender: patientRecord.gender || '',
-        address: patientRecord.address || '',
-        city: patientRecord.city || '',
-        postalCode: patientRecord.postal_code || '',
-        insurance: patientRecord.insurance,
-        insuranceNumber: patientRecord.insurance_number,
-        medicalHistory: patientRecord.medical_history,
-        allergies: patientRecord.allergies || [],
-        lastVisit: patientRecord.last_visit,
-        isPediatric: patientRecord.is_child || false,
-        legalGuardian: patientRecord.legal_guardian ? JSON.parse(JSON.stringify(patientRecord.legal_guardian)) : undefined,
-        treatingDoctor: treatingDoctor ? {
-          id: treatingDoctor.id,
-          firstName: treatingDoctor.first_name,
-          lastName: treatingDoctor.last_name,
-          specialization: treatingDoctor.specialization
-        } : undefined,
-        createdAt: patientRecord.created_at
-      };
-    } catch (error) {
-      console.error(`Error al actualizar paciente:`, error);
-      console.log('Devolviendo datos de ejemplo para el paciente actualizado');
-      
-      // Encontrar el paciente de ejemplo con el ID correspondiente o usar el primero
-      const basePatient = SAMPLE_PATIENTS.find(p => p.id === id) || SAMPLE_PATIENTS[0];
-      
-      // Crear un paciente actualizado combinando los datos originales con las actualizaciones
-      return {
-        ...basePatient,
-        ...(patient.firstName !== undefined ? { firstName: patient.firstName } : {}),
-        ...(patient.lastName !== undefined ? { lastName: patient.lastName } : {}),
-        ...(patient.email !== undefined ? { email: patient.email } : {})
-        // Añadimos solo los campos más importantes para simplificar
-      };
-    }
+    }, 'patientService.update');
   },
 
   delete: async (id: string): Promise<void> => {
