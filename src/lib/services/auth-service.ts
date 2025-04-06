@@ -26,6 +26,7 @@ export const AUTH_EVENTS = {
   PASSWORD_RESET_REQUEST: 'auth:password_reset_request',
   PASSWORD_RESET_SUCCESS: 'auth:password_reset_success',
   PASSWORD_RESET_FAILURE: 'auth:password_reset_failure',
+  PASSWORD_UPDATE_REQUEST: 'auth:password_update_request',
   PASSWORD_UPDATE_SUCCESS: 'auth:password_update_success',
   PASSWORD_UPDATE_FAILURE: 'auth:password_update_failure'
 };
