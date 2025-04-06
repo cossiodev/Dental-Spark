@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -110,23 +110,25 @@ const PatientDetails = () => {
   useEffect(() => {
     if (patient) {
       console.log("[DIAGNÓSTICO] Actualizando formulario con datos del paciente:", patient);
-      form.reset({
-        firstName: patient.firstName || '',
-        lastName: patient.lastName || '',
-        email: patient.email || '',
-        phone: patient.phone || '',
-        dateOfBirth: patient.dateOfBirth || '',
-        gender: patient.gender || '',
-        address: patient.address || '',
-        city: patient.city || '',
-        postalCode: patient.postalCode || '',
-        insurance: patient.insurance || '',
-        insuranceNumber: patient.insuranceNumber || '',
-        medicalHistory: patient.medicalHistory || '',
-        allergies: patient.allergies || [],
-      });
+      setTimeout(() => {
+        form.reset({
+          firstName: patient.firstName || '',
+          lastName: patient.lastName || '',
+          email: patient.email || '',
+          phone: patient.phone || '',
+          dateOfBirth: patient.dateOfBirth || '',
+          gender: patient.gender || '',
+          address: patient.address || '',
+          city: patient.city || '',
+          postalCode: patient.postalCode || '',
+          insurance: patient.insurance || '',
+          insuranceNumber: patient.insuranceNumber || '',
+          medicalHistory: patient.medicalHistory || '',
+          allergies: patient.allergies || [],
+        });
+      }, 50); // Pequeño retraso para garantizar que el diálogo esté completamente abierto
     }
-  }, [patient, form]);
+  }, [patient, form, isEditDialogOpen]); // Añadir isEditDialogOpen como dependencia
 
   useEffect(() => {
     const loadPatient = async () => {
@@ -211,6 +213,7 @@ const PatientDetails = () => {
     try {
       console.log("[DIAGNÓSTICO] Actualizando paciente con ID:", patient.id);
       console.log("[DIAGNÓSTICO] Datos a actualizar:", data);
+      console.log("[DIAGNÓSTICO] Valores del formulario:", form.getValues());
 
       // Mostrar toast de carga
       toast({
@@ -257,11 +260,72 @@ const PatientDetails = () => {
       console.error("[DIAGNÓSTICO] Error al actualizar paciente:", error);
       toast({
         title: "Error",
-        description: "No se pudo actualizar la información del paciente. Intente nuevamente.",
+        description: typeof error === 'string' 
+          ? error 
+          : "No se pudo actualizar la información del paciente. Intente nuevamente.",
         variant: "destructive",
       });
     }
   };
+
+  const handleEditClick = () => {
+    // Asegurarse de que los datos del paciente estén cargados en el formulario antes de abrir el diálogo
+    if (patient) {
+      form.reset({
+        firstName: patient.firstName || '',
+        lastName: patient.lastName || '',
+        email: patient.email || '',
+        phone: patient.phone || '',
+        dateOfBirth: patient.dateOfBirth || '',
+        gender: patient.gender || '',
+        address: patient.address || '',
+        city: patient.city || '',
+        postalCode: patient.postalCode || '',
+        insurance: patient.insurance || '',
+        insuranceNumber: patient.insuranceNumber || '',
+        medicalHistory: patient.medicalHistory || '',
+        allergies: patient.allergies || [],
+      });
+      setIsEditDialogOpen(true);
+    }
+  };
+
+  // Agregar un manejador para cuando cambia el estado del diálogo
+  const handleDialogChange = (open: boolean) => {
+    setIsEditDialogOpen(open);
+    
+    // Si el diálogo se está cerrando, no hacemos nada adicional
+    if (!open) return;
+    
+    // Si el diálogo se está abriendo, aseguramos que los datos del formulario estén actualizados
+    if (patient) {
+      console.log("[DIAGNÓSTICO] Diálogo abierto, reiniciando formulario con datos del paciente");
+      form.reset({
+        firstName: patient.firstName || '',
+        lastName: patient.lastName || '',
+        email: patient.email || '',
+        phone: patient.phone || '',
+        dateOfBirth: patient.dateOfBirth || '',
+        gender: patient.gender || '',
+        address: patient.address || '',
+        city: patient.city || '',
+        postalCode: patient.postalCode || '',
+        insurance: patient.insurance || '',
+        insuranceNumber: patient.insuranceNumber || '',
+        medicalHistory: patient.medicalHistory || '',
+        allergies: patient.allergies || [],
+      });
+    }
+  };
+
+  // Monitorear cambios en el formulario para fines de depuración
+  useEffect(() => {
+    const subscription = form.watch((value) => {
+      console.log("[DIAGNÓSTICO] Formulario actualizado:", value);
+    });
+    
+    return () => subscription.unsubscribe();
+  }, [form]);
 
   if (isLoading) {
     return (
@@ -301,13 +365,11 @@ const PatientDetails = () => {
         <h1 className="text-3xl font-bold tracking-tight">
           Detalles del Paciente
         </h1>
-        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <Edit className="mr-2 h-4 w-4" />
-              Editar Paciente
-            </Button>
-          </DialogTrigger>
+        <Button onClick={handleEditClick}>
+          <Edit className="mr-2 h-4 w-4" />
+          Editar Paciente
+        </Button>
+        <Dialog open={isEditDialogOpen} onOpenChange={handleDialogChange}>
           <DialogContent className="max-w-3xl">
             <DialogHeader>
               <DialogTitle>Editar Detalles del Paciente</DialogTitle>
@@ -391,6 +453,10 @@ const PatientDetails = () => {
                             type="date" 
                             {...field} 
                             value={field.value || ""}
+                            onChange={(e) => {
+                              console.log("[DIAGNÓSTICO] Campo fecha cambiado:", e.target.value);
+                              field.onChange(e);
+                            }}
                           />
                         </FormControl>
                         <FormMessage />
@@ -401,29 +467,34 @@ const PatientDetails = () => {
                   <FormField
                     control={form.control}
                     name="gender"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Género</FormLabel>
-                        <Select
-                          onValueChange={field.onChange}
-                          defaultValue={field.value}
-                          value={field.value || ""}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Seleccione un género" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="Masculino">Masculino</SelectItem>
-                            <SelectItem value="Femenino">Femenino</SelectItem>
-                            <SelectItem value="Otro">Otro</SelectItem>
-                            <SelectItem value="Prefiero no decir">Prefiero no decir</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
+                    render={({ field }) => {
+                      console.log("[DIAGNÓSTICO] Campo género:", field.value);
+                      return (
+                        <FormItem>
+                          <FormLabel>Género</FormLabel>
+                          <Select
+                            onValueChange={(value) => {
+                              console.log("[DIAGNÓSTICO] Género seleccionado:", value);
+                              field.onChange(value);
+                            }}
+                            value={field.value || ""}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Seleccione un género" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="Masculino">Masculino</SelectItem>
+                              <SelectItem value="Femenino">Femenino</SelectItem>
+                              <SelectItem value="Otro">Otro</SelectItem>
+                              <SelectItem value="Prefiero no decir">Prefiero no decir</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      );
+                    }}
                   />
                   
                   <FormField
