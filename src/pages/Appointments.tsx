@@ -910,12 +910,13 @@ const Appointments = () => {
                 <table className="min-w-full border-collapse" style={{ tableLayout: 'fixed' }}>
                   <thead>
                     <tr className="bg-gray-100 text-sm font-bold">
-                      <th className="p-2 border-b w-1/6 text-left">Paciente</th>
-                      <th className="p-2 border-b w-1/6 text-left">Doctor</th>
-                      <th className="p-2 border-b w-1/6 text-left">Fecha</th>
-                      <th className="p-2 border-b w-1/6 text-left">Hora</th>
-                      <th className="p-2 border-b w-1/6 text-left">Tipo</th>
-                      <th className="p-2 border-b w-1/6 text-left">Estado / Acciones</th>
+                      <th className="p-2 border-b w-1/7 text-left">Paciente</th>
+                      <th className="p-2 border-b w-1/7 text-left">Doctor</th>
+                      <th className="p-2 border-b w-1/7 text-left">Fecha</th>
+                      <th className="p-2 border-b w-1/7 text-left">Hora</th>
+                      <th className="p-2 border-b w-1/7 text-left">Tipo</th>
+                      <th className="p-2 border-b w-1/7 text-left">Estado</th>
+                      <th className="p-2 border-b w-1/7 text-left">Acciones</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -936,32 +937,32 @@ const Appointments = () => {
                           : "-"}
                         </td>
                         <td className="p-2">
-                          <div className="flex items-center justify-between">
-                            <span
-                              className={`px-2 py-1 rounded text-xs ${getStatusColor(
-                                appointment.status
-                              )}`}
+                          <span
+                            className={`px-2 py-1 rounded text-xs ${getStatusColor(
+                              appointment.status
+                            )}`}
+                          >
+                            {getStatusText(appointment.status)}
+                          </span>
+                        </td>
+                        <td className="p-2">
+                          <div className="flex space-x-2">
+                            <button
+                              onClick={() => handleEditAppointment(appointment)}
+                              className="flex items-center space-x-1 bg-blue-50 hover:bg-blue-100 text-blue-700 px-2 py-1 rounded"
+                              title="Editar cita"
                             >
-                              {getStatusText(appointment.status)}
-                            </span>
-                            <div className="flex space-x-2">
-                              <button
-                                onClick={() => handleEditAppointment(appointment)}
-                                className="flex items-center space-x-1 bg-blue-50 hover:bg-blue-100 text-blue-700 px-2 py-1 rounded"
-                                title="Editar cita"
-                              >
-                                <Edit className="h-4 w-4" />
-                                <span className="text-xs">Editar</span>
-                              </button>
-                              <button
-                                onClick={() => handleDeleteAppointment(appointment.id)}
-                                className="flex items-center space-x-1 bg-red-50 hover:bg-red-100 text-red-700 px-2 py-1 rounded"
-                                title="Eliminar cita"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                                <span className="text-xs">Eliminar</span>
-                              </button>
-                            </div>
+                              <Edit className="h-4 w-4" />
+                              <span className="text-xs">Editar</span>
+                            </button>
+                            <button
+                              onClick={() => handleDeleteAppointment(appointment.id)}
+                              className="flex items-center space-x-1 bg-red-50 hover:bg-red-100 text-red-700 px-2 py-1 rounded"
+                              title="Eliminar cita"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                              <span className="text-xs">Eliminar</span>
+                            </button>
                           </div>
                         </td>
                       </tr>
