@@ -472,170 +472,191 @@ const Odontogram = () => {
     // Dental numbering system groups
     const isUpper = [11, 12, 13, 14, 15, 16, 17, 18, 21, 22, 23, 24, 25, 26, 27, 28].includes(toothNumber);
     
-    // Common styling for all teeth
-    const commonStroke = "#555";
-    const strokeWidth = "1.2";
+    // Define tooth type
+    const isIncisor = [11, 12, 21, 22, 31, 32, 41, 42].includes(toothNumber);
+    const isCanine = [13, 23, 33, 43].includes(toothNumber);
+    const isPremolar = [14, 15, 24, 25, 34, 35, 44, 45].includes(toothNumber);
+    const isMolar = [16, 17, 18, 26, 27, 28, 36, 37, 38, 46, 47, 48].includes(toothNumber);
     
-    if ([11, 12, 21, 22, 31, 32, 41, 42].includes(toothNumber)) {
-      // Incisor - simplified, professional design
-      if (isUpper) {
-        // Upper incisor
-        return (
-          <>
-            <path 
-              d="M32 10 C42 10, 46 14, 46 26 C46 42, 40 54, 32 54 C24 54, 18 42, 18 26 C18 14, 22 10, 32 10 Z" 
-              stroke={commonStroke}
-              strokeWidth={strokeWidth}
-            />
-            <path 
-              d="M26 14 L38 14 L38 16 C38 18, 32 20, 26 18 L26 14 Z" 
-              stroke={commonStroke}
-              strokeWidth={strokeWidth}
-              fill="none"
-            />
-          </>
-        );
-      } else {
-        // Lower incisor
-        return (
-          <>
-            <path 
-              d="M32 10 C42 10, 46 18, 46 38 C46 48, 40 54, 32 54 C24 54, 18 48, 18 38 C18 18, 22 10, 32 10 Z" 
-              stroke={commonStroke}
-              strokeWidth={strokeWidth}
-            />
-            <path 
-              d="M26 50 L38 50 L38 48 C38 46, 32 44, 26 46 L26 50 Z" 
-              stroke={commonStroke}
-              strokeWidth={strokeWidth}
-              fill="none"
-            />
-          </>
-        );
-      }
-    } else if ([13, 23, 33, 43].includes(toothNumber)) {
-      // Canine - distinctive pointed cusp
-      if (isUpper) {
-        // Upper canine
-        return (
-          <>
-            <path 
-              d="M32 8 C40 8, 47 14, 47 30 C47 44, 40 56, 32 56 C24 56, 17 44, 17 30 C17 14, 24 8, 32 8 Z" 
-              stroke={commonStroke}
-              strokeWidth={strokeWidth}
-            />
-            <path 
-              d="M32 8 L32 14 M27 12 L37 12" 
-              stroke={commonStroke}
-              strokeWidth={strokeWidth}
-              fill="none"
-            />
-          </>
-        );
-      } else {
-        // Lower canine
-        return (
-          <>
-            <path 
-              d="M32 8 C40 8, 47 16, 47 38 C47 50, 40 56, 32 56 C24 56, 17 50, 17 38 C17 16, 24 8, 32 8 Z" 
-              stroke={commonStroke}
-              strokeWidth={strokeWidth}
-            />
-            <path 
-              d="M32 56 L32 50 M27 52 L37 52" 
-              stroke={commonStroke}
-              strokeWidth={strokeWidth}
-              fill="none"
-            />
-          </>
-        );
-      }
-    } else if ([14, 15, 24, 25, 34, 35, 44, 45].includes(toothNumber)) {
-      // Premolar - with two cusps
-      if (isUpper) {
-        // Upper premolar
-        return (
-          <>
-            <path 
-              d="M32 10 C43 10, 48 16, 48 30 C48 46, 40 54, 32 54 C24 54, 16 46, 16 30 C16 16, 21 10, 32 10 Z" 
-              stroke={commonStroke}
-              strokeWidth={strokeWidth}
-            />
-            <path 
-              d="M26 16 C26 12, 28 10, 30 14 M38 16 C38 12, 36 10, 34 14" 
-              stroke={commonStroke}
-              strokeWidth={strokeWidth}
-              fill="none"
-            />
-          </>
-        );
-      } else {
-        // Lower premolar
-        return (
-          <>
-            <path 
-              d="M32 10 C43 10, 48 20, 48 38 C48 48, 40 54, 32 54 C24 54, 16 48, 16 38 C16 20, 21 10, 32 10 Z" 
-              stroke={commonStroke}
-              strokeWidth={strokeWidth}
-            />
-            <path 
-              d="M26 48 C26 52, 28 54, 30 50 M38 48 C38 52, 36 54, 34 50" 
-              stroke={commonStroke}
-              strokeWidth={strokeWidth}
-              fill="none"
-            />
-          </>
-        );
-      }
+    // Common styling
+    const baseColor = "#ffffff";
+    const borderColor = "#666";
+    const highlightColor = "#f0f0f0";
+    const shadowColor = "#dddddd";
+    
+    if (isIncisor) {
+      // Incisor - flat crown with single root
+      return (
+        <g>
+          {/* Base tooth shape */}
+          <path 
+            d="M32 10 C40 10, 44 14, 44 20 L44 36 C44 48, 38 56, 32 56 C26 56, 20 48, 20 36 L20 20 C20 14, 24 10, 32 10 Z" 
+            fill={baseColor}
+            stroke={borderColor}
+            strokeWidth="1"
+          />
+          
+          {/* Crown edge detail */}
+          <path 
+            d="M24 14 L40 14 C40 16, 36 18, 32 18 C28 18, 24 16, 24 14 Z" 
+            fill={highlightColor}
+            stroke={borderColor}
+            strokeWidth="0.5"
+          />
+          
+          {/* Surface gradient */}
+          <path 
+            d="M32 14 C38 14, 42 18, 42 24 L42 34 C42 44, 38 52, 32 52 
+               C28 52, 24 46, 24 38 L24 24 C24 18, 26 14, 32 14 Z" 
+            fill="url(#incisorGradient)"
+            stroke="none"
+          />
+          
+          {/* Root shading */}
+          <path 
+            d="M32 40 C36 40, 38 44, 38 48 C38 52, 36 56, 32 56 
+               C28 56, 26 52, 26 48 C26 44, 28 40, 32 40 Z" 
+            fill={shadowColor}
+            stroke="none"
+            opacity="0.3"
+          />
+        </g>
+      );
+    } else if (isCanine) {
+      // Canine - pointed cusp with long root
+      return (
+        <g>
+          {/* Base tooth shape */}
+          <path 
+            d="M32 6 C40 6, 46 12, 46 22 L46 34 C46 48, 40 58, 32 58 C24 58, 18 48, 18 34 L18 22 C18 12, 24 6, 32 6 Z" 
+            fill={baseColor}
+            stroke={borderColor}
+            strokeWidth="1"
+          />
+          
+          {/* Crown edge detail - pointed cusp */}
+          <path 
+            d="M32 8 L36 14 L40 18 C40 20, 36 22, 32 22 C28 22, 24 20, 24 18 L28 14 Z" 
+            fill={highlightColor}
+            stroke={borderColor}
+            strokeWidth="0.5"
+          />
+          
+          {/* Surface gradient */}
+          <path 
+            d="M32 10 C38 10, 42 14, 44 20 L44 30 C44 42, 40 52, 32 52 
+               C26 52, 22 44, 22 34 L22 20 C22 14, 26 10, 32 10 Z" 
+            fill="url(#canineGradient)"
+            stroke="none"
+          />
+          
+          {/* Root shading */}
+          <path 
+            d="M32 44 C36 44, 38 48, 38 52 C38 56, 36 58, 32 58 
+               C28 58, 26 56, 26 52 C26 48, 28 44, 32 44 Z" 
+            fill={shadowColor}
+            stroke="none"
+            opacity="0.3"
+          />
+        </g>
+      );
+    } else if (isPremolar) {
+      // Premolar - two cusps with bifurcated root
+      return (
+        <g>
+          {/* Base tooth shape */}
+          <path 
+            d="M32 10 C42 10, 48 16, 48 24 L48 36 C48 46, 42 56, 32 56 C22 56, 16 46, 16 36 L16 24 C16 16, 22 10, 32 10 Z" 
+            fill={baseColor}
+            stroke={borderColor}
+            strokeWidth="1"
+          />
+          
+          {/* Crown edge detail - two cusps */}
+          <path 
+            d="M22 18 L28 14 L36 14 L42 18 
+               C42 22, 38 24, 32 24 C26 24, 22 22, 22 18 Z" 
+            fill={highlightColor}
+            stroke={borderColor}
+            strokeWidth="0.5"
+          />
+          
+          {/* Surface gradient */}
+          <path 
+            d="M32 14 C40 14, 44 18, 46 24 L46 34 C46 44, 40 52, 32 52 
+               C24 52, 18 44, 18 34 L18 24 C18 18, 24 14, 32 14 Z" 
+            fill="url(#premolarGradient)"
+            stroke="none"
+          />
+          
+          {/* Cusps detail */}
+          <path 
+            d="M28 14 C28 18, 26 20, 24 18 M36 14 C36 18, 38 20, 40 18" 
+            fill="none"
+            stroke={borderColor}
+            strokeWidth="0.5"
+          />
+          
+          {/* Root shading */}
+          <path 
+            d="M32 44 C38 44, 42 48, 42 52 C42 56, 38 56, 32 56 
+               C26 56, 22 56, 22 52 C22 48, 26 44, 32 44 Z" 
+            fill={shadowColor}
+            stroke="none"
+            opacity="0.3"
+          />
+        </g>
+      );
     } else {
-      // Molar - rectangular with cusps
-      if (isUpper) {
-        // Upper molar - more realistic crown shape
-        return (
-          <>
-            <path 
-              d="M18 16 L46 16 L46 46 C46 50, 40 54, 32 54 C24 54, 18 50, 18 46 Z" 
-              stroke={commonStroke}
-              strokeWidth={strokeWidth}
-            />
-            <path 
-              d="M18 16 C18 12, 24 8, 32 8 C40 8, 46 12, 46 16" 
-              stroke={commonStroke}
-              strokeWidth={strokeWidth}
-              fill="none"
-            />
-            <path 
-              d="M25 16 C25 13, 28 10, 32 12 M39 16 C39 13, 36 10, 32 12" 
-              stroke={commonStroke}
-              strokeWidth={strokeWidth}
-              fill="none"
-            />
-          </>
-        );
-      } else {
-        // Lower molar - with clear cusps
-        return (
-          <>
-            <path 
-              d="M18 18 C18 14, 24 10, 32 10 C40 10, 46 14, 46 18 L46 48 L18 48 Z" 
-              stroke={commonStroke}
-              strokeWidth={strokeWidth}
-            />
-            <path 
-              d="M18 48 C18 52, 24 54, 32 54 C40 54, 46 52, 46 48" 
-              stroke={commonStroke}
-              strokeWidth={strokeWidth}
-              fill="none"
-            />
-            <path 
-              d="M25 48 C25 51, 28 54, 32 52 M39 48 C39 51, 36 54, 32 52" 
-              stroke={commonStroke}
-              strokeWidth={strokeWidth}
-              fill="none"
-            />
-          </>
-        );
-      }
+      // Molar - multiple cusps with multiple roots
+      return (
+        <g>
+          {/* Base tooth shape */}
+          <path 
+            d="M18 16 C18 12, 24 8, 32 8 C40 8, 46 12, 46 16 
+               L46 36 C46 48, 40 56, 32 56 C24 56, 18 48, 18 36 Z" 
+            fill={baseColor}
+            stroke={borderColor}
+            strokeWidth="1"
+          />
+          
+          {/* Crown edge detail - multiple cusps */}
+          <path 
+            d="M18 16 L46 16 C46 22, 40 26, 32 26 C24 26, 18 22, 18 16 Z" 
+            fill={highlightColor}
+            stroke={borderColor}
+            strokeWidth="0.5"
+          />
+          
+          {/* Surface gradient */}
+          <path 
+            d="M20 18 L44 18 L44 34 C44 44, 38 50, 32 50 
+               C26 50, 20 44, 20 34 Z" 
+            fill="url(#molarGradient)"
+            stroke="none"
+          />
+          
+          {/* Cusps detail */}
+          <path 
+            d="M24 16 C24 20, 22 22, 20 20 
+               M32 16 C32 20, 30 22, 28 20 
+               M32 16 C32 20, 34 22, 36 20 
+               M40 16 C40 20, 42 22, 44 20" 
+            fill="none"
+            stroke={borderColor}
+            strokeWidth="0.5"
+          />
+          
+          {/* Root shading */}
+          <path 
+            d="M24 42 C24 46, 22 52, 20 52 L20 42 Z
+               M40 42 C40 46, 42 52, 44 52 L44 42 Z" 
+            fill={shadowColor}
+            stroke="none"
+            opacity="0.3"
+          />
+        </g>
+      );
     }
   };
 
@@ -666,13 +687,39 @@ const Odontogram = () => {
           >
             <div className="absolute inset-0 flex items-center justify-center">
               <svg width="64" height="64" viewBox="0 0 64 64" className="absolute inset-0">
-                {getToothIcon(tooth.number)}
+                {/* Define gradients for tooth rendering */}
+                <defs>
+                  <linearGradient id="incisorGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#ffffff" />
+                    <stop offset="90%" stopColor="#f0f0f0" />
+                  </linearGradient>
+                  <linearGradient id="canineGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#ffffff" />
+                    <stop offset="90%" stopColor="#f0f0f0" />
+                  </linearGradient>
+                  <linearGradient id="premolarGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#ffffff" />
+                    <stop offset="90%" stopColor="#f0f0f0" />
+                  </linearGradient>
+                  <linearGradient id="molarGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#ffffff" />
+                    <stop offset="90%" stopColor="#f0f0f0" />
+                  </linearGradient>
+                </defs>
                 
-                {/* Fill the tooth based on condition */}
-                <g fill={hasSurfaces ? "white" : fillColor}>
+                {/* Render base tooth icon */}
+                <g opacity={condition?.status === "extraction" ? "0.6" : "1"}>
                   {getToothIcon(tooth.number)}
                 </g>
                 
+                {/* Fill the tooth based on condition */}
+                {condition && !hasSurfaces && (
+                  <g fill={fillColor} opacity="0.85">
+                    {getToothIcon(tooth.number)}
+                  </g>
+                )}
+                
+                {/* Render surfaces if needed */}
                 {hasSurfaces && (
                   <>
                     {condition.surfaces?.includes("top") && (
@@ -709,9 +756,19 @@ const Odontogram = () => {
                     )}
                   </>
                 )}
+                
+                <text
+                  x="32"
+                  y="58"
+                  textAnchor="middle"
+                  fill="#444"
+                  fontSize="11"
+                  fontWeight="bold"
+                  className="font-sans"
+                >
+                  {tooth.number}
+                </text>
               </svg>
-              
-              <span className="text-base font-bold z-10">{tooth.number}</span>
             </div>
             
             {condition && (
@@ -775,6 +832,157 @@ const Odontogram = () => {
                 <span className="text-sm">{label}</span>
               </div>
             ))}
+          </div>
+        </div>
+        
+        {/* Tooth type legend */}
+        <div className="pt-6 border-t">
+          <h3 className="text-base font-medium mb-3">Tipos de Dientes</h3>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="flex flex-col items-center border rounded-md p-3 bg-white">
+              <div className="w-16 h-16">
+                <svg width="100%" height="100%" viewBox="0 0 64 64">
+                  <defs>
+                    <linearGradient id="incisorGradientDemo" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stopColor="#ffffff" />
+                      <stop offset="90%" stopColor="#f0f0f0" />
+                    </linearGradient>
+                  </defs>
+                  <g>
+                    <path 
+                      d="M32 10 C40 10, 44 14, 44 20 L44 36 C44 48, 38 56, 32 56 C26 56, 20 48, 20 36 L20 20 C20 14, 24 10, 32 10 Z" 
+                      fill="#ffffff"
+                      stroke="#666"
+                      strokeWidth="1"
+                    />
+                    <path 
+                      d="M24 14 L40 14 C40 16, 36 18, 32 18 C28 18, 24 16, 24 14 Z" 
+                      fill="#f0f0f0"
+                      stroke="#666"
+                      strokeWidth="0.5"
+                    />
+                    <path 
+                      d="M32 14 C38 14, 42 18, 42 24 L42 34 C42 44, 38 52, 32 52 
+                         C28 52, 24 46, 24 38 L24 24 C24 18, 26 14, 32 14 Z" 
+                      fill="url(#incisorGradientDemo)"
+                      stroke="none"
+                    />
+                  </g>
+                </svg>
+              </div>
+              <span className="text-sm font-medium mt-2">INCISIVO</span>
+            </div>
+            
+            <div className="flex flex-col items-center border rounded-md p-3 bg-white">
+              <div className="w-16 h-16">
+                <svg width="100%" height="100%" viewBox="0 0 64 64">
+                  <defs>
+                    <linearGradient id="canineGradientDemo" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stopColor="#ffffff" />
+                      <stop offset="90%" stopColor="#f0f0f0" />
+                    </linearGradient>
+                  </defs>
+                  <g>
+                    <path 
+                      d="M32 6 C40 6, 46 12, 46 22 L46 34 C46 48, 40 58, 32 58 C24 58, 18 48, 18 34 L18 22 C18 12, 24 6, 32 6 Z" 
+                      fill="#ffffff"
+                      stroke="#666"
+                      strokeWidth="1"
+                    />
+                    <path 
+                      d="M32 8 L36 14 L40 18 C40 20, 36 22, 32 22 C28 22, 24 20, 24 18 L28 14 Z" 
+                      fill="#f0f0f0"
+                      stroke="#666"
+                      strokeWidth="0.5"
+                    />
+                    <path 
+                      d="M32 10 C38 10, 42 14, 44 20 L44 30 C44 42, 40 52, 32 52 C26 52, 22 44, 22 34 L22 20 C22 14, 26 10, 32 10 Z" 
+                      fill="url(#canineGradientDemo)"
+                      stroke="none"
+                    />
+                  </g>
+                </svg>
+              </div>
+              <span className="text-sm font-medium mt-2">CANINO</span>
+            </div>
+            
+            <div className="flex flex-col items-center border rounded-md p-3 bg-white">
+              <div className="w-16 h-16">
+                <svg width="100%" height="100%" viewBox="0 0 64 64">
+                  <defs>
+                    <linearGradient id="premolarGradientDemo" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stopColor="#ffffff" />
+                      <stop offset="90%" stopColor="#f0f0f0" />
+                    </linearGradient>
+                  </defs>
+                  <g>
+                    <path 
+                      d="M32 10 C42 10, 48 16, 48 24 L48 36 C48 46, 42 56, 32 56 C22 56, 16 46, 16 36 L16 24 C16 16, 22 10, 32 10 Z" 
+                      fill="#ffffff"
+                      stroke="#666"
+                      strokeWidth="1"
+                    />
+                    <path 
+                      d="M22 18 L28 14 L36 14 L42 18 C42 22, 38 24, 32 24 C26 24, 22 22, 22 18 Z" 
+                      fill="#f0f0f0"
+                      stroke="#666"
+                      strokeWidth="0.5"
+                    />
+                    <path 
+                      d="M32 14 C40 14, 44 18, 46 24 L46 34 C46 44, 40 52, 32 52 C24 52, 18 44, 18 34 L18 24 C18 18, 24 14, 32 14 Z" 
+                      fill="url(#premolarGradientDemo)"
+                      stroke="none"
+                    />
+                    <path 
+                      d="M28 14 C28 18, 26 20, 24 18 M36 14 C36 18, 38 20, 40 18" 
+                      fill="none"
+                      stroke="#666"
+                      strokeWidth="0.5"
+                    />
+                  </g>
+                </svg>
+              </div>
+              <span className="text-sm font-medium mt-2">PREMOLAR</span>
+            </div>
+            
+            <div className="flex flex-col items-center border rounded-md p-3 bg-white">
+              <div className="w-16 h-16">
+                <svg width="100%" height="100%" viewBox="0 0 64 64">
+                  <defs>
+                    <linearGradient id="molarGradientDemo" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stopColor="#ffffff" />
+                      <stop offset="90%" stopColor="#f0f0f0" />
+                    </linearGradient>
+                  </defs>
+                  <g>
+                    <path 
+                      d="M18 16 C18 12, 24 8, 32 8 C40 8, 46 12, 46 16 L46 36 C46 48, 40 56, 32 56 C24 56, 18 48, 18 36 Z" 
+                      fill="#ffffff"
+                      stroke="#666"
+                      strokeWidth="1"
+                    />
+                    <path 
+                      d="M18 16 L46 16 C46 22, 40 26, 32 26 C24 26, 18 22, 18 16 Z" 
+                      fill="#f0f0f0"
+                      stroke="#666"
+                      strokeWidth="0.5"
+                    />
+                    <path 
+                      d="M20 18 L44 18 L44 34 C44 44, 38 50, 32 50 C26 50, 20 44, 20 34 Z" 
+                      fill="url(#molarGradientDemo)"
+                      stroke="none"
+                    />
+                    <path 
+                      d="M24 16 C24 20, 22 22, 20 20 M32 16 C32 20, 30 22, 28 20 M32 16 C32 20, 34 22, 36 20 M40 16 C40 20, 42 22, 44 20" 
+                      fill="none"
+                      stroke="#666"
+                      strokeWidth="0.5"
+                    />
+                  </g>
+                </svg>
+              </div>
+              <span className="text-sm font-medium mt-2">MOLAR</span>
+            </div>
           </div>
         </div>
       </div>
