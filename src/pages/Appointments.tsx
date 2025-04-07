@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { CalendarIcon, Clock, PlusCircle } from "lucide-react";
+import { CalendarIcon, Clock, PlusCircle, Edit, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 // UI Components
@@ -52,39 +52,33 @@ import { StatusBadge } from "@/components/appointments/StatusBadge";
 import { AppointmentActions } from "@/components/appointments/AppointmentActions";
 import { AppointmentForm } from "@/components/appointments/AppointmentForm";
 
-// Helper para formatear fecha para mostrar
+// Helper para formatear fecha para mostrar (SIMPLIFICADO AL MÁXIMO)
 const formatDisplayDate = (dateString: string) => {
   try {
+    // Si no hay fecha, mostrar mensaje
     if (!dateString) return 'Sin fecha';
+
+    // Acceder directamente a los componentes de la fecha de la base de datos
+    // Format en Supabase: YYYY-MM-DD
+    const parts = dateString.split('-');
+    if (parts.length !== 3) return dateString;
     
-    // Simplemente mostrar la fecha directamente de la base de datos
-    // asegurando que esté en formato YYYY-MM-DD
-    const dateParts = dateString.trim().split('T')[0].split('-');
-    if (dateParts.length !== 3) {
-      console.error(`Error en formato de fecha: ${dateString}`);
-      return dateString;
-    }
+    // Extraer componentes
+    const year = parseInt(parts[0]);
+    const month = parseInt(parts[1]);
+    const day = parseInt(parts[2]);
     
-    // Extraer los componentes de la fecha
-    const [year, month, day] = dateParts.map(Number);
+    // Nombres de meses en español
+    const monthNames = [
+      'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 
+      'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'
+    ];
     
-    // Este es el formato que debemos mostrar para coincidir con la fecha en DB
-    return `${day} de ${
-      month === 1 ? 'enero' :
-      month === 2 ? 'febrero' :
-      month === 3 ? 'marzo' :
-      month === 4 ? 'abril' :
-      month === 5 ? 'mayo' :
-      month === 6 ? 'junio' :
-      month === 7 ? 'julio' :
-      month === 8 ? 'agosto' :
-      month === 9 ? 'septiembre' :
-      month === 10 ? 'octubre' :
-      month === 11 ? 'noviembre' :
-      'diciembre'
-    } de ${year}`;
+    // Devolver la fecha formateada en español
+    return `${day} de ${monthNames[month-1]} de ${year}`;
   } catch (error) {
-    console.error(`Error formateando fecha: ${dateString}`, error);
+    console.error('Error al formatear fecha:', error);
+    // Devolver la fecha original si hay error
     return dateString;
   }
 };
@@ -828,8 +822,7 @@ const Appointments = () => {
                         <TableCell>{appointment.doctorName || appointment.doctorId}</TableCell>
                         <TableCell>
                           <div className="flex flex-col">
-                            <span>{formatDisplayDate(appointment.date)}</span>
-                            <span className="text-xs text-muted-foreground">({appointment.date})</span>
+                            <span className="font-medium">{formatDisplayDate(appointment.date)}</span>
                           </div>
                         </TableCell>
                         <TableCell>{appointment.startTime} - {appointment.endTime}</TableCell>
@@ -847,12 +840,28 @@ const Appointments = () => {
                           <StatusBadge status={appointment.status} />
                         </TableCell>
                         <TableCell className="p-2">
-                          <AppointmentActions 
-                            appointment={appointment}
-                            onEdit={handleEditAppointment}
-                            onDelete={handleDeleteAppointment}
-                            onStatusChange={handleStatusChange}
-                          />
+                          {/* BOTONES DE ACCIÓN DIRECTOS Y VISIBLES */}
+                          <div className="flex flex-row gap-2 justify-center">
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              onClick={() => handleEditAppointment(appointment)}
+                              className="bg-blue-50 hover:bg-blue-100 border-blue-200 text-blue-800 h-9"
+                            >
+                              <Edit className="h-4 w-4 mr-1" />
+                              <span>Editar</span>
+                            </Button>
+                            
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              onClick={() => handleDeleteAppointment(appointment.id)}
+                              className="bg-red-50 hover:bg-red-100 border-red-200 text-red-800 h-9"
+                            >
+                              <Trash2 className="h-4 w-4 mr-1" />
+                              <span>Eliminar</span>
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))}
