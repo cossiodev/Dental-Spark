@@ -163,7 +163,7 @@ const Appointments = () => {
   // Estado para manejar la edición de citas
   const [isEditingAppointment, setIsEditingAppointment] = useState(false);
   const [appointmentToEdit, setAppointmentToEdit] = useState<Appointment | null>(null);
-  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [showEditForm, setShowEditForm] = useState(false);
 
   // Estado para indicar si se está enviando el formulario
   const [isLoading, setIsLoading] = useState(false);
@@ -445,7 +445,7 @@ const Appointments = () => {
   const handleEditAppointment = (appointment: Appointment) => {
     setAppointmentToEdit(appointment);
     setIsEditingAppointment(true);
-    setShowEditDialog(true);
+    setShowEditForm(true);
   };
 
   // Función para eliminar una cita
@@ -576,7 +576,7 @@ const Appointments = () => {
       // Resetear estado de edición
       setIsEditingAppointment(false);
       setAppointmentToEdit(null);
-      setShowEditDialog(false);
+      setShowEditForm(false);
       
       // Refrescar datos de citas
       await refetchAppointments();
@@ -598,7 +598,7 @@ const Appointments = () => {
   const handleCancelEdit = () => {
     setIsEditingAppointment(false);
     setAppointmentToEdit(null);
-    setShowEditDialog(false);
+    setShowEditForm(false);
   };
 
   // Función para restablecer el formulario
@@ -655,7 +655,7 @@ const Appointments = () => {
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
-            <Button className="ml-auto bg-blue-600 hover:bg-blue-700 text-white">
+            <Button className="ml-auto">
               <PlusCircle className="mr-2 h-4 w-4" />
               Nueva Cita
             </Button>
@@ -865,39 +865,34 @@ const Appointments = () => {
         </Dialog>
       </div>
 
-      {/* Diálogo para editar cita */}
-      <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
-        <DialogContent className="sm:max-w-[600px]">
-          <DialogHeader>
-            <DialogTitle>Modificar Cita</DialogTitle>
-            <DialogDescription>
-              Modifica los detalles de la cita seleccionada.
-            </DialogDescription>
-          </DialogHeader>
-          
-          {appointmentToEdit && (
-            <AppointmentForm 
-              initialData={appointmentToEdit}
-              onSubmit={handleUpdateAppointment}
-              onCancel={handleCancelEdit}
-              isEditing={true}
-            />
-          )}
-        </DialogContent>
-      </Dialog>
+      {/* Formulario de edición de cita */}
+      {showEditForm && appointmentToEdit && (
+        <div className="my-6">
+          <div className="mb-4">
+            <h2 className="text-xl font-semibold">Editar Cita</h2>
+            <p className="text-muted-foreground">Modifica los detalles de la cita seleccionada.</p>
+          </div>
+          <AppointmentForm 
+            initialData={appointmentToEdit}
+            onSubmit={handleUpdateAppointment}
+            onCancel={handleCancelEdit}
+            isEditing={true}
+          />
+        </div>
+      )}
 
-      <Tabs defaultValue="today" value={selectedTab} onValueChange={setSelectedTab} className="w-full">
-        <TabsList className="grid w-full md:w-auto grid-cols-3 mb-4 rounded-md overflow-hidden bg-gray-100">
-          <TabsTrigger value="today" className="font-medium data-[state=active]:bg-blue-600 data-[state=active]:text-white">Hoy</TabsTrigger>
-          <TabsTrigger value="tomorrow" className="font-medium data-[state=active]:bg-blue-600 data-[state=active]:text-white">Mañana</TabsTrigger>
-          <TabsTrigger value="upcoming" className="font-medium data-[state=active]:bg-blue-600 data-[state=active]:text-white">Próximas</TabsTrigger>
+      <Tabs defaultValue="today" value={selectedTab} onValueChange={setSelectedTab}>
+        <TabsList className="grid w-full md:w-auto grid-cols-3 mb-4">
+          <TabsTrigger value="today">Hoy</TabsTrigger>
+          <TabsTrigger value="tomorrow">Mañana</TabsTrigger>
+          <TabsTrigger value="upcoming">Próximas</TabsTrigger>
         </TabsList>
         
         {/* Combined content for all tabs */}
         <Card>
-          <CardHeader className="pb-3 bg-gray-50">
-            <CardTitle className="text-xl">Citas {selectedTab === "today" ? "de Hoy" : selectedTab === "tomorrow" ? "de Mañana" : "Próximas"}</CardTitle>
-            <CardDescription className="text-sm font-normal">
+          <CardHeader className="pb-3">
+            <CardTitle>Citas {selectedTab === "today" ? "de Hoy" : selectedTab === "tomorrow" ? "de Mañana" : "Próximas"}</CardTitle>
+            <CardDescription>
               {isLoadingAppointments ? "Cargando citas..." : 
                 filteredAppointments.length > 0 
                   ? `Mostrando ${filteredAppointments.length} citas`
@@ -912,7 +907,7 @@ const Appointments = () => {
               </div>
             ) : filteredAppointments.length > 0 ? (
               <div className="overflow-x-auto" style={{ width: '100%' }}>
-                <table className="min-w-full border-collapse bg-white" style={{ tableLayout: 'fixed' }}>
+                <table className="min-w-full border-collapse" style={{ tableLayout: 'fixed' }}>
                   <thead>
                     <tr className="bg-gray-100 text-sm font-bold">
                       <th className="p-2 border-b w-1/6 text-left">Paciente</th>
@@ -941,29 +936,29 @@ const Appointments = () => {
                           : "-"}
                         </td>
                         <td className="p-2">
-                          <div className="flex items-center">
-                            <span
-                              className={`inline-block px-2 py-1 rounded text-xs font-medium ${getStatusColor(
-                                appointment.status
-                              )}`}
-                            >
-                              {getStatusText(appointment.status)}
-                            </span>
-                            <div className="flex ml-2">
-                              <button
+                          <div className="flex flex-col space-y-2">
+                            <StatusBadge status={appointment.status} />
+                            
+                            <div className="flex flex-row gap-2 mt-2">
+                              <Button 
+                                variant="outline" 
+                                size="sm" 
                                 onClick={() => handleEditAppointment(appointment)}
-                                className="p-1 text-blue-600 hover:text-blue-800 mr-1"
-                                title="Editar cita"
+                                className="bg-blue-50 hover:bg-blue-100 border-blue-200 text-blue-800"
                               >
-                                <Edit className="h-4 w-4" />
-                              </button>
-                              <button
+                                <Edit className="h-4 w-4 mr-1" />
+                                Editar
+                              </Button>
+                              
+                              <Button 
+                                variant="outline" 
+                                size="sm" 
                                 onClick={() => handleDeleteAppointment(appointment.id)}
-                                className="p-1 text-red-600 hover:text-red-800"
-                                title="Eliminar cita"
+                                className="bg-red-50 hover:bg-red-100 border-red-200 text-red-800"
                               >
-                                <Trash2 className="h-4 w-4" />
-                              </button>
+                                <Trash2 className="h-4 w-4 mr-1" />
+                                Eliminar
+                              </Button>
                             </div>
                           </div>
                         </td>
