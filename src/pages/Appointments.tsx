@@ -936,7 +936,7 @@ const Appointments = () => {
                           : "-"}
                         </td>
                         <td className="p-2">
-                          <div className="flex items-center space-x-2">
+                          <div className="flex items-center justify-between">
                             <span
                               className={`px-2 py-1 rounded text-xs ${getStatusColor(
                                 appointment.status
@@ -944,25 +944,21 @@ const Appointments = () => {
                             >
                               {getStatusText(appointment.status)}
                             </span>
-                            <div className="flex space-x-1">
-                              <Button 
-                                variant="outline" 
-                                size="sm" 
-                                className="h-8 px-2 text-blue-600"
+                            <div className="flex space-x-2">
+                              <button
                                 onClick={() => handleEditAppointment(appointment)}
+                                className="text-blue-600 hover:text-blue-800"
+                                title="Editar cita"
                               >
-                                <Edit className="h-3.5 w-3.5 mr-1" />
-                                Editar
-                              </Button>
-                              <Button 
-                                variant="outline" 
-                                size="sm" 
-                                className="h-8 px-2 text-red-600"
+                                <Edit className="h-4 w-4" />
+                              </button>
+                              <button
                                 onClick={() => handleDeleteAppointment(appointment.id)}
+                                className="text-red-600 hover:text-red-800"
+                                title="Eliminar cita"
                               >
-                                <Trash2 className="h-3.5 w-3.5 mr-1" />
-                                Eliminar
-                              </Button>
+                                <Trash2 className="h-4 w-4" />
+                              </button>
                             </div>
                           </div>
                         </td>
