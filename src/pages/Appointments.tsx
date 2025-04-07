@@ -859,11 +859,10 @@ const Appointments = () => {
                     <tr className="bg-gray-100 text-sm font-bold">
                       <th className="p-2 border-b w-1/6 text-left">Paciente</th>
                       <th className="p-2 border-b w-1/6 text-left">Doctor</th>
-                      <th className="p-2 border-b w-1/12 text-left">Fecha</th>
-                      <th className="p-2 border-b w-1/12 text-left">Hora</th>
-                      <th className="p-2 border-b w-1/12 text-left">Tipo</th>
-                      <th className="p-2 border-b w-1/12 text-left">Estado</th>
-                      <th className="p-2 border-b w-1/3 text-center text-red-700 text-lg">ACCIONES</th>
+                      <th className="p-2 border-b w-1/6 text-left">Fecha</th>
+                      <th className="p-2 border-b w-1/6 text-left">Hora</th>
+                      <th className="p-2 border-b w-1/6 text-left">Tipo</th>
+                      <th className="p-2 border-b w-1/6 text-left">Estado y Acciones</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -884,44 +883,34 @@ const Appointments = () => {
                           : "-"}
                         </td>
                         <td className="p-2">
-                          <StatusBadge status={appointment.status} />
-                        </td>
-                        <td className="p-2 text-center">
-                          <div className="flex gap-2 justify-center items-center">
-                            <button
-                              type="button"
-                              onClick={() => {
-                                console.log('⚡ EDITAR CITA ID:', appointment.id);
-                                alert(`Editando cita ID: ${appointment.id}`);
-                                handleEditAppointment(appointment);
-                              }}
-                              className="flex items-center gap-1 bg-blue-600 text-white py-1 px-3 rounded font-bold hover:bg-blue-700"
-                            >
-                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                              </svg>
-                              EDITAR
-                            </button>
+                          <div className="flex flex-col gap-2">
+                            <StatusBadge status={appointment.status} />
                             
-                            <button
-                              type="button"
-                              onClick={() => {
-                                console.log('⚡ ELIMINAR CITA ID:', appointment.id);
-                                alert(`Eliminando cita ID: ${appointment.id}`);
-                                handleDeleteAppointment(appointment.id);
-                              }}
-                              className="flex items-center gap-1 bg-red-600 text-white py-1 px-3 rounded font-bold hover:bg-red-700"
-                            >
-                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M3 6h18"></path>
-                                <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
-                                <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
-                                <line x1="10" y1="11" x2="10" y2="17"></line>
-                                <line x1="14" y1="11" x2="14" y2="17"></line>
-                              </svg>
-                              ELIMINAR
-                            </button>
+                            <div className="flex flex-col gap-2 mt-2">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  console.log('⚡ EDITAR CITA ID:', appointment.id);
+                                  alert(`Editando cita ID: ${appointment.id}`);
+                                  handleEditAppointment(appointment);
+                                }}
+                                className="bg-blue-600 text-white py-1 px-2 rounded text-xs font-bold hover:bg-blue-700"
+                              >
+                                ✏️ EDITAR
+                              </button>
+                              
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  console.log('⚡ ELIMINAR CITA ID:', appointment.id);
+                                  alert(`Eliminando cita ID: ${appointment.id}`);
+                                  handleDeleteAppointment(appointment.id);
+                                }}
+                                className="bg-red-600 text-white py-1 px-2 rounded text-xs font-bold hover:bg-red-700"
+                              >
+                                🗑️ ELIMINAR
+                              </button>
+                            </div>
                           </div>
                         </td>
                       </tr>
