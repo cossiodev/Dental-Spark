@@ -1189,63 +1189,67 @@ const Odontogram = () => {
             
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mt-4">
               <div className="flex items-center gap-2">
-                {patientOdontograms.length > 0 && (
-                  <Select 
-                    value={selectedDate} 
-                    onValueChange={(date) => setSelectedDate(date)}
-                  >
-                    <SelectTrigger className="w-[240px]">
-                      <SelectValue>
-                        {selectedDate ? format(new Date(selectedDate), "d 'de' MMMM 'de' yyyy", { locale: es }) : "Seleccionar fecha"}
-                      </SelectValue>
-                    </SelectTrigger>
-                    <SelectContent>
-                      <div className="max-h-[300px] overflow-y-auto py-1">
-                        <SelectItem value={format(new Date(), "yyyy-MM-dd")}>
-                          Nuevo odontograma ({format(new Date(), "d 'de' MMMM 'de' yyyy", { locale: es })})
+                <Select 
+                  value={selectedDate} 
+                  onValueChange={(date) => setSelectedDate(date)}
+                >
+                  <SelectTrigger className="w-[240px]">
+                    <SelectValue>
+                      {selectedDate ? format(new Date(selectedDate), "d 'de' MMMM 'de' yyyy", { locale: es }) : "Seleccionar fecha"}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <div className="max-h-[300px] overflow-y-auto">
+                      {/* Opción para crear un nuevo odontograma */}
+                      <div className="border-b pb-2 mb-2">
+                        <SelectItem value={format(new Date(), "yyyy-MM-dd")} className="font-medium">
+                          <div className="flex justify-between items-center w-full">
+                            <span>
+                              Nuevo odontograma
+                            </span>
+                            <span className="text-xs text-muted-foreground">
+                              {format(new Date(), "d MMM yyyy", { locale: es })}
+                            </span>
+                          </div>
                         </SelectItem>
-                        
-                        {patientOdontograms.length > 0 && (
-                          <>
-                            <SelectSeparator />
-                            <div className="px-2 py-1.5 text-xs text-muted-foreground">
-                              Odontogramas anteriores
-                            </div>
-                            {patientOdontograms
-                              .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-                              .map((odontogram) => (
-                                <SelectItem key={odontogram.date} value={odontogram.date}>
-                                  {format(new Date(odontogram.date), "d 'de' MMMM 'de' yyyy", { locale: es })}
-                                </SelectItem>
-                              ))}
-                          </>
-                        )}
                       </div>
-                    </SelectContent>
-                  </Select>
-                )}
-                
-                {patientOdontograms.length === 0 && (
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className="w-[240px] justify-start text-left font-normal"
-                      >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {selectedDate ? format(new Date(selectedDate), "d 'de' MMMM 'de' yyyy", { locale: es }) : <span>Seleccione una fecha</span>}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={selectedDate ? new Date(selectedDate) : undefined}
-                        onSelect={(date) => date && setSelectedDate(format(date, "yyyy-MM-dd"))}
-                        initialFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
-                )}
+                      
+                      {patientOdontograms.length > 0 ? (
+                        <>
+                          <div className="px-2 py-1.5 text-xs text-muted-foreground">
+                            Odontogramas guardados
+                          </div>
+                          {patientOdontograms
+                            .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                            .map((odontogram) => (
+                              <SelectItem 
+                                key={odontogram.date} 
+                                value={odontogram.date}
+                                className={selectedDate === odontogram.date ? "bg-accent" : ""}
+                              >
+                                <div className="flex justify-between items-center w-full">
+                                  <div className="flex items-center gap-2">
+                                    {selectedDate === odontogram.date && (
+                                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M13.4 3.6L6 11L2.6 7.6L1.4 8.8L6 13.4L14.6 4.8L13.4 3.6Z" fill="currentColor"/>
+                                      </svg>
+                                    )}
+                                    <span>
+                                      {format(new Date(odontogram.date), "d 'de' MMMM 'de' yyyy", { locale: es })}
+                                    </span>
+                                  </div>
+                                </div>
+                              </SelectItem>
+                            ))}
+                        </>
+                      ) : (
+                        <div className="px-2 py-4 text-center text-muted-foreground">
+                          No hay odontogramas previos
+                        </div>
+                      )}
+                    </div>
+                  </SelectContent>
+                </Select>
               </div>
               
               <Button 
