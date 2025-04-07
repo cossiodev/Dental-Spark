@@ -286,7 +286,7 @@ export function AppointmentForm({
                   }
                 }}
                 initialFocus
-                className="p-3"
+                className="p-2"
                 disabled={(date) => {
                   // Deshabilitar fechas pasadas excepto si estamos editando
                   if (!isEditing) {
@@ -299,14 +299,14 @@ export function AppointmentForm({
                 classNames={{
                   day_selected: "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground",
                   day_today: "bg-accent text-accent-foreground",
-                  day: "h-10 w-10 font-normal text-slate-700 aria-selected:opacity-100 hover:bg-slate-100 rounded-md flex items-center justify-center m-0.5",
-                  head_cell: "text-slate-500 font-medium text-[0.85rem] flex items-center justify-center h-10 w-10",
-                  table: "border-spacing-1 border-separate w-full",
-                  row: "flex w-full mt-2 justify-center space-x-2",
-                  cell: "text-center p-0",
-                  caption: "flex justify-center p-2 relative items-center",
+                  day: "h-8 w-8 font-normal text-slate-700 aria-selected:opacity-100 hover:bg-slate-100 rounded-md flex items-center justify-center",
+                  head_cell: "text-slate-500 font-medium text-[0.8rem] flex items-center justify-center h-8 w-8",
+                  table: "border-spacing-0 border-separate w-full",
+                  row: "flex w-full justify-between mt-1",
+                  cell: "p-0",
+                  caption: "flex justify-center p-1.5 relative items-center",
                   caption_label: "text-sm font-medium",
-                  nav_button: "h-7 w-7 bg-transparent p-0 opacity-75 hover:opacity-100",
+                  nav_button: "h-6 w-6 bg-transparent p-0 opacity-75 hover:opacity-100",
                   day_outside: "text-slate-300"
                 }}
               />
