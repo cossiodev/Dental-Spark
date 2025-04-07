@@ -54,16 +54,19 @@ export function AppointmentActions({
 
   // Manejar clic en botón de editar
   const handleEditClick = () => {
+    console.log("Botón editar clickeado para cita:", appointment.id);
     onEdit(appointment);
   };
 
   // Manejar clic en botón de eliminar
   const handleDeleteClick = () => {
+    console.log("Botón eliminar clickeado para cita:", appointment.id);
     setOpenDeleteDialog(true);
   };
 
   // Confirmar eliminación de cita
   const confirmDelete = () => {
+    console.log("Confirmando eliminación de cita:", appointment.id);
     onDelete(appointment.id);
     setOpenDeleteDialog(false);
     toast({
@@ -75,6 +78,7 @@ export function AppointmentActions({
   // Cambiar estado de cita
   const handleStatusChange = (newStatus: string) => {
     if (onStatusChange) {
+      console.log(`Cambiando estado de cita ${appointment.id} a ${newStatus}`);
       onStatusChange({...appointment, status: newStatus}, newStatus);
       toast({
         title: "Estado actualizado",
@@ -89,68 +93,70 @@ export function AppointmentActions({
   };
 
   return (
-    <div className="flex justify-center items-center gap-2 flex-wrap">
-      {/* Botones principales con etiquetas de texto */}
-      <Button 
-        variant="outline" 
-        size="sm" 
-        onClick={handleEditClick}
-        className="flex items-center gap-1 bg-blue-50 hover:bg-blue-100 border-blue-200 text-blue-800 w-28 h-9"
-      >
-        <Edit className="h-4 w-4" />
-        <span>Editar</span>
-      </Button>
-      
-      <Button 
-        variant="outline" 
-        size="sm" 
-        onClick={handleDeleteClick} 
-        className="flex items-center gap-1 bg-red-50 hover:bg-red-100 border-red-200 text-red-800 w-28 h-9"
-      >
-        <Trash2 className="h-4 w-4" />
-        <span>Eliminar</span>
-      </Button>
-      
-      {/* Menú de estados (si se proporciona la función) */}
-      {onStatusChange && (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="bg-gray-50 hover:bg-gray-100 border-gray-200 h-9"
-            >
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => handleStatusChange('scheduled')}>
-              <div className="flex items-center gap-2">
-                <div className="h-2 w-2 rounded-full bg-blue-500" />
-                <span>Programada</span>
-              </div>
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleStatusChange('confirmed')}>
-              <div className="flex items-center gap-2">
-                <div className="h-2 w-2 rounded-full bg-green-500" />
-                <span>Confirmada</span>
-              </div>
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleStatusChange('completed')}>
-              <div className="flex items-center gap-2">
-                <CheckCircle className="h-4 w-4 text-green-600" />
-                <span>Completada</span>
-              </div>
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleStatusChange('cancelled')}>
-              <div className="flex items-center gap-2">
-                <XCircle className="h-4 w-4 text-red-600" />
-                <span>Cancelada</span>
-              </div>
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      )}
+    <>
+      {/* Botones de acción */}
+      <div className="flex flex-row items-center gap-2 w-full justify-center">
+        <Button 
+          variant="outline" 
+          size="sm" 
+          onClick={handleEditClick}
+          className="bg-blue-50 hover:bg-blue-100 border-blue-200 text-blue-800"
+        >
+          <Edit className="h-4 w-4 mr-1" />
+          <span>Editar</span>
+        </Button>
+        
+        <Button 
+          variant="outline" 
+          size="sm" 
+          onClick={handleDeleteClick} 
+          className="bg-red-50 hover:bg-red-100 border-red-200 text-red-800"
+        >
+          <Trash2 className="h-4 w-4 mr-1" />
+          <span>Eliminar</span>
+        </Button>
+        
+        {/* Menú de estados (si se proporciona la función) */}
+        {onStatusChange && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="bg-gray-50 hover:bg-gray-100 border-gray-200"
+              >
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => handleStatusChange('scheduled')}>
+                <div className="flex items-center gap-2">
+                  <div className="h-2 w-2 rounded-full bg-blue-500" />
+                  <span>Programada</span>
+                </div>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleStatusChange('confirmed')}>
+                <div className="flex items-center gap-2">
+                  <div className="h-2 w-2 rounded-full bg-green-500" />
+                  <span>Confirmada</span>
+                </div>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleStatusChange('completed')}>
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="h-4 w-4 text-green-600" />
+                  <span>Completada</span>
+                </div>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleStatusChange('cancelled')}>
+                <div className="flex items-center gap-2">
+                  <XCircle className="h-4 w-4 text-red-600" />
+                  <span>Cancelada</span>
+                </div>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
+      </div>
 
       {/* Diálogo de confirmación para eliminar */}
       <AlertDialog open={openDeleteDialog} onOpenChange={setOpenDeleteDialog}>
@@ -170,6 +176,6 @@ export function AppointmentActions({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </>
   );
 } 

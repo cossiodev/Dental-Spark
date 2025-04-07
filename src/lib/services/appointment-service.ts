@@ -142,7 +142,7 @@ export const appointmentService = {
           endTime: appointment.end_time,
           status: appointment.status,
           notes: appointment.notes || '',
-          treatmentType: appointment.treatment_type || '',
+          treatmentType: appointment.treatment_type,
         };
       });
       
@@ -179,7 +179,7 @@ export const appointmentService = {
         return [];
       }
 
-      console.log('🔴 DATOS CRUDOS DE CITAS DE SUPABASE:', JSON.stringify(appointments, null, 2));
+      console.log('DATOS DE SUPABASE (SIN PROCESAR):', JSON.stringify(appointments, null, 2));
       
       // Mapear los resultados al formato esperado por la aplicación
       const result = appointments.map(appointment => {
@@ -195,11 +195,14 @@ export const appointmentService = {
                             appointment.doctors.first_name && 
                             appointment.doctors.last_name;
           
-          // Asegurar que el formato de fecha es correcto
-          const origDate = appointment.date;
-          const normalizedDate = origDate ? String(origDate).trim().split('T')[0] : new Date().toISOString().split('T')[0];
+          // Acceder directamente a la fecha como viene de la base de datos
+          const rawDate = appointment.date;
+          console.log('FECHA ORIGINAL DE SUPABASE:', rawDate);
           
-          console.log(`🔴 CITA ${appointment.id} - Fecha original: "${origDate}", Normalizada: "${normalizedDate}"`);
+          // NO convertir la fecha - mantenerla exactamente como viene de Supabase
+          // Solo asegurarse de que sea un string en formato YYYY-MM-DD
+          const dateStr = rawDate ? String(rawDate).trim().split('T')[0] : '';
+          console.log('FECHA PROCESADA:', dateStr);
           
           return {
             id: appointment.id,
@@ -211,7 +214,7 @@ export const appointmentService = {
             doctorName: hasDoctor 
               ? `${appointment.doctors.first_name} ${appointment.doctors.last_name}`
               : 'Doctor sin nombre',
-            date: normalizedDate,
+            date: dateStr,
             startTime: appointment.start_time,
             endTime: appointment.end_time,
             status: appointment.status || 'scheduled',

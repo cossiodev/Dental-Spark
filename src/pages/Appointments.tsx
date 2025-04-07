@@ -57,22 +57,18 @@ const formatDisplayDate = (dateString: string) => {
   try {
     if (!dateString) return 'Sin fecha';
     
-    // Asegurar que la fecha esté en formato YYYY-MM-DD antes de parsear
-    const normalizedDate = dateString.trim().split('T')[0];
-    console.log(`🔴 REFORMATEO DE FECHA - Input: "${dateString}", Normalizada: "${normalizedDate}"`);
-    
-    // Dividir la fecha en componentes
-    const [year, month, day] = normalizedDate.split('-').map(Number);
-    
-    if (!year || !month || !day) {
-      console.error(`🔴 COMPONENTES INVÁLIDOS: año=${year}, mes=${month}, día=${day}`);
-      return normalizedDate;
+    // Simplemente mostrar la fecha directamente de la base de datos
+    // asegurando que esté en formato YYYY-MM-DD
+    const dateParts = dateString.trim().split('T')[0].split('-');
+    if (dateParts.length !== 3) {
+      console.error(`Error en formato de fecha: ${dateString}`);
+      return dateString;
     }
     
-    // Log de depuración
-    console.log(`🔴 COMPONENTES: año=${year}, mes=${month}, día=${day}`);
+    // Extraer los componentes de la fecha
+    const [year, month, day] = dateParts.map(Number);
     
-    // Mostrar fecha directamente como está en Supabase
+    // Este es el formato que debemos mostrar para coincidir con la fecha en DB
     return `${day} de ${
       month === 1 ? 'enero' :
       month === 2 ? 'febrero' :
@@ -88,8 +84,8 @@ const formatDisplayDate = (dateString: string) => {
       'diciembre'
     } de ${year}`;
   } catch (error) {
-    console.error(`🔴 ERROR FATAL al formatear fecha "${dateString}":`, error);
-    return dateString || 'Sin fecha';
+    console.error(`Error formateando fecha: ${dateString}`, error);
+    return dateString;
   }
 };
 
@@ -819,7 +815,7 @@ const Appointments = () => {
                       <TableHead>Hora</TableHead>
                       <TableHead>Tipo</TableHead>
                       <TableHead>Estado</TableHead>
-                      <TableHead className="text-center w-[280px]">Acciones</TableHead>
+                      <TableHead className="text-center" style={{ width: "300px" }}>Acciones</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -831,9 +827,9 @@ const Appointments = () => {
                         <TableCell className="font-medium">{appointment.patientName || appointment.patientId}</TableCell>
                         <TableCell>{appointment.doctorName || appointment.doctorId}</TableCell>
                         <TableCell>
-                          <div className="space-y-1">
-                            <div className="text-sm">{formatDisplayDate(appointment.date)}</div>
-                            <div className="text-xs text-muted-foreground">DB: {appointment.date}</div>
+                          <div className="flex flex-col">
+                            <span>{formatDisplayDate(appointment.date)}</span>
+                            <span className="text-xs text-muted-foreground">({appointment.date})</span>
                           </div>
                         </TableCell>
                         <TableCell>{appointment.startTime} - {appointment.endTime}</TableCell>
@@ -850,7 +846,7 @@ const Appointments = () => {
                         <TableCell>
                           <StatusBadge status={appointment.status} />
                         </TableCell>
-                        <TableCell className="p-2 text-center">
+                        <TableCell className="p-2">
                           <AppointmentActions 
                             appointment={appointment}
                             onEdit={handleEditAppointment}
