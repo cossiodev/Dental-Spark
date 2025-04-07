@@ -947,17 +947,19 @@ const Appointments = () => {
                             <div className="flex space-x-2">
                               <button
                                 onClick={() => handleEditAppointment(appointment)}
-                                className="text-blue-600 hover:text-blue-800"
+                                className="flex items-center space-x-1 bg-blue-50 hover:bg-blue-100 text-blue-700 px-2 py-1 rounded"
                                 title="Editar cita"
                               >
                                 <Edit className="h-4 w-4" />
+                                <span className="text-xs">Editar</span>
                               </button>
                               <button
                                 onClick={() => handleDeleteAppointment(appointment.id)}
-                                className="text-red-600 hover:text-red-800"
+                                className="flex items-center space-x-1 bg-red-50 hover:bg-red-100 text-red-700 px-2 py-1 rounded"
                                 title="Eliminar cita"
                               >
                                 <Trash2 className="h-4 w-4" />
+                                <span className="text-xs">Eliminar</span>
                               </button>
                             </div>
                           </div>
