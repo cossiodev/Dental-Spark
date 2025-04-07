@@ -169,7 +169,9 @@ const Appointments = () => {
     }
     
     try {
+      // Asegurar que usamos la fecha seleccionada y no la fecha actual
       const formattedDate = format(formData.date, "yyyy-MM-dd");
+      console.log('Fecha seleccionada para la cita:', formattedDate);
       
       // Extraer horas de inicio y fin del timeBlock
       let [startTime, endTime] = formData.timeBlock.split('-');
@@ -481,7 +483,7 @@ const Appointments = () => {
                           selected={formData.date}
                           onSelect={(date) => {
                             if (date) {
-                              // Asegurarnos de que solo un día puede estar seleccionado
+                              console.log('Fecha seleccionada en calendario:', date.toISOString());
                               handleChange("date", date);
                             }
                           }}
@@ -628,12 +630,15 @@ const Appointments = () => {
                       <TableHead>Hora</TableHead>
                       <TableHead>Tipo</TableHead>
                       <TableHead>Estado</TableHead>
-                      <TableHead className="text-right">Acciones</TableHead>
+                      <TableHead className="text-right w-[100px]">Acciones</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {filteredAppointments.map((appointment) => (
-                      <TableRow key={appointment.id}>
+                      <TableRow 
+                        key={appointment.id} 
+                        className="group hover:bg-muted/50 transition-colors"
+                      >
                         <TableCell className="font-medium">{appointment.patientName || appointment.patientId}</TableCell>
                         <TableCell>{appointment.doctorName || appointment.doctorId}</TableCell>
                         <TableCell>{formatDate(appointment.date)}</TableCell>
@@ -651,13 +656,15 @@ const Appointments = () => {
                         <TableCell>
                           <StatusBadge status={appointment.status} />
                         </TableCell>
-                        <TableCell className="text-right">
-                          <AppointmentActions 
-                            appointment={appointment}
-                            onEdit={handleEditAppointment}
-                            onDelete={handleDeleteAppointment}
-                            onStatusChange={handleStatusChange}
-                          />
+                        <TableCell className="text-right p-2">
+                          <div className="flex justify-end items-center">
+                            <AppointmentActions 
+                              appointment={appointment}
+                              onEdit={handleEditAppointment}
+                              onDelete={handleDeleteAppointment}
+                              onStatusChange={handleStatusChange}
+                            />
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))}

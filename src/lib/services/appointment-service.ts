@@ -255,6 +255,8 @@ export const appointmentService = {
         formattedDate = appointment.date.toISOString().split('T')[0];
       }
       
+      console.log('Fecha formateada para la cita:', formattedDate);
+      
       const appointmentData = {
         patient_id: appointment.patientId,
         doctor_id: appointment.doctorId,
@@ -266,7 +268,7 @@ export const appointmentService = {
         treatment_type: appointment.treatmentType || ''
       };
       
-      console.log('Datos formateados para Supabase:', appointmentData);
+      console.log('Datos completos para inserción en Supabase:', appointmentData);
       
       // Intentar varias opciones para crear la cita
       console.log('Intentando inserción directa en la tabla de citas...');
@@ -319,7 +321,7 @@ export const appointmentService = {
       }
       
       const newAppointmentId = insertedData.id;
-      console.log('Cita creada con ID:', newAppointmentId);
+      console.log('Cita creada exitosamente con ID:', newAppointmentId);
       
       // Breve espera para asegurar que la BD haya procesado completamente la inserción
       await new Promise(resolve => setTimeout(resolve, 1000));
@@ -339,7 +341,7 @@ export const appointmentService = {
         treatmentType: appointment.treatmentType || ''
       };
       
-      console.log('Datos de la cita creada:', createdAppointment);
+      console.log('Datos completos de la cita creada:', createdAppointment);
       return createdAppointment;
     } catch (error) {
       console.error('Error al crear cita:', error);
