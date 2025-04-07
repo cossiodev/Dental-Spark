@@ -668,6 +668,8 @@ const Appointments = () => {
     switch (status) {
       case 'scheduled':
         return 'Programada';
+      case 'confirmed':
+        return 'Confirmada';
       case 'completed':
         return 'Completada';
       case 'cancelled':
