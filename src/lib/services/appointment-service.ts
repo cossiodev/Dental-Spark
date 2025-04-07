@@ -499,6 +499,10 @@ export const appointmentService = {
     try {
       console.log('Eliminando cita con ID:', appointmentId);
       
+      // Verificar si el usuario tiene permisos adecuados
+      const { data: userData, error: userError } = await supabase.auth.getUser();
+      console.log('Usuario actual:', userData?.user?.email);
+      
       // Eliminar la cita en Supabase
       const { error } = await supabase
         .from('appointments')
@@ -507,6 +511,14 @@ export const appointmentService = {
       
       if (error) {
         console.error('Error al eliminar cita en Supabase:', error);
+        
+        // Mensajes más descriptivos para problemas de permisos
+        if (error.message.includes('permission denied') || 
+            error.message.includes('policy') || 
+            error.message.includes('not authorized')) {
+          throw new Error(`No tienes permiso para eliminar esta cita. Por favor contacta al administrador o utiliza la cuenta admin@dentalspark.com con permisos de administrador.`);
+        }
+        
         throw new Error(`Error al eliminar cita: ${error.message}`);
       }
       
@@ -514,6 +526,53 @@ export const appointmentService = {
     } catch (error) {
       console.error('Error al eliminar cita:', error);
       throw error;
+    }
+  },
+
+  // Método para verificar permisos del usuario
+  checkUserPermissions: async (): Promise<{canEdit: boolean, canDelete: boolean, userEmail: string | null}> => {
+    try {
+      // Obtener información del usuario actual
+      const { data: userData, error: userError } = await supabase.auth.getUser();
+      
+      if (userError) {
+        console.error('Error al verificar usuario:', userError);
+        return { canEdit: false, canDelete: false, userEmail: null };
+      }
+      
+      const userEmail = userData?.user?.email || null;
+      console.log('Verificando permisos para usuario:', userEmail);
+      
+      // Intento de verificación básica
+      try {
+        // Intentar hacer una operación mínima para probar permisos (select)
+        const { data, error } = await supabase
+          .from('appointments')
+          .select('id')
+          .limit(1);
+          
+        if (error) {
+          console.error('Error al verificar permisos de lectura:', error);
+          return { canEdit: false, canDelete: false, userEmail };
+        }
+        
+        // Verificar si el usuario es administrador (esto depende de tu lógica de roles)
+        // Aquí asumimos que ciertos correos tienen permisos completos
+        const isAdmin = userEmail === 'admin@dentalspark.com' || 
+                      userEmail === 'cossio.dev@gmail.com';
+        
+        return { 
+          canEdit: isAdmin, 
+          canDelete: isAdmin,
+          userEmail
+        };
+      } catch (err) {
+        console.error('Error durante verificación de permisos:', err);
+        return { canEdit: false, canDelete: false, userEmail };
+      }
+    } catch (error) {
+      console.error('Error general verificando permisos:', error);
+      return { canEdit: false, canDelete: false, userEmail: null };
     }
   },
 

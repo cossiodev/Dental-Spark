@@ -128,6 +128,14 @@ const Appointments = () => {
     treatmentType: ""
   });
 
+  // Estado para permisos de usuario
+  const [userPermissions, setUserPermissions] = useState({
+    canEdit: false,
+    canDelete: false,
+    userEmail: null as string | null,
+    checked: false
+  });
+
   // Estado para manejar la edición de citas
   const [isEditingAppointment, setIsEditingAppointment] = useState(false);
   const [appointmentToEdit, setAppointmentToEdit] = useState<Appointment | null>(null);
@@ -276,6 +284,33 @@ const Appointments = () => {
       debugAppointments();
     }
   }, [appointments, isLoadingAppointments]);
+
+  // Efecto para verificar permisos del usuario al cargar
+  useEffect(() => {
+    const checkPermissions = async () => {
+      try {
+        const permissions = await appointmentService.checkUserPermissions();
+        setUserPermissions({
+          ...permissions,
+          checked: true
+        });
+        
+        console.log('Permisos del usuario:', permissions);
+        
+        if (!permissions.canEdit || !permissions.canDelete) {
+          toast({
+            title: "Información de permisos",
+            description: `Usuario: ${permissions.userEmail || 'No identificado'}. ${!permissions.canEdit ? 'No tienes permisos para editar citas.' : ''} ${!permissions.canDelete ? 'No tienes permisos para eliminar citas.' : ''}`,
+            variant: "default",
+          });
+        }
+      } catch (error) {
+        console.error('Error al verificar permisos:', error);
+      }
+    };
+    
+    checkPermissions();
+  }, [toast]);
 
   // Handle form change
   const handleChange = (field: string, value: any) => {
@@ -558,6 +593,12 @@ const Appointments = () => {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Citas</h1>
           <p className="text-muted-foreground">Gestiona las citas de los pacientes en el sistema.</p>
+          {userPermissions.checked && (
+            <div className={`mt-2 p-2 rounded-md ${userPermissions.canEdit && userPermissions.canDelete ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
+              <p>Usuario: {userPermissions.userEmail || 'No identificado'}</p>
+              <p>Permisos: {userPermissions.canEdit ? '✅ Editar' : '❌ No puede editar'} | {userPermissions.canDelete ? '✅ Eliminar' : '❌ No puede eliminar'}</p>
+            </div>
+          )}
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
@@ -854,25 +895,53 @@ const Appointments = () => {
                         </TableCell>
                         <TableCell className="p-2">
                           {/* BOTONES DE ACCIÓN DIRECTOS Y VISIBLES */}
-                          <div className="flex flex-row gap-2 justify-center">
+                          <div className="flex flex-row gap-2 justify-center" style={{ border: '2px solid #ff6b6b', padding: '8px', borderRadius: '8px', background: '#fff1f1' }}>
                             <Button 
-                              variant="outline" 
+                              variant="default"
                               size="sm" 
-                              onClick={() => handleEditAppointment(appointment)}
-                              className="bg-blue-50 hover:bg-blue-100 border-blue-200 text-blue-800 h-9"
+                              onClick={() => {
+                                console.log('⚡ BOTÓN EDITAR CLICKEADO para cita ID:', appointment.id);
+                                console.log('Permisos de edición:', userPermissions.canEdit);
+                                if (!userPermissions.canEdit) {
+                                  toast({
+                                    title: "Permiso denegado",
+                                    description: "No tienes permisos para editar citas. Contacta al administrador.",
+                                    variant: "destructive",
+                                  });
+                                  return;
+                                }
+                                alert('Editando cita: ' + appointment.id);
+                                handleEditAppointment(appointment);
+                              }}
+                              className="bg-blue-500 hover:bg-blue-600 text-white font-bold h-9"
+                              disabled={!userPermissions.canEdit}
                             >
-                              <Edit className="h-4 w-4 mr-1" />
-                              <span>Editar</span>
+                              <Edit className="h-5 w-5 mr-2" />
+                              <span className="text-base">EDITAR</span>
                             </Button>
                             
                             <Button 
-                              variant="outline" 
+                              variant="destructive"
                               size="sm" 
-                              onClick={() => handleDeleteAppointment(appointment.id)}
-                              className="bg-red-50 hover:bg-red-100 border-red-200 text-red-800 h-9"
+                              onClick={() => {
+                                console.log('⚡ BOTÓN ELIMINAR CLICKEADO para cita ID:', appointment.id);
+                                console.log('Permisos de eliminación:', userPermissions.canDelete);
+                                if (!userPermissions.canDelete) {
+                                  toast({
+                                    title: "Permiso denegado",
+                                    description: "No tienes permisos para eliminar citas. Contacta al administrador.",
+                                    variant: "destructive",
+                                  });
+                                  return;
+                                }
+                                alert('Eliminando cita: ' + appointment.id);
+                                handleDeleteAppointment(appointment.id);
+                              }}
+                              className="bg-red-500 hover:bg-red-600 text-white font-bold h-9"
+                              disabled={!userPermissions.canDelete}
                             >
-                              <Trash2 className="h-4 w-4 mr-1" />
-                              <span>Eliminar</span>
+                              <Trash2 className="h-5 w-5 mr-2" />
+                              <span className="text-base">ELIMINAR</span>
                             </Button>
                           </div>
                         </TableCell>
