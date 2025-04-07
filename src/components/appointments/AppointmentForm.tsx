@@ -51,6 +51,7 @@ export function AppointmentForm({
   const [patients, setPatients] = useState<Patient[]>([]);
   const [doctors, setDoctors] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Cargar datos iniciales si estamos editando
   useEffect(() => {
@@ -112,6 +113,8 @@ export function AppointmentForm({
       return;
     }
     
+    setIsSubmitting(true);
+    
     // Extraer horas de inicio y fin del timeBlock
     const [startTime, endTime] = formData.timeBlock.split('-');
     
@@ -124,6 +127,10 @@ export function AppointmentForm({
     
     // Enviar datos al componente padre
     onSubmit(appointmentData);
+    
+    // Note: La función onSubmit es asíncrona y debería manejar el estado de isSubmitting
+    // pero como no tenemos acceso directo al resultado, dejamos que el componente padre
+    // maneje el estado de carga después de la llamada
   };
 
   if (loading) {
@@ -142,7 +149,7 @@ export function AppointmentForm({
               <Select 
                 value={formData.patientId || ""} 
                 onValueChange={(value) => handleChange("patientId", value)}
-                disabled={isEditing}
+                disabled={isEditing || isSubmitting}
               >
                 <SelectTrigger id="patient">
                   <SelectValue placeholder="Seleccione un paciente" />
@@ -164,6 +171,7 @@ export function AppointmentForm({
               <Select 
                 value={formData.doctorId || ""} 
                 onValueChange={(value) => handleChange("doctorId", value)}
+                disabled={isSubmitting}
               >
                 <SelectTrigger id="doctor">
                   <SelectValue placeholder="Seleccione un doctor" />
@@ -193,6 +201,8 @@ export function AppointmentForm({
                       "w-full justify-start text-left font-normal",
                       !formData.date && "text-muted-foreground"
                     )}
+                    type="button"
+                    disabled={isSubmitting}
                   >
                     <CalendarIcon className="mr-2 h-4 w-4" />
                     {formData.date ? format(formData.date, "PPP", { locale: es }) : <span>Selecciona una fecha</span>}
@@ -234,6 +244,7 @@ export function AppointmentForm({
               <Select 
                 value={formData.treatmentType || ""} 
                 onValueChange={(value) => handleChange("treatmentType", value)}
+                disabled={isSubmitting}
               >
                 <SelectTrigger id="treatmentType">
                   <SelectValue placeholder="Seleccione un tipo" />
@@ -259,6 +270,7 @@ export function AppointmentForm({
               <TimeBlockSelector
                 value={formData.timeBlock || ""}
                 onChange={(value) => handleChange("timeBlock", value)}
+                disabled={isSubmitting}
               />
             </div>
             
@@ -269,6 +281,7 @@ export function AppointmentForm({
               <Select 
                 value={formData.status || "scheduled"} 
                 onValueChange={(value) => handleChange("status", value)}
+                disabled={isSubmitting}
               >
                 <SelectTrigger id="status">
                   <SelectValue placeholder="Seleccione un estado" />
@@ -292,15 +305,26 @@ export function AppointmentForm({
               placeholder="Información adicional sobre la cita" 
               value={formData.notes || ""}
               onChange={(e) => handleChange("notes", e.target.value)}
+              disabled={isSubmitting}
             />
           </div>
           
           <div className="flex justify-end space-x-2 pt-2">
-            <Button type="button" variant="outline" onClick={onCancel}>
+            <Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting}>
               Cancelar
             </Button>
-            <Button type="submit">
-              {isEditing ? "Actualizar Cita" : "Crear Cita"}
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? (
+                <>
+                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  {isEditing ? "Actualizando..." : "Creando..."}
+                </>
+              ) : (
+                isEditing ? "Actualizar Cita" : "Crear Cita"
+              )}
             </Button>
           </div>
         </CardContent>

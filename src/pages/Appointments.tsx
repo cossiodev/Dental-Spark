@@ -363,31 +363,41 @@ const Appointments = () => {
   // Función para eliminar una cita
   const handleDeleteAppointment = async (appointmentId: string) => {
     try {
+      setIsLoading(true);
+      
+      console.log(`Eliminando cita con ID: ${appointmentId}`);
       await appointmentService.delete(appointmentId);
-      await refetchAppointments();
-      setForceRefresh(prev => prev + 1);
       
       toast({
         title: "Cita eliminada",
         description: "La cita ha sido eliminada exitosamente.",
       });
+      
+      // Refrescar los datos
+      await refetchAppointments();
+      setForceRefresh(prev => prev + 1);
+      
     } catch (error) {
       console.error("Error al eliminar cita:", error);
       toast({
         title: "Error",
-        description: "No se pudo eliminar la cita. Por favor intente nuevamente.",
+        description: error instanceof Error ? error.message : "No se pudo eliminar la cita. Por favor intente nuevamente.",
         variant: "destructive",
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
   // Función para cambiar el estado de una cita
   const handleStatusChange = async (appointment: Appointment, newStatus: string) => {
     try {
+      setIsLoading(true);
+      
+      console.log(`Cambiando estado de cita ${appointment.id} a: ${newStatus}`);
       const updatedAppointment = { ...appointment, status: newStatus };
+      
       await appointmentService.update(updatedAppointment);
-      await refetchAppointments();
-      setForceRefresh(prev => prev + 1);
       
       toast({
         title: "Estado actualizado",
@@ -398,24 +408,64 @@ const Appointments = () => {
           newStatus === 'cancelled' ? 'cancelada' : newStatus
         }.`,
       });
+      
+      // Refrescar los datos
+      await refetchAppointments();
+      setForceRefresh(prev => prev + 1);
+      
     } catch (error) {
       console.error("Error al cambiar estado de la cita:", error);
       toast({
         title: "Error",
-        description: "No se pudo actualizar el estado. Por favor intente nuevamente.",
+        description: error instanceof Error ? error.message : "No se pudo actualizar el estado. Por favor intente nuevamente.",
         variant: "destructive",
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
   // Función para guardar cambios en una cita
   const handleUpdateAppointment = async (updatedData: Partial<Appointment>) => {
     try {
-      if (!appointmentToEdit) return;
+      if (!appointmentToEdit) {
+        toast({
+          title: "Error",
+          description: "No se encontró la cita para actualizar",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      setIsLoading(true);
+      
+      // Normalizar y formatear la fecha para enviar a la API
+      let formattedDate;
+      
+      if (updatedData.date instanceof Date) {
+        // Crear fecha sin componente de tiempo para evitar problemas de timezone
+        const year = updatedData.date.getFullYear();
+        const month = (updatedData.date.getMonth() + 1).toString().padStart(2, '0'); // +1 porque getMonth() es zero-based
+        const day = updatedData.date.getDate().toString().padStart(2, '0');
+        formattedDate = `${year}-${month}-${day}`;
+      } else if (typeof updatedData.date === 'string') {
+        // Si es string, asegurar que tenga el formato correcto
+        formattedDate = updatedData.date.trim().split('T')[0];
+      } else {
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = (now.getMonth() + 1).toString().padStart(2, '0');
+        const day = now.getDate().toString().padStart(2, '0');
+        formattedDate = `${year}-${month}-${day}`;
+      }
+      
+      console.log('🔍 Fecha seleccionada para actualizar (original):', updatedData.date);
+      console.log('🔍 Fecha formateada para enviar:', formattedDate);
       
       const appointmentData = {
         ...appointmentToEdit,
         ...updatedData,
+        date: formattedDate,
         patientName: appointmentToEdit.patientName, // Mantener el nombre del paciente para la UI
         doctorName: appointmentToEdit.doctorName,   // Mantener el nombre del doctor para la UI
       };
@@ -440,9 +490,11 @@ const Appointments = () => {
       console.error("Error al actualizar cita:", error);
       toast({
         title: "Error",
-        description: "No se pudo actualizar la cita. Por favor intente nuevamente.",
+        description: error instanceof Error ? error.message : "No se pudo actualizar la cita. Por favor intente nuevamente.",
         variant: "destructive",
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
