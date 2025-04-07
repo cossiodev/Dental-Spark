@@ -1095,7 +1095,9 @@ const Odontogram = () => {
     <div className="container py-8 space-y-8">
       <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Odontograma</h1>
+          <h1 className="text-3xl font-bold tracking-tight">
+            Odontograma {currentPatient && `de ${currentPatient.firstName} ${currentPatient.lastName}`}
+          </h1>
           <p className="text-muted-foreground">Visualiza y edita el odontograma de tus pacientes.</p>
         </div>
       </div>
@@ -1172,11 +1174,7 @@ const Odontogram = () => {
             <CardTitle>
               <div className="flex items-center gap-2">
                 <User className="h-5 w-5" />
-                {currentPatient ? (
-                  <>Odontograma de {currentPatient.firstName} {currentPatient.lastName}</>
-                ) : (
-                  <>Odontograma</>
-                )}
+                Odontograma
               </div>
             </CardTitle>
             <CardDescription>
