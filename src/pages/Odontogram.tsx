@@ -1117,7 +1117,14 @@ const Odontogram = () => {
           <div className="w-full md:w-80">
             <Select value={selectedPatient || ""} onValueChange={handlePatientChange}>
               <SelectTrigger>
-                <SelectValue placeholder="Seleccione un paciente" />
+                {currentPatient ? (
+                  <span>
+                    {currentPatient.firstName} {currentPatient.lastName}
+                    {currentPatient.isPediatric && " (Pediátrico)"}
+                  </span>
+                ) : (
+                  <SelectValue placeholder="Seleccione un paciente" />
+                )}
               </SelectTrigger>
               <SelectContent>
                 {filteredPatients.length > 0 ? (
