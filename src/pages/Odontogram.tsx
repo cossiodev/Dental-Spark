@@ -186,60 +186,31 @@ const Odontogram = () => {
       try {
         setIsLoading(true);
         
+        // Cargar todos los pacientes
+        console.log("[DIAGNÓSTICO] Iniciando carga de pacientes...");
         const patientsData = await patientService.getAll();
+        console.log("[DIAGNÓSTICO] Pacientes cargados:", patientsData.length);
         setPatients(patientsData);
         
-        // Load recent patients
+        // Aplicar filtro si hay query de búsqueda
+        if (searchQuery) {
+          const filtered = patientsData.filter(patient => 
+            `${patient.firstName} ${patient.lastName}`.toLowerCase().includes(searchQuery.toLowerCase())
+          );
+          setFilteredPatients(filtered);
+        } else {
+          setFilteredPatients(patientsData);
+        }
+        
+        // Cargar pacientes recientes
         const recentPatientsData = await patientService.getRecent(10);
         setRecentPatients(recentPatientsData);
         
-        if (selectedPatient) {
-          const patient = patientsData.find(p => p.id === selectedPatient);
-          setCurrentPatient(patient || null);
-          
-          if (patient) {
-            setIsPediatric(!!patient.isPediatric);
-            
-            if (isViewMode) {
-              const patientOdontograms = await odontogramService.getByPatientId(selectedPatient);
-              const odontogram = patientOdontograms.find(o => o.date === selectedDate);
-              
-              if (odontogram) {
-                setTeethConditions(odontogram.teeth);
-                setGeneralNotes(odontogram.notes);
-                setIsPediatric(!!odontogram.isPediatric);
-              } else {
-                toast({
-                  title: "Error",
-                  description: "No se encontró el odontograma para la fecha seleccionada",
-                  variant: "destructive",
-                });
-                setIsViewMode(false);
-              }
-            } else {
-              const patientOdontograms = await odontogramService.getByPatientId(selectedPatient);
-              const todayOdontogram = patientOdontograms.find(o => o.date === selectedDate);
-              
-              if (todayOdontogram) {
-                setTeethConditions(todayOdontogram.teeth);
-                setGeneralNotes(todayOdontogram.notes);
-                setIsPediatric(!!todayOdontogram.isPediatric);
-                toast({
-                  title: "Odontograma cargado",
-                  description: "Se ha cargado un odontograma existente para la fecha seleccionada",
-                });
-              } else {
-                setTeethConditions({});
-                setGeneralNotes("");
-              }
-            }
-          }
-        }
       } catch (error) {
-        console.error("Error loading data:", error);
+        console.error("Error loading patients:", error);
         toast({
           title: "Error",
-          description: "No se pudieron cargar los datos",
+          description: "No se pudieron cargar los pacientes",
           variant: "destructive",
         });
       } finally {
@@ -248,7 +219,60 @@ const Odontogram = () => {
     };
     
     loadData();
-  }, [selectedPatient, selectedDate, isViewMode, toast]);
+  }, [searchQuery, toast]);
+
+  useEffect(() => {
+    const loadOdontogramData = async () => {
+      if (!selectedPatient) return;
+      
+      try {
+        setIsLoading(true);
+        
+        // Buscar el paciente seleccionado
+        const patient = patients.find(p => p.id === selectedPatient);
+        setCurrentPatient(patient || null);
+        
+        if (patient) {
+          console.log(`[DIAGNÓSTICO] Paciente encontrado:`, patient.firstName, patient.lastName);
+          setIsPediatric(!!patient.isPediatric);
+          setTeethType(patient.isPediatric ? "child" : "adult");
+          
+          // Cargar odontograma existente para la fecha seleccionada
+          console.log(`[DIAGNÓSTICO] Buscando odontogramas para paciente ${patient.id} en fecha ${selectedDate}`);
+          const patientOdontograms = await odontogramService.getByPatientId(selectedPatient);
+          const todayOdontogram = patientOdontograms.find(o => o.date === selectedDate);
+          
+          if (todayOdontogram) {
+            console.log(`[DIAGNÓSTICO] Odontograma encontrado para la fecha:`, todayOdontogram);
+            setTeethConditions(todayOdontogram.teeth);
+            setGeneralNotes(todayOdontogram.notes || "");
+            setIsPediatric(!!todayOdontogram.isPediatric);
+            toast({
+              title: "Odontograma cargado",
+              description: "Se ha cargado un odontograma existente para la fecha seleccionada",
+            });
+          } else {
+            console.log(`[DIAGNÓSTICO] No se encontró odontograma para la fecha seleccionada`);
+            setTeethConditions({});
+            setGeneralNotes("");
+          }
+        } else {
+          console.error(`[DIAGNÓSTICO] No se encontró el paciente con ID ${selectedPatient}`);
+        }
+      } catch (error) {
+        console.error("Error loading odontogram data:", error);
+        toast({
+          title: "Error",
+          description: "No se pudieron cargar los datos del odontograma",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    loadOdontogramData();
+  }, [selectedPatient, selectedDate, patients, toast]);
 
   const generateTreatmentSuggestions = () => {
     const suggestions: SuggestedTreatment[] = [];
@@ -534,11 +558,56 @@ const Odontogram = () => {
   };
 
   const handlePatientChange = (value: string) => {
+    console.log("[DIAGNÓSTICO] Cambiando paciente seleccionado a:", value);
     setSelectedPatient(value);
+    
+    // Buscar el paciente en la lista y actualizar si es pediátrico
+    const patient = patients.find(p => p.id === value);
+    if (patient) {
+      console.log("[DIAGNÓSTICO] ¿Es paciente pediátrico?", patient.isPediatric ? "Sí" : "No");
+      setIsPediatric(!!patient.isPediatric);
+      // Actualizar automáticamente el tipo de dientes según el paciente
+      setTeethType(patient.isPediatric ? "child" : "adult");
+    }
   };
 
-  const loadPatients = () => {
-    // Implementation of loadPatients function
+  const loadPatients = async () => {
+    try {
+      setIsLoading(true);
+      toast({
+        title: "Actualizando pacientes",
+        description: "Cargando lista de pacientes...",
+      });
+      
+      console.log("[DIAGNÓSTICO] Actualizando lista de pacientes...");
+      const patientsData = await patientService.getAll();
+      console.log("[DIAGNÓSTICO] Pacientes obtenidos correctamente:", patientsData.length);
+      setPatients(patientsData);
+      
+      // Aplicar filtro si hay query de búsqueda
+      if (searchQuery) {
+        const filtered = patientsData.filter(patient => 
+          `${patient.firstName} ${patient.lastName}`.toLowerCase().includes(searchQuery.toLowerCase())
+        );
+        setFilteredPatients(filtered);
+      } else {
+        setFilteredPatients(patientsData);
+      }
+      
+      toast({
+        title: "Pacientes actualizados",
+        description: `Se han cargado ${patientsData.length} pacientes`,
+      });
+    } catch (error) {
+      console.error("Error updating patients:", error);
+      toast({
+        title: "Error",
+        description: "No se pudieron actualizar los pacientes",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const saveTeethConditions = async () => {
@@ -631,7 +700,7 @@ const Odontogram = () => {
               </ToggleGroupItem>
               <ToggleGroupItem value="child" aria-label="Dientes de niño">
                 <Baby className="h-4 w-4 mr-2" />
-                Niño
+                Pediátrico
               </ToggleGroupItem>
             </ToggleGroup>
           </div>
@@ -644,10 +713,20 @@ const Odontogram = () => {
             <CardTitle>
               <div className="flex items-center gap-2">
                 <User className="h-5 w-5" />
-                Odontograma de {selectedPatient.firstName} {selectedPatient.lastName}
+                {currentPatient ? (
+                  <>Odontograma de {currentPatient.firstName} {currentPatient.lastName}</>
+                ) : (
+                  <>Odontograma de Paciente</>
+                )}
               </div>
             </CardTitle>
-            <CardDescription>Haga clic en un diente para registrar su condición</CardDescription>
+            <CardDescription>
+              {currentPatient?.isPediatric ? (
+                <>Odontograma pediátrico - Haga clic en un diente para registrar su condición</>
+              ) : (
+                <>Haga clic en un diente para registrar su condición</>
+              )}
+            </CardDescription>
           </CardHeader>
           <CardContent>
             {isLoading ? (
