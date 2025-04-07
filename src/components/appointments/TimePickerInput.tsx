@@ -2,10 +2,12 @@ import React from 'react';
 import { Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 
 interface TimePickerInputProps {
@@ -23,66 +25,127 @@ export function TimePickerInput({
   placeholder = "Seleccionar hora",
   disabled = false,
 }: TimePickerInputProps) {
-  // Formatear la hora para visualización
-  const formatDisplayTime = (timeValue: string): string => {
-    if (!timeValue) return "";
+  // Extraer hora, minutos y período del valor actual
+  const parseTime = () => {
+    if (!value) return { hour: "09", minute: "00", period: "AM" };
     
     try {
-      const [hours, minutes] = timeValue.split(':').map(num => parseInt(num, 10));
-      const period = hours >= 12 ? 'PM' : 'AM';
-      const hour12 = hours % 12 === 0 ? 12 : hours % 12;
+      const [hoursStr, minutesStr] = value.split(':');
+      const hours = parseInt(hoursStr);
       
-      return `${hour12}:${minutes.toString().padStart(2, '0')} ${period}`;
+      let hour = hours;
+      if (hours > 12) hour = hours - 12;
+      if (hours === 0) hour = 12;
+      
+      const period = hours >= 12 ? "PM" : "AM";
+      
+      return {
+        hour: hour.toString().padStart(2, '0'),
+        minute: minutesStr,
+        period
+      };
     } catch (e) {
-      return timeValue;
+      return { hour: "09", minute: "00", period: "AM" };
     }
   };
   
-  // Horas más comunes en clínicas dentales
-  const commonTimes = [
-    { label: "8:00 AM", value: "08:00" },
-    { label: "9:00 AM", value: "09:00" },
-    { label: "10:00 AM", value: "10:00" },
-    { label: "11:00 AM", value: "11:00" },
-    { label: "12:00 PM", value: "12:00" },
-    { label: "1:00 PM", value: "13:00" },
-    { label: "2:00 PM", value: "14:00" },
-    { label: "3:00 PM", value: "15:00" },
-    { label: "4:00 PM", value: "16:00" },
-    { label: "5:00 PM", value: "17:00" },
-    { label: "6:00 PM", value: "18:00" },
+  const { hour, minute, period } = parseTime();
+  
+  // Actualizar el valor cuando cambia cualquier parte
+  const updateTime = (type: 'hour' | 'minute' | 'period', newValue: string) => {
+    const current = parseTime();
+    
+    // Actualizar el valor correspondiente
+    if (type === 'hour') current.hour = newValue;
+    if (type === 'minute') current.minute = newValue;
+    if (type === 'period') current.period = newValue;
+    
+    // Convertir a formato 24 horas
+    let hours = parseInt(current.hour);
+    if (current.period === 'PM' && hours < 12) hours += 12;
+    if (current.period === 'AM' && hours === 12) hours = 0;
+    
+    const timeString = `${hours.toString().padStart(2, '0')}:${current.minute}`;
+    onChange(timeString);
+  };
+  
+  // Opciones para los selectores
+  const hourOptions = ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"];
+  const minuteOptions = ["00", "15", "30", "45"];
+  const periodOptions = ["AM", "PM"];
+  
+  // Atajos de horarios comunes
+  const timePresets = [
+    { label: "9AM", value: "09:00" },
+    { label: "12PM", value: "12:00" },
+    { label: "5PM", value: "17:00" }
   ];
   
   return (
-    <Popover>
-      <PopoverTrigger asChild>
-        <Button
-          variant="outline"
-          className={cn(
-            "w-full justify-start text-left",
-            !value && "text-muted-foreground",
-            className
-          )}
+    <div className="flex items-center space-x-2">
+      <div className="flex items-center space-x-1">
+        <Select
+          value={hour}
+          onValueChange={(val) => updateTime('hour', val)}
           disabled={disabled}
         >
-          <Clock className="mr-2 h-4 w-4" />
-          {value ? formatDisplayTime(value) : placeholder}
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-[240px] p-0" align="start">
-        <div className="grid grid-cols-2 gap-2 p-3">
-          {commonTimes.map((time) => (
-            <Button
-              key={time.value}
-              variant={value === time.value ? "default" : "outline"}
-              className="h-8 text-sm"
-              onClick={() => onChange(time.value)}
-            >
-              {time.label}
-            </Button>
-          ))}
-        </div>
-      </PopoverContent>
-    </Popover>
+          <SelectTrigger className="w-[60px] h-9">
+            <SelectValue placeholder={hour} />
+          </SelectTrigger>
+          <SelectContent>
+            {hourOptions.map((h) => (
+              <SelectItem key={h} value={h}>{h}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        
+        <span>:</span>
+        
+        <Select
+          value={minute}
+          onValueChange={(val) => updateTime('minute', val)}
+          disabled={disabled}
+        >
+          <SelectTrigger className="w-[60px] h-9">
+            <SelectValue placeholder={minute} />
+          </SelectTrigger>
+          <SelectContent>
+            {minuteOptions.map((m) => (
+              <SelectItem key={m} value={m}>{m}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        
+        <Select
+          value={period}
+          onValueChange={(val) => updateTime('period', val)}
+          disabled={disabled}
+        >
+          <SelectTrigger className="w-[70px] h-9">
+            <SelectValue placeholder={period} />
+          </SelectTrigger>
+          <SelectContent>
+            {periodOptions.map((p) => (
+              <SelectItem key={p} value={p}>{p}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+      
+      <div className="flex space-x-1">
+        {timePresets.map((preset) => (
+          <Button
+            key={preset.label}
+            variant="outline"
+            size="sm"
+            className="h-9"
+            onClick={() => onChange(preset.value)}
+            disabled={disabled}
+          >
+            {preset.label}
+          </Button>
+        ))}
+      </div>
+    </div>
   );
 } 
