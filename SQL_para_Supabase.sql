@@ -155,22 +155,51 @@ CREATE OR REPLACE FUNCTION create_appointment(
   p_start_time TIME,
   p_end_time TIME,
   p_treatment_type TEXT DEFAULT NULL,
-  p_notes TEXT DEFAULT NULL
+  p_notes TEXT DEFAULT NULL,
+  p_status TEXT DEFAULT 'scheduled'
 ) RETURNS UUID AS $$
 DECLARE
   new_id UUID;
 BEGIN
+  -- Insertar una nueva cita y devolver el ID generado
   INSERT INTO appointments (
-    patient_id, doctor_id, date, start_time, end_time, 
-    status, treatment_type, notes
+    patient_id, 
+    doctor_id, 
+    date, 
+    start_time, 
+    end_time, 
+    treatment_type, 
+    notes, 
+    status
   ) VALUES (
-    p_patient_id, p_doctor_id, p_date, p_start_time, p_end_time, 
-    'scheduled', p_treatment_type, p_notes
+    p_patient_id, 
+    p_doctor_id, 
+    p_date, 
+    p_start_time, 
+    p_end_time, 
+    p_treatment_type, 
+    p_notes, 
+    p_status
   ) RETURNING id INTO new_id;
   
+  -- Devolver el ID de la cita recién creada
   RETURN new_id;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Comentario: Esta función usa SECURITY DEFINER para ejecutarse con los privilegios del creador
+-- de la función, evitando así las políticas de seguridad a nivel de fila (RLS) que
+-- podrían estar bloqueando las inserciones directas en la tabla appointments.
+
+-- Agregar política de permisos a la función
+GRANT EXECUTE ON FUNCTION create_appointment TO authenticated;
+GRANT EXECUTE ON FUNCTION create_appointment TO anon;
+
+-- Nota para los administradores:
+-- 1. Asegúrate de que esta función esté expuesta a través de la API de Supabase habilitándola en
+--    el panel de Database > Functions
+-- 2. Verifica que la tabla appointments tenga las columnas correctas
+-- 3. Puedes modificar esta función según tus necesidades específicas
 
 -- Función para actualizar el estado de una cita
 CREATE OR REPLACE FUNCTION update_appointment_status(

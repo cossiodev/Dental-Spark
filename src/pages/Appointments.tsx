@@ -107,8 +107,9 @@ const Appointments = () => {
   } = useQuery({
     queryKey: ["appointments"],
     queryFn: () => appointmentService.getAll(),
-    refetchOnWindowFocus: false,
-    refetchInterval: 10000, // Refrescar automáticamente cada 10 segundos
+    refetchOnWindowFocus: true,
+    refetchInterval: 5000, // Refrescar automáticamente cada 5 segundos
+    retry: 3
   });
 
   // Filter appointments based on selected tab
@@ -234,24 +235,33 @@ const Appointments = () => {
       });
       setOpen(false);
       
-      // Forzar recarga inmediata de la lista de citas
-      await refetchAppointments();
-      
-      // Agregar la cita manualmente a la lista si no aparece por alguna razón
-      if (newAppointment && newAppointment.id !== 'pending') {
-        // Verificar el estado actual de la pestaña
-        const today = new Date().toISOString().split("T")[0];
+      // Configurar múltiples intentos de recarga para asegurar que aparezca la cita
+      const reloadAppointments = async () => {
+        console.log("Iniciando secuencia de recarga de citas");
         
-        // Si la cita es para hoy y no estamos en la pestaña de hoy, cambiar a la pestaña de hoy
-        if (formattedDate === today && selectedTab !== "today") {
-          setSelectedTab("today");
-        } else {
-          // Intentar volver a cargar después de un breve retraso
-          setTimeout(() => {
-            refetchAppointments();
-            console.log("Recarga adicional de citas después de la creación");
-          }, 1000);
-        }
+        // Inmediatamente después de crear la cita
+        await refetchAppointments();
+        console.log("Primera recarga de citas completada");
+        
+        // Recargar citas después de 1 segundo
+        setTimeout(async () => {
+          await refetchAppointments();
+          console.log("Segunda recarga de citas después de 1 segundo");
+          
+          // Recargar citas después de 3 segundos
+          setTimeout(async () => {
+            await refetchAppointments();
+            console.log("Tercera recarga de citas después de 3 segundos");
+          }, 2000);
+        }, 1000);
+      };
+      
+      reloadAppointments();
+      
+      // Si la cita es para hoy, asegurarse de mostrar la pestaña "hoy"
+      const today = new Date().toISOString().split("T")[0];
+      if (formattedDate === today && selectedTab !== "today") {
+        setSelectedTab("today");
       }
     } catch (error) {
       console.error("Error creating appointment:", error);

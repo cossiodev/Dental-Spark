@@ -253,113 +253,53 @@ export const appointmentService = {
       
       console.log('Datos formateados para Supabase:', appointmentData);
       
-      // Primero insertar sin select para evitar el error de seguridad de fila
-      const { data: insertedData, error: insertError } = await supabase
-        .from('appointments')
-        .insert(appointmentData)
-        .select('id'); // Solo seleccionar el ID para confirmar la inserción
+      // Usar la función RPC 'create_appointment' definida en Supabase 
+      const { data, error } = await supabase.rpc('create_appointment', {
+        p_patient_id: appointmentData.patient_id,
+        p_doctor_id: appointmentData.doctor_id,
+        p_date: appointmentData.date as string,
+        p_start_time: appointmentData.start_time,
+        p_end_time: appointmentData.end_time,
+        p_treatment_type: appointmentData.treatment_type,
+        p_notes: appointmentData.notes,
+        p_status: appointmentData.status
+      });
 
-      if (insertError) {
-        console.error('Error al crear cita en Supabase:', insertError);
-        throw new Error(`Error al crear cita: ${insertError.message}`);
+      if (error) {
+        console.error('Error al crear cita en Supabase:', error);
+        throw new Error(`Error al crear cita: ${error.message}`);
       }
       
-      if (!insertedData || insertedData.length === 0) {
-        console.error('No se devolvió ID después de crear la cita');
+      // La función RPC debe devolver el ID de la cita creada
+      if (!data) {
+        console.error('No se recibió ID después de crear la cita');
         throw new Error('No se pudo crear la cita');
       }
       
-      const newAppointmentId = insertedData[0].id;
+      const newAppointmentId = data;
       console.log('Cita creada con ID:', newAppointmentId);
       
-      // Esperar un momento para que la BD procese la inserción
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // Breve espera para asegurar que la BD haya procesado completamente la inserción
+      await new Promise(resolve => setTimeout(resolve, 1000));
       
-      // Luego consultar los datos completos de la cita recién creada por su ID
-      const { data: appointmentDetail, error: selectError } = await supabase
-        .from('appointments')
-        .select(`
-          *,
-          doctors (
-            first_name,
-            last_name
-          ),
-          patients (
-            first_name,
-            last_name
-          )
-        `)
-        .eq('id', newAppointmentId)
-        .single();
-
-      if (selectError) {
-        console.error('Error al obtener los detalles de la cita recién creada:', selectError);
-        // Como ya tenemos el ID, podemos construir un objeto básico de respuesta
-        return {
-          id: newAppointmentId,
-          patientId: appointment.patientId,
-          doctorId: appointment.doctorId,
-          patientName: 'Paciente',
-          doctorName: 'Doctor',
-          date: formattedDate as string,
-          startTime: appointment.startTime,
-          endTime: appointment.endTime,
-          status: appointment.status || 'scheduled',
-          notes: appointment.notes || '',
-          treatmentType: appointment.treatmentType || ''
-        };
-      }
-
-      if (!appointmentDetail) {
-        console.log('No se encontró la cita recién creada, pero se creó exitosamente con ID:', newAppointmentId);
-        // Proporcionar datos básicos usando el ID real
-        return {
-          id: newAppointmentId,
-          patientId: appointment.patientId,
-          doctorId: appointment.doctorId,
-          patientName: 'Paciente',
-          doctorName: 'Doctor',
-          date: formattedDate as string,
-          startTime: appointment.startTime,
-          endTime: appointment.endTime,
-          status: appointment.status || 'scheduled',
-          notes: appointment.notes || '',
-          treatmentType: appointment.treatmentType || ''
-        };
-      }
-
-      console.log('Cita creada exitosamente en Supabase, detalles completos:', appointmentDetail);
-      
-      // Verificar que los datos relacionados existan
-      const hasPatient = appointmentDetail.patients && 
-                       appointmentDetail.patients.first_name && 
-                       appointmentDetail.patients.last_name;
-      
-      const hasDoctor = appointmentDetail.doctors && 
-                      appointmentDetail.doctors.first_name && 
-                      appointmentDetail.doctors.last_name;
-      
-      // Transformar los datos al formato que espera la aplicación
-      const result = {
-        id: appointmentDetail.id,
-        patientId: appointmentDetail.patient_id,
-        patientName: hasPatient 
-          ? `${appointmentDetail.patients.first_name} ${appointmentDetail.patients.last_name}`
-          : 'Paciente',
-        doctorId: appointmentDetail.doctor_id,
-        doctorName: hasDoctor 
-          ? `${appointmentDetail.doctors.first_name} ${appointmentDetail.doctors.last_name}`
-          : 'Doctor',
-        date: appointmentDetail.date,
-        startTime: appointmentDetail.start_time,
-        endTime: appointmentDetail.end_time,
-        status: appointmentDetail.status,
-        notes: appointmentDetail.notes || '',
-        treatmentType: appointmentDetail.treatment_type || '',
+      // Construir respuesta usando los datos que ya tenemos
+      // Esto evita tener que hacer una consulta adicional que podría fallar por permisos
+      const createdAppointment = {
+        id: newAppointmentId,
+        patientId: appointment.patientId,
+        doctorId: appointment.doctorId,
+        patientName: 'Cargando...',  // Se actualizará cuando se recargue la lista
+        doctorName: 'Cargando...',   // Se actualizará cuando se recargue la lista
+        date: formattedDate as string,
+        startTime: appointment.startTime,
+        endTime: appointment.endTime,
+        status: appointment.status || 'scheduled',
+        notes: appointment.notes || '',
+        treatmentType: appointment.treatmentType || ''
       };
       
-      console.log('Cita creada y formateada para la aplicación:', result);
-      return result;
+      console.log('Datos de la cita creada:', createdAppointment);
+      return createdAppointment;
     } catch (error) {
       console.error('Error al crear cita:', error);
       // Re-lanzar el error para manejo adecuado en el componente
