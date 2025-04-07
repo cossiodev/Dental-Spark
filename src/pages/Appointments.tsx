@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { CalendarIcon, Clock, PlusCircle, Edit, Trash2 } from "lucide-react";
+import { CalendarIcon, Clock, PlusCircle, Edit, Trash2, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 // UI Components
@@ -905,95 +905,80 @@ const Appointments = () => {
             <TabsTrigger value="tomorrow">Mañana</TabsTrigger>
             <TabsTrigger value="upcoming">Próximas</TabsTrigger>
           </TabsList>
+          
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => refetchAppointments()}>
+              <RefreshCw className="mr-2 h-4 w-4" />
+              Actualizar Lista
+            </Button>
+          </div>
         </div>
         
-        {/* Combined content for all tabs */}
-        <Card className="border shadow">
-          <CardHeader className="py-3 px-4 flex flex-row items-center justify-between space-y-0">
-            <div>
-              <CardTitle className="text-xl font-semibold">{selectedTab === "today" ? "Citas de Hoy" : selectedTab === "tomorrow" ? "Citas de Mañana" : "Próximas Citas"}</CardTitle>
-              <CardDescription>
-                {isLoadingAppointments ? "Cargando citas..." : 
-                  filteredAppointments.length > 0 
-                    ? `Mostrando ${filteredAppointments.length} citas`
-                    : "No hay citas programadas en este período"
-                }
-              </CardDescription>
-            </div>
-            <div className="flex space-x-2">
-              {filteredAppointments.length > 0 && (
-                <Button variant="outline" onClick={() => setOpen(true)} className="h-9">
-                  <PlusCircle className="mr-2 h-4 w-4" />
-                  Nueva Cita
-                </Button>
-              )}
-            </div>
-          </CardHeader>
+        <Card>
           <CardContent className="p-0">
             {isLoadingAppointments ? (
               <div className="flex justify-center py-8">
                 <p>Cargando citas...</p>
               </div>
             ) : filteredAppointments.length > 0 ? (
-              <div className="overflow-x-auto" style={{ width: '100%' }}>
-                <table className="w-full">
-                  <thead>
-                    <tr>
-                      <th className="p-2 text-left font-medium">Paciente</th>
-                      <th className="p-2 text-left font-medium">Doctor</th>
-                      <th className="p-2 text-left font-medium">Fecha</th>
-                      <th className="p-2 text-left font-medium">Hora</th>
-                      <th className="p-2 text-left font-medium">Tipo</th>
-                      <th className="p-2 text-left font-medium">Estado</th>
-                      <th className="p-2 text-right font-medium">Acciones</th>
-                    </tr>
-                  </thead>
-                  <tbody>
+              <div className="relative w-full overflow-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Paciente</TableHead>
+                      <TableHead>Doctor</TableHead>
+                      <TableHead>Fecha</TableHead>
+                      <TableHead>Hora</TableHead>
+                      <TableHead>Tipo</TableHead>
+                      <TableHead>Estado</TableHead>
+                      <TableHead className="text-right">Acciones</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
                     {filteredAppointments.map((appointment) => (
-                      <tr key={appointment.id} className="border-t hover:bg-gray-50">
-                        <td className="p-2 font-medium">{appointment.patientName || appointment.patientId}</td>
-                        <td className="p-2">{appointment.doctorName || appointment.doctorId}</td>
-                        <td className="p-2">{formatDisplayDate(appointment.date)}</td>
-                        <td className="p-2">{appointment.startTime} - {appointment.endTime}</td>
-                        <td className="p-2">{appointment.treatmentType ? 
+                      <TableRow 
+                        key={appointment.id} 
+                        className="cursor-pointer hover:bg-muted/60"
+                      >
+                        <TableCell className="font-medium">{appointment.patientName || appointment.patientId}</TableCell>
+                        <TableCell>{appointment.doctorName || appointment.doctorId}</TableCell>
+                        <TableCell>{formatDisplayDate(appointment.date)}</TableCell>
+                        <TableCell>{appointment.startTime} - {appointment.endTime}</TableCell>
+                        <TableCell>{appointment.treatmentType ? 
                             appointment.treatmentType === "consultation" ? "Consulta" :
                             appointment.treatmentType === "cleaning" ? "Limpieza" :
                             appointment.treatmentType === "filling" ? "Empaste" :
                             appointment.treatmentType === "extraction" ? "Extracción" :
                             appointment.treatmentType === "rootcanal" ? "Endodoncia" :
                             appointment.treatmentType === "orthodontics" ? "Ortodoncia" : appointment.treatmentType
-                          : "-"}</td>
-                        <td className="p-2">
-                          <span
-                            className={`inline-block px-2 py-1 rounded-md text-xs ${getStatusColor(
-                              appointment.status
-                            )}`}
-                          >
+                          : "-"}</TableCell>
+                        <TableCell>
+                          <Badge variant="secondary">
                             {getStatusText(appointment.status)}
-                          </span>
-                        </td>
-                        <td className="p-2 text-right">
-                          <div className="flex justify-end space-x-3">
-                            <button
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-2">
+                            <Button
+                              size="icon"
+                              variant="ghost"
                               onClick={() => handleEditAppointment(appointment)}
-                              className="text-blue-600 hover:text-blue-800"
-                              title="Editar cita"
                             >
                               <Edit className="h-4 w-4" />
-                            </button>
-                            <button
+                            </Button>
+                            <Button
+                              size="icon"
+                              variant="ghost"
                               onClick={() => handleDeleteAppointment(appointment.id)}
-                              className="text-red-600 hover:text-red-800"
-                              title="Eliminar cita"
                             >
                               <Trash2 className="h-4 w-4" />
-                            </button>
+                            </Button>
                           </div>
-                        </td>
-                      </tr>
+                        </TableCell>
+                      </TableRow>
                     ))}
-                  </tbody>
-                </table>
+                  </TableBody>
+                </Table>
               </div>
             ) : (
               <div className="flex flex-col items-center justify-center py-8 text-center">
