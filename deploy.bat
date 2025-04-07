@@ -3,17 +3,19 @@ echo ===== DESPLIEGUE AUTOMATICO VIA GITHUB =====
 echo.
 echo Las actualizaciones se desplegaran automaticamente tras push a GitHub
 
+rem Limpiar cache y carpeta dist
+echo Limpiando cache y carpeta dist...
+if exist "node_modules\.vite" rmdir /s /q node_modules\.vite
+if exist "dist" rmdir /s /q dist
+
 rem Agregar cambios
 echo Agregando cambios al stage...
 git add .
 
-rem Crear commit
-echo Creando commit con los cambios...
+rem Auto-pushing cambios a GitHub
+echo Auto-pushing cambios a GitHub...
 git commit -m "Actualizacion produccion %date% %time%"
-
-rem Push a GitHub
-echo Enviando cambios a GitHub...
-git push origin master
+git push
 
 echo.
 echo Cambios enviados con exito!
