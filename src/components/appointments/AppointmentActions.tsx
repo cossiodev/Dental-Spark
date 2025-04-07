@@ -89,13 +89,13 @@ export function AppointmentActions({
   };
 
   return (
-    <div className="flex justify-center items-center gap-2">
+    <div className="flex justify-center items-center gap-2 flex-wrap">
       {/* Botones principales con etiquetas de texto */}
       <Button 
         variant="outline" 
         size="sm" 
         onClick={handleEditClick}
-        className="flex items-center gap-1 bg-blue-50 hover:bg-blue-100 border-blue-200 text-blue-800 w-24 h-9"
+        className="flex items-center gap-1 bg-blue-50 hover:bg-blue-100 border-blue-200 text-blue-800 w-28 h-9"
       >
         <Edit className="h-4 w-4" />
         <span>Editar</span>

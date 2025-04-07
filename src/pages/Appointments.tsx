@@ -59,24 +59,40 @@ const formatDisplayDate = (dateString: string) => {
     
     // Asegurar que la fecha esté en formato YYYY-MM-DD antes de parsear
     const normalizedDate = dateString.trim().split('T')[0];
-    console.log(`Formateando fecha para mostrar: "${normalizedDate}"`);
+    console.log(`⚠️ Formateando fecha para mostrar: "${normalizedDate}"`);
     
-    // Crear objeto de fecha con timezone local para evitar problemas
+    // Crear fecha como UTC para evitar problemas de timezone
     const [year, month, day] = normalizedDate.split('-').map(Number);
     
-    // Meses en JavaScript son 0-indexed (0=enero, 1=febrero, etc.)
-    const date = new Date(year, month - 1, day);
+    // Crear una fecha UTC pero ajustada para mostrar correctamente
+    // Esto evita problemas donde la fecha se ajusta por timezone y se muestra un día antes
+    const date = new Date(Date.UTC(year, month - 1, day));
+    
+    console.log(`⚠️ Fecha después de parsear: ${date.toISOString()}`);
     
     // Verificar que la fecha es válida
     if (isNaN(date.getTime())) {
-      console.error(`Fecha inválida: "${normalizedDate}"`);
+      console.error(`⚠️ Fecha inválida: "${normalizedDate}"`);
       return normalizedDate; // Devolver el string original si no se puede parsear
     }
     
-    // Aplicar formato localizado
-    return format(date, "PPP", { locale: es });
+    // Mostrar fecha como aparece en Supabase, sin conversión de zona horaria
+    return `${day} de ${
+      month === 1 ? 'enero' :
+      month === 2 ? 'febrero' :
+      month === 3 ? 'marzo' :
+      month === 4 ? 'abril' :
+      month === 5 ? 'mayo' :
+      month === 6 ? 'junio' :
+      month === 7 ? 'julio' :
+      month === 8 ? 'agosto' :
+      month === 9 ? 'septiembre' :
+      month === 10 ? 'octubre' :
+      month === 11 ? 'noviembre' :
+      'diciembre'
+    } de ${year}`;
   } catch (error) {
-    console.error(`Error al formatear fecha "${dateString}":`, error);
+    console.error(`⚠️ Error al formatear fecha "${dateString}":`, error);
     return dateString || 'Sin fecha';
   }
 };
@@ -785,7 +801,7 @@ const Appointments = () => {
                       <TableHead>Hora</TableHead>
                       <TableHead>Tipo</TableHead>
                       <TableHead>Estado</TableHead>
-                      <TableHead className="text-center w-[250px]">Acciones</TableHead>
+                      <TableHead className="text-center w-[280px]">Acciones</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -811,15 +827,13 @@ const Appointments = () => {
                         <TableCell>
                           <StatusBadge status={appointment.status} />
                         </TableCell>
-                        <TableCell className="p-0 text-center">
-                          <div className="flex justify-center items-center">
-                            <AppointmentActions 
-                              appointment={appointment}
-                              onEdit={handleEditAppointment}
-                              onDelete={handleDeleteAppointment}
-                              onStatusChange={handleStatusChange}
-                            />
-                          </div>
+                        <TableCell className="p-2 text-center">
+                          <AppointmentActions 
+                            appointment={appointment}
+                            onEdit={handleEditAppointment}
+                            onDelete={handleDeleteAppointment}
+                            onStatusChange={handleStatusChange}
+                          />
                         </TableCell>
                       </TableRow>
                     ))}
