@@ -297,14 +297,14 @@ export function AppointmentForm({
                   return false;
                 }}
                 classNames={{
-                  day_selected: "bg-primary text-primary-foreground focus:bg-primary focus:text-primary-foreground",
+                  day_selected: "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground",
                   day_today: "bg-accent text-accent-foreground",
-                  day: "h-9 w-9 p-0 font-normal text-slate-700",
-                  head_cell: "text-slate-500 font-medium text-[0.8rem]",
-                  table: "border-collapse space-y-1 bg-white",
-                  row: "flex w-full mt-1",
-                  cell: "text-center text-sm p-0 relative",
-                  caption: "flex justify-center py-1 items-center",
+                  day: "h-9 w-9 font-normal text-slate-700 p-0 aria-selected:opacity-100 hover:bg-slate-100 rounded-md flex items-center justify-center",
+                  head_cell: "text-slate-500 font-medium text-[0.8rem] w-9 h-9 flex items-center justify-center",
+                  table: "border-collapse w-full",
+                  row: "flex w-full justify-between",
+                  cell: "p-0 relative flex items-center justify-center",
+                  caption: "flex justify-center py-2 px-4 items-center",
                   caption_label: "text-sm font-medium",
                   nav_button: "h-7 w-7 bg-transparent p-0 opacity-75 hover:opacity-100",
                   day_outside: "text-slate-300"
