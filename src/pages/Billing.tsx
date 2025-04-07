@@ -264,9 +264,9 @@ const Billing = () => {
                   <SelectValue placeholder="Ver todas las facturas" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Ver todas las facturas</SelectItem>
+                  <SelectItem value="all-invoices">Ver todas las facturas</SelectItem>
                   {patients.map((patient) => (
-                    <SelectItem key={patient.id} value={patient.id}>
+                    <SelectItem key={patient.id} value={patient.id || `patient-${patient.firstName}-${patient.lastName}`}>
                       {patient.firstName} {patient.lastName}
                     </SelectItem>
                   ))}
@@ -360,11 +360,15 @@ const Billing = () => {
                     <SelectValue placeholder="Seleccione un paciente" />
                   </SelectTrigger>
                   <SelectContent>
-                    {patients.map((patient) => (
-                      <SelectItem key={patient.id} value={patient.id}>
-                        {patient.firstName} {patient.lastName}
-                      </SelectItem>
-                    ))}
+                    {patients.length > 0 ? (
+                      patients.map((patient) => (
+                        <SelectItem key={patient.id} value={patient.id || `patient-${patient.firstName}-${patient.lastName}`}>
+                          {patient.firstName} {patient.lastName}
+                        </SelectItem>
+                      ))
+                    ) : (
+                      <SelectItem value="no-patients">No hay pacientes disponibles</SelectItem>
+                    )}
                   </SelectContent>
                 </Select>
               </div>
