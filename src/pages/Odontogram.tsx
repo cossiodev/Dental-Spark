@@ -1172,7 +1172,11 @@ const Odontogram = () => {
             <CardTitle>
               <div className="flex items-center gap-2">
                 <User className="h-5 w-5" />
-                Odontograma
+                {currentPatient ? (
+                  <>Odontograma de {currentPatient.firstName} {currentPatient.lastName}</>
+                ) : (
+                  <>Odontograma</>
+                )}
               </div>
             </CardTitle>
             <CardDescription>
