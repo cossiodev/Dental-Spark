@@ -921,7 +921,7 @@ const Appointments = () => {
                       <th className="p-2 border-b w-1/6 text-left">Fecha</th>
                       <th className="p-2 border-b w-1/6 text-left">Hora</th>
                       <th className="p-2 border-b w-1/6 text-left">Tipo</th>
-                      <th className="p-2 border-b w-1/6 text-left">Estado</th>
+                      <th className="p-2 border-b w-1/6 text-left">Estado / Acciones</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -941,31 +941,35 @@ const Appointments = () => {
                             appointment.treatmentType === "orthodontics" ? "Ortodoncia" : "Otro"
                           : "-"}
                         </td>
-                        <td className="p-2 border-b">
+                        <td className="p-2">
                           <div className="flex items-center">
                             <span
-                              className={`px-2 py-1 rounded text-sm ${getStatusColor(
+                              className={`px-2 py-1 rounded text-xs ${getStatusColor(
                                 appointment.status
                               )}`}
                             >
                               {getStatusText(appointment.status)}
                             </span>
-                            <div className="flex ml-2">
-                              <button
-                                onClick={() => handleEditAppointment(appointment)}
-                                className="p-1 text-blue-600 hover:text-blue-800 mr-1"
-                                title="Editar cita"
-                              >
-                                <Edit className="h-4 w-4" />
-                              </button>
-                              <button
-                                onClick={() => handleDeleteAppointment(appointment.id)}
-                                className="p-1 text-red-600 hover:text-red-800"
-                                title="Eliminar cita"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </button>
-                            </div>
+                            {userPermissions.canEdit && (
+                              <div className="flex ml-2">
+                                <button
+                                  onClick={() => handleEditAppointment(appointment)}
+                                  className="p-1 text-blue-600 hover:text-blue-800 mr-1"
+                                  title="Editar cita"
+                                >
+                                  <Edit className="h-4 w-4" />
+                                </button>
+                                {userPermissions.canDelete && (
+                                  <button
+                                    onClick={() => handleDeleteAppointment(appointment.id)}
+                                    className="p-1 text-red-600 hover:text-red-800"
+                                    title="Eliminar cita"
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </button>
+                                )}
+                              </div>
+                            )}
                           </div>
                         </td>
                       </tr>
