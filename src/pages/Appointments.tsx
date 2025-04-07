@@ -652,12 +652,6 @@ const Appointments = () => {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Citas</h1>
           <p className="text-muted-foreground">Gestiona las citas de los pacientes en el sistema.</p>
-          {userPermissions.checked && (
-            <div className={`mt-2 p-2 rounded-md ${userPermissions.canEdit && userPermissions.canDelete ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
-              <p>Usuario: {userPermissions.userEmail || 'No identificado'}</p>
-              <p>Permisos: {userPermissions.canEdit ? '✅ Editar' : '❌ No puede editar'} | {userPermissions.canDelete ? '✅ Eliminar' : '❌ No puede eliminar'}</p>
-            </div>
-          )}
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
