@@ -156,44 +156,51 @@ export const appointmentService = {
 
   getAll: async (): Promise<Appointment[]> => {
     try {
-      console.log('Obteniendo todas las citas...');
-      // Consulta simplificada sin relaciones para evitar errores de relación entre tablas
+      console.log('Obteniendo todas las citas usando RPC...');
+      
+      // Usar la función RPC en lugar de una consulta directa a la tabla
       const { data, error } = await supabase
-        .from('appointments')
-        .select('*')
-        .order('date', { ascending: true });
+        .rpc('get_all_appointments');
 
       if (error) {
-        console.error('Error al obtener citas:', error);
+        console.error('Error al obtener citas usando RPC:', error);
         console.warn('Devolviendo datos de muestra debido a error de conexión');
         return SAMPLE_APPOINTMENTS;
       }
 
-      // Procesar los resultados manualmente
-      console.log(`Recuperadas ${data.length} citas de Supabase`);
+      // Procesar los resultados de la función
+      console.log(`Recuperadas ${data?.length || 0} citas de Supabase usando RPC`);
       
-      // Imprimir todas las fechas para debugging
-      data.forEach(item => {
-        console.log(`FECHA DB [${item.id}]: "${item.date}"`);
-      });
+      if (!data || data.length === 0) {
+        console.log('No se encontraron citas en la base de datos');
+        return [];
+      }
       
+      // Formatear los datos recibidos de la función RPC
       const appointments = data.map(item => {
-        // IMPORTANTE: Mantener la fecha exactamente como viene de Supabase
-        const originalDate = item.date;
-        console.log(`Procesando cita ID=${item.id}, fecha original="${originalDate}"`);
+        console.log(`Procesando cita ID=${item.id}, fecha="${item.date}"`);
+        
+        // Construir nombre completo de paciente y doctor
+        const patientName = item.patient_first_name && item.patient_last_name 
+          ? `${item.patient_first_name} ${item.patient_last_name}`
+          : 'Paciente no encontrado';
+          
+        const doctorName = item.doctor_first_name && item.doctor_last_name
+          ? `${item.doctor_first_name} ${item.doctor_last_name}`
+          : 'Doctor no encontrado';
         
         return {
           id: item.id,
           patientId: item.patient_id,
-          patientName: "Cargando...", // Se llenará después si es necesario
+          patientName: patientName,
           doctorId: item.doctor_id,
-          doctorName: "Cargando...", // Se llenará después si es necesario
-          date: originalDate, // Usar la fecha original sin conversiones
+          doctorName: doctorName,
+          date: item.date,
           startTime: item.start_time,
           endTime: item.end_time,
           status: item.status,
-          notes: item.notes,
-          treatmentType: item.treatment_type,
+          notes: item.notes || '',
+          treatmentType: item.treatment_type || '',
           createdAt: item.created_at
         } as Appointment;
       });

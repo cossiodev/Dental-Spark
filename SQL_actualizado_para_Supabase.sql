@@ -73,4 +73,52 @@ BEGIN
   -- Devolver el ID de la cita recién creada
   RETURN new_id;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER; 
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Función para obtener todas las citas sin usar relaciones directas
+CREATE OR REPLACE FUNCTION get_all_appointments()
+RETURNS TABLE (
+  id UUID,
+  patient_id UUID,
+  patient_first_name TEXT,
+  patient_last_name TEXT,
+  doctor_id UUID,
+  doctor_first_name TEXT,
+  doctor_last_name TEXT,
+  date DATE,
+  start_time TIME,
+  end_time TIME,
+  status TEXT,
+  notes TEXT,
+  treatment_type TEXT,
+  created_at TIMESTAMP WITH TIME ZONE
+) AS $$
+BEGIN
+  RETURN QUERY
+  SELECT 
+    a.id,
+    a.patient_id,
+    p.first_name AS patient_first_name,
+    p.last_name AS patient_last_name,
+    a.doctor_id,
+    d.first_name AS doctor_first_name,
+    d.last_name AS doctor_last_name,
+    a.date,
+    a.start_time,
+    a.end_time,
+    a.status,
+    a.notes,
+    a.treatment_type,
+    a.created_at
+  FROM 
+    appointments a
+  LEFT JOIN patients p ON a.patient_id = p.id
+  LEFT JOIN doctors d ON a.doctor_id = d.id
+  ORDER BY a.date, a.start_time;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Agregar permisos para ejecutar la función
+GRANT EXECUTE ON FUNCTION get_all_appointments() TO anon;
+GRANT EXECUTE ON FUNCTION get_all_appointments() TO authenticated;
+GRANT EXECUTE ON FUNCTION get_all_appointments() TO service_role; 
