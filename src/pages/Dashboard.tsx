@@ -105,6 +105,33 @@ const treatmentService = {
   getAll: async () => []
 };
 
+// Esta función convierte los datos reales de citas en estadísticas para el gráfico
+const calculateAppointmentStatsByStatus = (appointments: Appointment[]) => {
+  const statusCounts = {
+    scheduled: 0,
+    confirmed: 0,
+    completed: 0,
+    cancelled: 0,
+    "no-show": 0,
+  };
+  
+  // Contar citas por estado
+  appointments.forEach(appointment => {
+    if (appointment.status && statusCounts.hasOwnProperty(appointment.status)) {
+      statusCounts[appointment.status as keyof typeof statusCounts]++;
+    }
+  });
+  
+  // Convertir a formato requerido por el gráfico
+  return [
+    { name: "Programada", value: statusCounts.scheduled },
+    { name: "Confirmada", value: statusCounts.confirmed },
+    { name: "Completada", value: statusCounts.completed },
+    { name: "Cancelada", value: statusCounts.cancelled },
+    { name: "No asistió", value: statusCounts["no-show"] }
+  ].filter(item => item.value > 0); // Solo incluir estados con al menos una cita
+};
+
 const Dashboard = () => {
   const { toast } = useToast();
   const [todayAppointments, setTodayAppointments] = useState<any[]>([]);
@@ -139,13 +166,16 @@ const Dashboard = () => {
         }
         
         let todayAppointments: Appointment[] = [];
+        let allAppointments: Appointment[] = [];
         try {
           const today = format(new Date(), "yyyy-MM-dd");
           todayAppointments = await appointmentService.getByDateRange(today, today);
-          console.log(`Cargadas ${todayAppointments.length} citas para hoy`);
+          allAppointments = await appointmentService.getAll();
+          console.log(`Cargadas ${todayAppointments.length} citas para hoy y ${allAppointments.length} citas en total`);
         } catch (error) {
           console.error("Error cargando citas:", error);
           todayAppointments = [];
+          allAppointments = [];
         }
         
         // Datos estadísticos base o mock si hay error
@@ -195,8 +225,10 @@ const Dashboard = () => {
           setUnpaidInvoices([]);
         }
 
-        // Usar datos de ejemplo para estadísticas
-        setAppointmentStats(await statisticsService.getAppointmentsByStatus());
+        // Usar datos reales para estadísticas de citas
+        setAppointmentStats(calculateAppointmentStatsByStatus(allAppointments));
+        
+        // Usar datos de ejemplo para otras estadísticas
         setTreatmentStats(await statisticsService.getTreatmentsByType());
         setRevenueStats(await statisticsService.getMonthlyRevenue());
         setInventoryStats(await statisticsService.getInventoryByCategory());
@@ -351,27 +383,36 @@ const Dashboard = () => {
                 <CardDescription>Distribución de citas por estado</CardDescription>
               </CardHeader>
               <CardContent className="h-80">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={appointmentStats}
-                      cx="50%"
-                      cy="50%"
-                      labelLine={false}
-                      outerRadius={100}
-                      fill="#8884d8"
-                      dataKey="value"
-                      nameKey="name"
-                      label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                    >
-                      {appointmentStats.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                    <Legend />
-                  </PieChart>
-                </ResponsiveContainer>
+                {appointmentStats.length === 0 ? (
+                  <div className="flex h-full items-center justify-center">
+                    <p className="text-muted-foreground">No hay citas registradas en el sistema</p>
+                  </div>
+                ) : (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={appointmentStats}
+                        cx="50%"
+                        cy="50%"
+                        labelLine={true}
+                        outerRadius={100}
+                        fill="#8884d8"
+                        dataKey="value"
+                        nameKey="name"
+                        label={({ name, value, percent }) => `${name}: ${value} (${(percent * 100).toFixed(0)}%)`}
+                      >
+                        {appointmentStats.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                        ))}
+                      </Pie>
+                      <Tooltip formatter={(value, name) => [`${value} citas`, name]} />
+                      <Legend formatter={(value, entry) => {
+                        const { payload } = entry;
+                        return `${value}: ${payload.value} citas`;
+                      }} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                )}
               </CardContent>
             </Card>
 
