@@ -936,27 +936,31 @@ const Appointments = () => {
                           : "-"}
                         </td>
                         <td className="p-2">
-                          <div className="flex flex-col space-y-2">
-                            <StatusBadge status={appointment.status} />
-                            
-                            <div className="flex flex-row gap-2 mt-2">
+                          <div className="flex items-center space-x-2">
+                            <span
+                              className={`px-2 py-1 rounded text-xs ${getStatusColor(
+                                appointment.status
+                              )}`}
+                            >
+                              {getStatusText(appointment.status)}
+                            </span>
+                            <div className="flex space-x-1">
                               <Button 
                                 variant="outline" 
                                 size="sm" 
+                                className="h-8 px-2 text-blue-600"
                                 onClick={() => handleEditAppointment(appointment)}
-                                className="bg-blue-50 hover:bg-blue-100 border-blue-200 text-blue-800"
                               >
-                                <Edit className="h-4 w-4 mr-1" />
+                                <Edit className="h-3.5 w-3.5 mr-1" />
                                 Editar
                               </Button>
-                              
                               <Button 
                                 variant="outline" 
                                 size="sm" 
+                                className="h-8 px-2 text-red-600"
                                 onClick={() => handleDeleteAppointment(appointment.id)}
-                                className="bg-red-50 hover:bg-red-100 border-red-200 text-red-800"
                               >
-                                <Trash2 className="h-4 w-4 mr-1" />
+                                <Trash2 className="h-3.5 w-3.5 mr-1" />
                                 Eliminar
                               </Button>
                             </div>
