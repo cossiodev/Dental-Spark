@@ -77,8 +77,16 @@ export const appointmentService = {
 
   getByDateRange: async (startDate: string, endDate: string): Promise<Appointment[]> => {
     try {
-      console.log(`Intentando obtener citas entre ${startDate} y ${endDate}...`);
+      console.log(`Obteniendo citas entre ${startDate} y ${endDate}...`);
       
+      // Asegurarse de que las fechas estén en formato correcto
+      if (!startDate || !endDate) {
+        console.error('Fechas inválidas para búsqueda de citas');
+        throw new Error('Fechas inválidas para búsqueda de citas');
+      }
+      
+      // Consulta a Supabase con más trazas de depuración
+      console.log(`Ejecutando consulta a Supabase para fechas: ${startDate} - ${endDate}`);
       const { data: appointments, error } = await supabase
         .from('appointments')
         .select(`
@@ -97,36 +105,58 @@ export const appointmentService = {
 
       if (error) {
         console.error('Error al obtener citas por rango de fechas:', error);
-        // Devolver todas las citas de ejemplo (simulando el rango de fechas)
-        return SAMPLE_APPOINTMENTS;
+        throw new Error(`Error al obtener citas: ${error.message}`);
       }
 
-      const result = appointments.map(appointment => ({
-        id: appointment.id,
-        patientId: appointment.patient_id,
-        patientName: appointment.patients.first_name + ' ' + appointment.patients.last_name,
-        doctorId: appointment.doctor_id,
-        doctorName: appointment.doctors.first_name + ' ' + appointment.doctors.last_name,
-        date: appointment.date,
-        startTime: appointment.start_time,
-        endTime: appointment.end_time,
-        status: appointment.status,
-        notes: appointment.notes,
-        treatmentType: appointment.treatment_type,
-      }));
+      if (!appointments || appointments.length === 0) {
+        console.log(`No se encontraron citas entre ${startDate} y ${endDate}`);
+        return [];
+      }
+
+      console.log(`Se encontraron ${appointments.length} citas entre ${startDate} y ${endDate}`);
+      console.log('Datos crudos de citas:', appointments);
       
-      console.log(`Obtenidas ${result.length} citas en el rango de fechas`);
+      // Mapear los resultados al formato esperado por la aplicación
+      const result = appointments.map(appointment => {
+        // Verificar que los datos relacionados existan
+        const hasPatient = appointment.patients && 
+                          appointment.patients.first_name && 
+                          appointment.patients.last_name;
+        
+        const hasDoctor = appointment.doctors && 
+                         appointment.doctors.first_name && 
+                         appointment.doctors.last_name;
+        
+        return {
+          id: appointment.id,
+          patientId: appointment.patient_id,
+          patientName: hasPatient 
+            ? `${appointment.patients.first_name} ${appointment.patients.last_name}`
+            : 'Paciente no encontrado',
+          doctorId: appointment.doctor_id,
+          doctorName: hasDoctor 
+            ? `${appointment.doctors.first_name} ${appointment.doctors.last_name}`
+            : 'Doctor no encontrado',
+          date: appointment.date,
+          startTime: appointment.start_time,
+          endTime: appointment.end_time,
+          status: appointment.status,
+          notes: appointment.notes || '',
+          treatmentType: appointment.treatment_type || '',
+        };
+      });
+      
+      console.log(`Datos de citas procesados correctamente: ${result.length} citas`);
       return result;
     } catch (error) {
       console.error('Error al obtener citas por rango de fechas:', error);
-      // Devolver todas las citas de ejemplo
-      return SAMPLE_APPOINTMENTS;
+      throw error; // Re-lanzar el error para manejarlo en el componente
     }
   },
 
   getAll: async (): Promise<Appointment[]> => {
     try {
-      console.log('Intentando obtener todas las citas...');
+      console.log('Obteniendo todas las citas...');
       
       const { data: appointments, error } = await supabase
         .from('appointments')
@@ -140,51 +170,92 @@ export const appointmentService = {
             first_name,
             last_name
           )
-        `);
+        `)
+        .order('date', { ascending: true })
+        .order('start_time', { ascending: true });
 
       if (error) {
         console.error('Error al obtener todas las citas:', error);
-        return SAMPLE_APPOINTMENTS;
+        throw new Error(`Error al obtener citas: ${error.message}`);
       }
 
-      const result = appointments.map(appointment => ({
-        id: appointment.id,
-        patientId: appointment.patient_id,
-        patientName: appointment.patients.first_name + ' ' + appointment.patients.last_name,
-        doctorId: appointment.doctor_id,
-        doctorName: appointment.doctors.first_name + ' ' + appointment.doctors.last_name,
-        date: appointment.date,
-        startTime: appointment.start_time,
-        endTime: appointment.end_time,
-        status: appointment.status,
-        notes: appointment.notes,
-        treatmentType: appointment.treatment_type,
-      }));
+      if (!appointments || appointments.length === 0) {
+        console.log('No se encontraron citas en la base de datos');
+        return [];
+      }
+
+      console.log(`Se encontraron ${appointments.length} citas en total`);
       
-      console.log(`Obtenidas ${result.length} citas en total`);
+      // Mapear los resultados al formato esperado por la aplicación
+      const result = appointments.map(appointment => {
+        // Verificar que los datos relacionados existan
+        const hasPatient = appointment.patients && 
+                          appointment.patients.first_name && 
+                          appointment.patients.last_name;
+        
+        const hasDoctor = appointment.doctors && 
+                         appointment.doctors.first_name && 
+                         appointment.doctors.last_name;
+        
+        return {
+          id: appointment.id,
+          patientId: appointment.patient_id,
+          patientName: hasPatient 
+            ? `${appointment.patients.first_name} ${appointment.patients.last_name}`
+            : 'Paciente no encontrado',
+          doctorId: appointment.doctor_id,
+          doctorName: hasDoctor 
+            ? `${appointment.doctors.first_name} ${appointment.doctors.last_name}`
+            : 'Doctor no encontrado',
+          date: appointment.date,
+          startTime: appointment.start_time,
+          endTime: appointment.end_time,
+          status: appointment.status,
+          notes: appointment.notes || '',
+          treatmentType: appointment.treatment_type || '',
+        };
+      });
+      
+      console.log('Datos de citas procesados correctamente');
       return result;
     } catch (error) {
       console.error('Error al obtener todas las citas:', error);
-      return SAMPLE_APPOINTMENTS;
+      throw error; // Re-lanzar el error para manejarlo en el componente
     }
   },
 
-  create: async (appointment: Omit<Appointment, 'id' | 'doctorName'>): Promise<Appointment> => {
+  create: async (appointment: Omit<Appointment, 'id' | 'doctorName' | 'patientName'>): Promise<Appointment> => {
     try {
-      console.log('Intentando crear una nueva cita...');
+      console.log('Creando nueva cita con datos:', appointment);
+      
+      // Asegurarse de que todos los campos obligatorios estén presentes
+      if (!appointment.patientId || !appointment.doctorId || !appointment.date || !appointment.startTime || !appointment.endTime) {
+        console.error('Error al crear cita: Datos obligatorios faltantes');
+        throw new Error('Faltan datos obligatorios para crear la cita');
+      }
+      
+      // Formatear fecha si es necesario
+      let formattedDate = appointment.date;
+      if (appointment.date instanceof Date) {
+        formattedDate = appointment.date.toISOString().split('T')[0];
+      }
+      
+      const appointmentData = {
+        patient_id: appointment.patientId,
+        doctor_id: appointment.doctorId,
+        date: formattedDate,
+        start_time: appointment.startTime,
+        end_time: appointment.endTime,
+        status: appointment.status || 'scheduled',
+        notes: appointment.notes || '',
+        treatment_type: appointment.treatmentType || ''
+      };
+      
+      console.log('Datos formateados para Supabase:', appointmentData);
       
       const { data, error } = await supabase
         .from('appointments')
-        .insert({
-          patient_id: appointment.patientId,
-          doctor_id: appointment.doctorId,
-          date: appointment.date,
-          start_time: appointment.startTime,
-          end_time: appointment.endTime,
-          status: appointment.status,
-          notes: appointment.notes,
-          treatment_type: appointment.treatmentType
-        })
+        .insert(appointmentData)
         .select(`
           *,
           doctors (
@@ -199,28 +270,25 @@ export const appointmentService = {
         .single();
 
       if (error) {
-        console.error('Error al crear cita:', error);
-        // Devolver una cita de ejemplo modificada con los datos proporcionados
-        const sampleAppointment = { 
-          ...SAMPLE_APPOINTMENTS[0],
-          patientId: appointment.patientId,
-          date: appointment.date,
-          startTime: appointment.startTime,
-          endTime: appointment.endTime,
-          status: appointment.status,
-          notes: appointment.notes || 'Sin notas',
-          treatmentType: appointment.treatmentType || 'general'
-        };
-        console.log('Devolviendo datos de ejemplo para la cita creada');
-        return sampleAppointment;
+        console.error('Error al crear cita en Supabase:', error);
+        // En lugar de devolver datos falsos, lanzar el error para manejarlo apropiadamente
+        throw new Error(`Error al crear cita: ${error.message}`);
       }
 
+      if (!data) {
+        console.error('No se devolvieron datos después de crear la cita');
+        throw new Error('No se pudo crear la cita');
+      }
+
+      console.log('Cita creada exitosamente en Supabase:', data);
+      
+      // Transformar los datos al formato que espera la aplicación
       const result = {
         id: data.id,
         patientId: data.patient_id,
-        patientName: data.patients.first_name + ' ' + data.patients.last_name,
+        patientName: data.patients?.first_name + ' ' + data.patients?.last_name,
         doctorId: data.doctor_id,
-        doctorName: data.doctors.first_name + ' ' + data.doctors.last_name,
+        doctorName: data.doctors?.first_name + ' ' + data.doctors?.last_name,
         date: data.date,
         startTime: data.start_time,
         endTime: data.end_time,
@@ -229,23 +297,12 @@ export const appointmentService = {
         treatmentType: data.treatment_type,
       };
       
-      console.log('Cita creada exitosamente');
+      console.log('Cita creada y formateada para la aplicación:', result);
       return result;
     } catch (error) {
       console.error('Error al crear cita:', error);
-      // Devolver una cita de ejemplo modificada con los datos proporcionados
-      const sampleAppointment = { 
-        ...SAMPLE_APPOINTMENTS[0],
-        patientId: appointment.patientId,
-        date: appointment.date,
-        startTime: appointment.startTime,
-        endTime: appointment.endTime,
-        status: appointment.status,
-        notes: appointment.notes || 'Sin notas',
-        treatmentType: appointment.treatmentType || 'general'
-      };
-      console.log('Devolviendo datos de ejemplo para la cita creada');
-      return sampleAppointment;
+      // Re-lanzar el error para manejo adecuado en el componente
+      throw error;
     }
   },
 

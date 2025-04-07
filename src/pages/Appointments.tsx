@@ -105,6 +105,7 @@ const Appointments = () => {
   } = useQuery({
     queryKey: ["appointments"],
     queryFn: () => appointmentService.getAll(),
+    refetchOnWindowFocus: false,
   });
 
   // Filter appointments based on selected tab
@@ -123,6 +124,12 @@ const Appointments = () => {
     }
     return true;
   });
+  
+  // Efecto para recargar las citas al cambiar de pestaña
+  useEffect(() => {
+    refetchAppointments();
+    console.log("Recargando citas al cambiar pestaña:", selectedTab);
+  }, [selectedTab, refetchAppointments]);
 
   // Handle form change
   const handleChange = (field: string, value: any) => {
@@ -168,8 +175,14 @@ const Appointments = () => {
       });
       setOpen(false);
       
-      // Refresh appointments list
-      refetchAppointments();
+      // Refresh appointments list y automáticamente mostrar "hoy" si la cita es para hoy
+      await refetchAppointments();
+      const today = new Date().toISOString().split("T")[0];
+      if (formattedDate === today && selectedTab !== "today") {
+        setSelectedTab("today");
+      } else {
+        console.log("Cita creada, recargando lista...");
+      }
     } catch (error) {
       console.error("Error creating appointment:", error);
       toast({
