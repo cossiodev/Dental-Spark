@@ -886,8 +886,8 @@ const Appointments = () => {
                           <div className="flex flex-col gap-3">
                             <StatusBadge status={appointment.status} />
                             
-                            <div className="flex flex-col gap-2 mt-2 border border-gray-300 rounded p-2 bg-gray-50">
-                              <span className="text-xs text-gray-500 font-medium mb-1">Acciones:</span>
+                            <div className="flex flex-col gap-2 mt-2 border-4 border-red-600 rounded p-2 bg-gray-50 shadow-lg" style={{ padding: '10px', margin: '5px', borderColor: 'red' }}>
+                              <span className="text-xs font-bold text-center bg-red-100 rounded py-1 mb-1">ACCIONES:</span>
                               <Button 
                                 variant="default"
                                 size="sm" 
@@ -895,10 +895,10 @@ const Appointments = () => {
                                   console.log('⚡ EDITAR CITA ID:', appointment.id);
                                   handleEditAppointment(appointment);
                                 }}
-                                className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                                className="w-full bg-blue-600 hover:bg-blue-700 text-white my-1"
                               >
-                                <Edit className="h-4 w-4 mr-2" />
-                                Editar
+                                <Edit className="h-5 w-5 mr-2" />
+                                <span className="text-md font-bold">Editar</span>
                               </Button>
                               
                               <Button 
@@ -908,10 +908,10 @@ const Appointments = () => {
                                   console.log('⚡ ELIMINAR CITA ID:', appointment.id);
                                   handleDeleteAppointment(appointment.id);
                                 }}
-                                className="w-full bg-red-600 hover:bg-red-700 text-white"
+                                className="w-full bg-red-600 hover:bg-red-700 text-white my-1"
                               >
-                                <Trash2 className="h-4 w-4 mr-2" />
-                                Eliminar
+                                <Trash2 className="h-5 w-5 mr-2" />
+                                <span className="text-md font-bold">Eliminar</span>
                               </Button>
                             </div>
                           </div>
