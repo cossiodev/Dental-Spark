@@ -6,7 +6,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
 import { Clock } from "lucide-react";
 
 interface TimeBlockSelectorProps {
@@ -33,46 +32,7 @@ export function TimeBlockSelector({
     { value: "15:00-16:00", label: "3PM - 4PM" },
     { value: "16:00-17:00", label: "4PM - 5PM" },
     { value: "17:00-18:00", label: "5PM - 6PM" },
-    { value: "otro", label: "Otro horario" },
   ];
-
-  // Manejar el caso de "Otro horario"
-  const [showCustomInput, setShowCustomInput] = React.useState(false);
-  const [customTime, setCustomTime] = React.useState("");
-
-  // Verificar si se debe mostrar el campo de entrada personalizada al iniciar
-  React.useEffect(() => {
-    // Si el valor actual no está entre las opciones disponibles y no es vacío, mostrar campo personalizado
-    if (value && !availableHours.some(hour => hour.value === value)) {
-      setShowCustomInput(true);
-      setCustomTime(value);
-    } else {
-      setShowCustomInput(value === "otro");
-    }
-  }, [value]);
-
-  // Al seleccionar una opción
-  const handleSelectChange = (selectedValue: string) => {
-    if (selectedValue === "otro") {
-      setShowCustomInput(true);
-      // No actualizar el valor principal hasta que se ingrese algo en el campo personalizado
-      return;
-    }
-    
-    setShowCustomInput(false);
-    onChange(selectedValue);
-  };
-
-  // Al ingresar un horario personalizado
-  const handleCustomTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const customValue = e.target.value;
-    setCustomTime(customValue);
-    
-    // Solo actualizar el valor principal si hay algo válido
-    if (customValue && customValue.includes('-')) {
-      onChange(customValue);
-    }
-  };
 
   // Función para obtener la etiqueta del valor actual
   const getCurrentLabel = () => {
@@ -92,14 +52,15 @@ export function TimeBlockSelector({
       return `${formatHour(start)} - ${formatHour(end)}`;
     }
     
-    return value || "Seleccionar horario";
+    // Valor por defecto si no hay coincidencia
+    return "Seleccionar horario";
   };
 
   return (
     <div className={className}>
       <Select
-        value={availableHours.some(hour => hour.value === value) ? value : "otro"}
-        onValueChange={handleSelectChange}
+        value={value}
+        onValueChange={onChange}
         disabled={disabled}
       >
         <SelectTrigger className="w-full">
@@ -116,22 +77,6 @@ export function TimeBlockSelector({
           ))}
         </SelectContent>
       </Select>
-
-      {showCustomInput && (
-        <div className="mt-2">
-          <Input
-            type="text"
-            placeholder="Ej: 9AM-10AM"
-            value={customTime}
-            onChange={handleCustomTimeChange}
-            className="w-full"
-            disabled={disabled}
-          />
-          <p className="text-xs text-muted-foreground mt-1">
-            Ingresa el horario en formato AM/PM (HH:MMAM-HH:MMPM)
-          </p>
-        </div>
-      )}
     </div>
   );
 } 
