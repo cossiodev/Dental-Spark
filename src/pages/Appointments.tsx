@@ -137,6 +137,23 @@ const formatDateToYYYYMMDD = (date: Date | string): string => {
   return '';
 };
 
+// Función para formatear la hora de 24h a formato 12h con AM/PM
+const formatTimeToAMPM = (time: string): string => {
+  if (!time) return '';
+  
+  // Dividir la hora en horas y minutos
+  const [hours, minutes] = time.split(':').map(num => parseInt(num, 10));
+  
+  // Determinar AM o PM
+  const period = hours >= 12 ? 'PM' : 'AM';
+  
+  // Convertir a formato 12h
+  const hour12 = hours % 12 || 12; // 0 se convierte en 12
+  
+  // Devolver la hora formateada
+  return `${hour12}${minutes > 0 ? ':' + minutes.toString().padStart(2, '0') : ''}${period}`;
+};
+
 const Appointments = () => {
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
@@ -636,14 +653,34 @@ const Appointments = () => {
     switch (status) {
       case 'scheduled':
         return 'bg-blue-100 text-blue-800';
+      case 'confirmed':
+        return 'bg-emerald-100 text-emerald-800';
       case 'completed':
         return 'bg-green-100 text-green-800';
       case 'cancelled':
         return 'bg-red-100 text-red-800';
       case 'no-show':
-        return 'bg-yellow-100 text-yellow-800';
+        return 'bg-amber-100 text-amber-800';
       default:
         return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  // Función para obtener la variante del Badge según el estado
+  const getStatusVariant = (status: string): string => {
+    switch (status) {
+      case 'scheduled':
+        return 'blue';
+      case 'confirmed':
+        return 'emerald';
+      case 'completed':
+        return 'green';
+      case 'cancelled':
+        return 'destructive';
+      case 'no-show':
+        return 'amber';
+      default:
+        return 'secondary';
     }
   };
 
@@ -943,7 +980,7 @@ const Appointments = () => {
                         <TableCell className="font-medium">{appointment.patientName || appointment.patientId}</TableCell>
                         <TableCell>{appointment.doctorName || appointment.doctorId}</TableCell>
                         <TableCell>{formatDisplayDate(appointment.date)}</TableCell>
-                        <TableCell>{appointment.startTime} - {appointment.endTime}</TableCell>
+                        <TableCell>{formatTimeToAMPM(appointment.startTime)} - {formatTimeToAMPM(appointment.endTime)}</TableCell>
                         <TableCell>{appointment.treatmentType ? 
                             appointment.treatmentType === "consultation" ? "Consulta" :
                             appointment.treatmentType === "cleaning" ? "Limpieza" :
@@ -953,7 +990,10 @@ const Appointments = () => {
                             appointment.treatmentType === "orthodontics" ? "Ortodoncia" : appointment.treatmentType
                           : "-"}</TableCell>
                         <TableCell>
-                          <Badge variant="secondary">
+                          <Badge 
+                            variant={getStatusVariant(appointment.status) as any}
+                            className="font-normal"
+                          >
                             {getStatusText(appointment.status)}
                           </Badge>
                         </TableCell>
