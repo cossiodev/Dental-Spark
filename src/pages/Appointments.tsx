@@ -889,34 +889,44 @@ const Appointments = () => {
         </TabsList>
         
         {/* Combined content for all tabs */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle>Citas {selectedTab === "today" ? "de Hoy" : selectedTab === "tomorrow" ? "de Mañana" : "Próximas"}</CardTitle>
-            <CardDescription>
-              {isLoadingAppointments ? "Cargando citas..." : 
-                filteredAppointments.length > 0 
-                  ? `Mostrando ${filteredAppointments.length} citas`
-                  : "No hay citas programadas en este período"
-              }
-            </CardDescription>
+        <Card className="shadow-sm">
+          <CardHeader className="pb-2 border-b">
+            <div className="flex justify-between items-center">
+              <div>
+                <CardTitle className="text-xl">Citas {selectedTab === "today" ? "de Hoy" : selectedTab === "tomorrow" ? "de Mañana" : "Próximas"}</CardTitle>
+                <CardDescription>
+                  {isLoadingAppointments ? "Cargando citas..." : 
+                    filteredAppointments.length > 0 
+                      ? `Mostrando ${filteredAppointments.length} citas`
+                      : "No hay citas programadas en este período"
+                  }
+                </CardDescription>
+              </div>
+              {filteredAppointments.length > 0 && (
+                <Button variant="outline" onClick={() => setOpen(true)} size="sm">
+                  <PlusCircle className="mr-2 h-4 w-4" />
+                  Nueva Cita
+                </Button>
+              )}
+            </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-0">
             {isLoadingAppointments ? (
               <div className="flex justify-center py-8">
                 <p>Cargando citas...</p>
               </div>
             ) : filteredAppointments.length > 0 ? (
               <div className="overflow-x-auto" style={{ width: '100%' }}>
-                <table className="min-w-full border-collapse" style={{ tableLayout: 'fixed' }}>
+                <table className="w-full border-collapse">
                   <thead>
-                    <tr className="bg-gray-100 text-sm font-bold">
-                      <th className="p-2 border-b w-1/7 text-left">Paciente</th>
-                      <th className="p-2 border-b w-1/7 text-left">Doctor</th>
-                      <th className="p-2 border-b w-1/7 text-left">Fecha</th>
-                      <th className="p-2 border-b w-1/7 text-left">Hora</th>
-                      <th className="p-2 border-b w-1/7 text-left">Tipo</th>
-                      <th className="p-2 border-b w-1/7 text-left">Estado</th>
-                      <th className="p-2 border-b w-1/7 text-left">Acciones</th>
+                    <tr className="bg-gray-50 text-sm font-medium">
+                      <th className="p-2 border-b text-left">Paciente</th>
+                      <th className="p-2 border-b text-left">Doctor</th>
+                      <th className="p-2 border-b text-left">Fecha</th>
+                      <th className="p-2 border-b text-left">Hora</th>
+                      <th className="p-2 border-b text-left">Tipo</th>
+                      <th className="p-2 border-b text-left">Estado</th>
+                      <th className="p-2 border-b text-center">Acciones</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -924,7 +934,7 @@ const Appointments = () => {
                       <tr key={appointment.id} className="border-b hover:bg-gray-50">
                         <td className="p-2 font-medium truncate">{appointment.patientName || appointment.patientId}</td>
                         <td className="p-2 truncate">{appointment.doctorName || appointment.doctorId}</td>
-                        <td className="p-2 font-medium">{formatDisplayDate(appointment.date)}</td>
+                        <td className="p-2">{formatDisplayDate(appointment.date)}</td>
                         <td className="p-2">{appointment.startTime} - {appointment.endTime}</td>
                         <td className="p-2 truncate">
                           {appointment.treatmentType ? 
@@ -938,25 +948,25 @@ const Appointments = () => {
                         </td>
                         <td className="p-2">
                           <span
-                            className={`px-2 py-1 rounded text-xs ${getStatusColor(
+                            className={`inline-block px-2 py-1 rounded-md text-xs ${getStatusColor(
                               appointment.status
                             )}`}
                           >
                             {getStatusText(appointment.status)}
                           </span>
                         </td>
-                        <td className="p-2">
-                          <div className="flex space-x-2 justify-center">
+                        <td className="p-2 text-center">
+                          <div className="flex justify-center space-x-3">
                             <button
                               onClick={() => handleEditAppointment(appointment)}
-                              className="text-blue-600 hover:text-blue-800 p-1.5"
+                              className="text-blue-600 hover:text-blue-800"
                               title="Editar cita"
                             >
                               <Edit className="h-4 w-4" />
                             </button>
                             <button
                               onClick={() => handleDeleteAppointment(appointment.id)}
-                              className="text-red-600 hover:text-red-800 p-1.5"
+                              className="text-red-600 hover:text-red-800"
                               title="Eliminar cita"
                             >
                               <Trash2 className="h-4 w-4" />
