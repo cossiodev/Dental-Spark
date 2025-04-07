@@ -113,6 +113,30 @@ const convert12To24Format = (time: string): string => {
   return time; // Ya está en formato 24h
 };
 
+// Corrige el error de instanceof y toISOString en la línea 218-219
+const formatDateToYYYYMMDD = (date: Date | string): string => {
+  if (!date) return '';
+  
+  if (date instanceof Date) {
+    return date.toISOString().split('T')[0];
+  }
+  
+  if (typeof date === 'string') {
+    // Si ya está en formato YYYY-MM-DD, retornarlo tal cual
+    if (/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+      return date;
+    }
+    
+    // Intentar convertir a Date y formatear
+    const dateObj = new Date(date);
+    if (!isNaN(dateObj.getTime())) {
+      return dateObj.toISOString().split('T')[0];
+    }
+  }
+  
+  return '';
+};
+
 const Appointments = () => {
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
@@ -453,13 +477,16 @@ const Appointments = () => {
     }
   };
 
+  // Corrige los errores de tipo en status (líneas 385 y 464)
+  type AppointmentStatus = "scheduled" | "completed" | "cancelled" | "no-show";
+
   // Función para cambiar el estado de una cita
-  const handleStatusChange = async (appointment: Appointment, newStatus: string) => {
+  const handleStatusChange = async (id: string, newStatus: AppointmentStatus) => {
     try {
       setIsLoading(true);
       
-      console.log(`Cambiando estado de cita ${appointment.id} a: ${newStatus}`);
-      const updatedAppointment = { ...appointment, status: newStatus };
+      console.log(`Cambiando estado de cita ${id} a: ${newStatus}`);
+      const updatedAppointment = { id, status: newStatus };
       
       await appointmentService.update(updatedAppointment);
       
@@ -585,6 +612,38 @@ const Appointments = () => {
       notes: "",
       treatmentType: ""
     });
+  };
+
+  // Función para obtener el color según el estado
+  const getStatusColor = (status: string): string => {
+    switch (status) {
+      case 'scheduled':
+        return 'bg-blue-100 text-blue-800';
+      case 'completed':
+        return 'bg-green-100 text-green-800';
+      case 'cancelled':
+        return 'bg-red-100 text-red-800';
+      case 'no-show':
+        return 'bg-yellow-100 text-yellow-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  // Función para obtener el texto del estado en español
+  const getStatusText = (status: string): string => {
+    switch (status) {
+      case 'scheduled':
+        return 'Programada';
+      case 'completed':
+        return 'Completada';
+      case 'cancelled':
+        return 'Cancelada';
+      case 'no-show':
+        return 'No asistió';
+      default:
+        return status;
+    }
   };
 
   return (
@@ -862,7 +921,7 @@ const Appointments = () => {
                       <th className="p-2 border-b w-1/6 text-left">Fecha</th>
                       <th className="p-2 border-b w-1/6 text-left">Hora</th>
                       <th className="p-2 border-b w-1/6 text-left">Tipo</th>
-                      <th className="p-2 border-b w-1/6 text-left">Estado / Acciones</th>
+                      <th className="p-2 border-b w-1/6 text-left">Estado</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -882,38 +941,30 @@ const Appointments = () => {
                             appointment.treatmentType === "orthodontics" ? "Ortodoncia" : "Otro"
                           : "-"}
                         </td>
-                        <td className="p-2">
-                          <div className="flex flex-col space-y-3">
-                            <div className="mb-1">
-                              <StatusBadge status={appointment.status} />
-                            </div>
-                            
-                            <div className="border-4 border-red-600 rounded-md p-2 bg-red-50" style={{ borderWidth: '4px' }}>
-                              <div className="text-center font-bold bg-red-100 rounded-t-sm mb-2 py-1 text-red-800">
-                                ACCIONES
-                              </div>
-                              
-                              <div className="flex flex-col gap-2">
-                                <Button 
-                                  variant="default" 
-                                  size="sm" 
-                                  onClick={() => handleEditAppointment(appointment)}
-                                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold"
-                                >
-                                  <Edit className="h-4 w-4 mr-2" />
-                                  Editar
-                                </Button>
-                                
-                                <Button 
-                                  variant="destructive" 
-                                  size="sm" 
-                                  onClick={() => handleDeleteAppointment(appointment.id)}
-                                  className="w-full bg-red-600 hover:bg-red-700 text-white font-bold"
-                                >
-                                  <Trash2 className="h-4 w-4 mr-2" />
-                                  Eliminar
-                                </Button>
-                              </div>
+                        <td className="p-2 border-b">
+                          <div className="flex items-center">
+                            <span
+                              className={`px-2 py-1 rounded text-sm ${getStatusColor(
+                                appointment.status
+                              )}`}
+                            >
+                              {getStatusText(appointment.status)}
+                            </span>
+                            <div className="flex ml-2">
+                              <button
+                                onClick={() => handleEditAppointment(appointment)}
+                                className="p-1 text-blue-600 hover:text-blue-800 mr-1"
+                                title="Editar cita"
+                              >
+                                <Edit className="h-4 w-4" />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteAppointment(appointment.id)}
+                                className="p-1 text-red-600 hover:text-red-800"
+                                title="Eliminar cita"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </button>
                             </div>
                           </div>
                         </td>

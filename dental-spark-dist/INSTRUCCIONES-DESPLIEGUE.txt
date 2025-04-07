@@ -1,0 +1,25 @@
+INSTRUCCIONES PARA DESPLIEGUE MANUAL A VERCEL
+=======================================
+
+Como alternativa a los despliegues automáticos que están fallando, puedes desplegar manualmente estos archivos a Vercel siguiendo estos pasos:
+
+1. Inicia sesión en Vercel: https://vercel.com/login
+
+2. Navega a tu proyecto: https://vercel.com/elvis-cossios-projects-ca2df045/dental-spark
+
+3. En la interfaz de Vercel, haz clic en "Add New..." y selecciona "Deploy"
+
+4. Selecciona la opción "Upload" en el menú lateral
+
+5. Arrastra y suelta esta carpeta "dental-spark-dist" (o su contenido) en el área de carga
+
+6. Haz clic en "Deploy" y espera a que se complete el proceso
+
+Los cambios implementados en esta versión incluyen:
+- Botones de Editar y Eliminar visibles dentro de la columna Estado/Acciones
+- Correcciones en el manejo de fechas para mostrar el día correcto
+- Mejoras en la interfaz de usuario
+
+Una vez completado el despliegue, podrás ver los botones de edición y eliminación en la tabla de citas.
+
+Para cualquier problema, contacta a tu administrador o desarrollador. 
