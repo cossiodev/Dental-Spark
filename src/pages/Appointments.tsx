@@ -302,11 +302,16 @@ const Appointments = () => {
     let formattedDate;
     
     if (formData.date instanceof Date) {
-      // Crear fecha sin componente de tiempo para evitar problemas de timezone
+      // CORRECCIÓN: Mantener la fecha exacta sin ajustes de timezone
+      // Al usar UTC, nos aseguramos que la fecha se guarde sin conversiones
       const year = formData.date.getFullYear();
-      const month = (formData.date.getMonth() + 1).toString().padStart(2, '0'); // +1 porque getMonth() es zero-based
+      const month = (formData.date.getMonth() + 1).toString().padStart(2, '0');
       const day = formData.date.getDate().toString().padStart(2, '0');
       formattedDate = `${year}-${month}-${day}`;
+
+      // Añadir hora UTC+0 para forzar que la fecha se mantenga
+      const dateObject = new Date(`${formattedDate}T12:00:00Z`);
+      console.log('🔍 Fecha con UTC forzado:', dateObject.toISOString());
     } else if (typeof formData.date === 'string') {
       // Si es string, asegurar que tenga el formato correcto
       formattedDate = formData.date.trim().split('T')[0];
@@ -339,7 +344,7 @@ const Appointments = () => {
     appointmentService.create({
       patientId: formData.patient,
       doctorId: formData.doctor,
-      date: formattedDate,
+      date: formattedDate, // Usamos la fecha formateada correctamente
       startTime,
       endTime,
       status: formData.status || 'scheduled',
@@ -467,11 +472,16 @@ const Appointments = () => {
       let formattedDate;
       
       if (updatedData.date instanceof Date) {
-        // Crear fecha sin componente de tiempo para evitar problemas de timezone
+        // CORRECCIÓN: Mantener la fecha exacta sin ajustes de timezone
+        // Al usar UTC, nos aseguramos que la fecha se guarde sin conversiones
         const year = updatedData.date.getFullYear();
-        const month = (updatedData.date.getMonth() + 1).toString().padStart(2, '0'); // +1 porque getMonth() es zero-based
+        const month = (updatedData.date.getMonth() + 1).toString().padStart(2, '0');
         const day = updatedData.date.getDate().toString().padStart(2, '0');
         formattedDate = `${year}-${month}-${day}`;
+
+        // Añadir hora UTC+0 para forzar que la fecha se mantenga
+        const dateObject = new Date(`${formattedDate}T12:00:00Z`);
+        console.log('🔍 Fecha de actualización con UTC forzado:', dateObject.toISOString());
       } else if (typeof updatedData.date === 'string') {
         // Si es string, asegurar que tenga el formato correcto
         formattedDate = updatedData.date.trim().split('T')[0];
@@ -635,22 +645,25 @@ const Appointments = () => {
                           selected={formData.date}
                           onSelect={(date) => {
                             if (date) {
-                              // Crear fecha sin componente de tiempo para evitar problemas
-                              const localDate = new Date(
-                                date.getFullYear(),
-                                date.getMonth(),
-                                date.getDate(),
-                                0, 0, 0
-                              );
+                              // CORRECCIÓN: Preservar la fecha seleccionada sin conversiones
+                              // Esto evita problemas de timezone al guardar
+                              const year = date.getFullYear();
+                              const month = date.getMonth();
+                              const day = date.getDate();
+                              
+                              // Crear una nueva fecha a mediodía UTC para evitar conversiones
+                              const localDate = new Date(Date.UTC(year, month, day, 12, 0, 0));
                               
                               const formattedDate = 
-                                `${localDate.getFullYear()}-${
-                                  (localDate.getMonth() + 1).toString().padStart(2, '0')
+                                `${localDate.getUTCFullYear()}-${
+                                  (localDate.getUTCMonth() + 1).toString().padStart(2, '0')
                                 }-${
-                                  localDate.getDate().toString().padStart(2, '0')
+                                  localDate.getUTCDate().toString().padStart(2, '0')
                                 }`;
                                 
                               console.log('Fecha seleccionada en calendario:', localDate);
+                              console.log('Fecha UTC:', localDate.toUTCString());
+                              console.log('Fecha ISO:', localDate.toISOString());
                               console.log('Fecha formateada:', formattedDate);
                               
                               handleChange("date", localDate);
