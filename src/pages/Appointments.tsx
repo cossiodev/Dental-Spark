@@ -52,10 +52,40 @@ import { StatusBadge } from "@/components/appointments/StatusBadge";
 import { AppointmentActions } from "@/components/appointments/AppointmentActions";
 import { AppointmentForm } from "@/components/appointments/AppointmentForm";
 
-// Helper function to format date
-const formatDate = (dateString: string) => {
+// Helper para formatear fecha para mostrar
+const formatDisplayDate = (dateString: string) => {
   const date = new Date(dateString);
   return format(date, "PPP", { locale: es });
+};
+
+// Helper para formatear fecha para la BD
+const formatISODate = (date: Date): string => {
+  return date.toISOString().split('T')[0];
+};
+
+// Helper para convertir hora de 12h a 24h
+const convert12To24Format = (time: string): string => {
+  time = time.trim().toUpperCase();
+  const isPM = time.includes('PM');
+  const isAM = time.includes('AM');
+  
+  if (isPM || isAM) {
+    // Eliminar AM/PM y espacios
+    time = time.replace(/AM|PM/i, '').trim();
+    
+    // Separar hora y minutos
+    let [hours, minutes] = time.split(':').map(part => part.trim());
+    let hoursNum = parseInt(hours);
+    
+    // Convertir a formato 24 horas
+    if (isPM && hoursNum < 12) hoursNum += 12;
+    if (isAM && hoursNum === 12) hoursNum = 0;
+    
+    // Formatear con ceros a la izquierda
+    return `${hoursNum.toString().padStart(2, '0')}:${minutes || '00'}`;
+  }
+  
+  return time; // Ya está en formato 24h
 };
 
 const Appointments = () => {
@@ -117,6 +147,8 @@ const Appointments = () => {
     tomorrow.setDate(tomorrow.getDate() + 1);
     const tomorrowStr = tomorrow.toISOString().split("T")[0];
     
+    console.log(`Filtrando cita - fecha: ${appointment.date}, today: ${today}, tomorrow: ${tomorrowStr}, tab: ${selectedTab}`);
+    
     if (selectedTab === "today") {
       return appointment.date === today;
     } else if (selectedTab === "tomorrow") {
@@ -155,139 +187,73 @@ const Appointments = () => {
   };
 
   // Handle form submission
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validar datos obligatorios
     if (!formData.patient || !formData.doctor || !formData.date || !formData.timeBlock) {
       toast({
         title: "Error",
-        description: "Por favor completa todos los campos obligatorios.",
+        description: "Por favor completa todos los campos obligatorios",
         variant: "destructive",
       });
       return;
     }
     
-    try {
-      // Asegurar que usamos la fecha seleccionada y no la fecha actual
-      const formattedDate = format(formData.date, "yyyy-MM-dd");
-      console.log('Fecha seleccionada para la cita:', formattedDate);
-      
-      // Extraer horas de inicio y fin del timeBlock
-      let [startTime, endTime] = formData.timeBlock.split('-');
-      
-      // Convertir formato 12h a 24h si se usó el formato AM/PM
-      const convertTo24Hour = (time: string) => {
-        time = time.trim().toUpperCase();
-        const isPM = time.includes('PM');
-        const isAM = time.includes('AM');
-        
-        if (isPM || isAM) {
-          // Eliminar AM/PM y espacios
-          time = time.replace(/AM|PM/i, '').trim();
-          
-          // Separar hora y minutos
-          let [hours, minutes] = time.split(':').map(part => part.trim());
-          let hoursNum = parseInt(hours);
-          
-          // Convertir a formato 24 horas
-          if (isPM && hoursNum < 12) hoursNum += 12;
-          if (isAM && hoursNum === 12) hoursNum = 0;
-          
-          // Formatear con ceros a la izquierda
-          return `${hoursNum.toString().padStart(2, '0')}:${minutes || '00'}`;
-        }
-        
-        return time; // Ya está en formato 24h
-      };
-      
-      // Convertir los tiempos si es necesario
-      if (startTime.includes('AM') || startTime.includes('PM') || 
-          endTime.includes('AM') || endTime.includes('PM')) {
-        startTime = convertTo24Hour(startTime);
-        endTime = convertTo24Hour(endTime);
-      }
-      
-      console.log('Enviando datos de cita con horario convertido:', {
-        patientId: formData.patient,
-        doctorId: formData.doctor,
-        date: formattedDate,
-        startTime,
-        endTime,
-        status: formData.status,
-        notes: formData.notes || '',
-        treatmentType: formData.treatmentType || ''
-      });
-      
-      // Crear la cita
-      const newAppointment = await appointmentService.create({
-        patientId: formData.patient,
-        doctorId: formData.doctor,
-        date: formattedDate,
-        startTime,
-        endTime,
-        status: formData.status,
-        notes: formData.notes || '',
-        treatmentType: formData.treatmentType || ''
-      });
-
-      toast({
-        title: "¡Cita creada!",
-        description: "La cita ha sido creada exitosamente.",
-      });
-      
-      // Reset form and close dialog
-      setFormData({
-        patient: "",
-        doctor: "",
-        date: new Date(),
-        timeBlock: "09:00-10:00",
-        status: "scheduled",
-        notes: "",
-        treatmentType: ""
-      });
-      setOpen(false);
-      
-      // Guardar ID de la última cita creada para seguimiento
-      setLastCreatedAppointment(newAppointment.id);
-      
-      // Configurar múltiples intentos de recarga para asegurar que aparezca la cita
-      const reloadWithDelay = async () => {
-        // Inmediatamente
-        await refetchAppointments();
-        console.log("Primera recarga de citas completada");
-        
-        // Después de 1 segundo
-        setTimeout(async () => {
-          await refetchAppointments();
-          console.log("Segunda recarga de citas después de 1 segundo");
-          
-          // Después de 3 segundos
-          setTimeout(async () => {
-            await refetchAppointments();
-            console.log("Tercera recarga de citas después de 3 segundos");
-            
-            // Forzar actualización del estado para re-renderizar
-            setForceRefresh(prev => prev + 1);
-          }, 2000);
-        }, 1000);
-      };
-      
-      reloadWithDelay();
-      
-      // Si la cita es para hoy, asegurarse de mostrar la pestaña "hoy"
-      const today = new Date().toISOString().split("T")[0];
-      if (formattedDate === today && selectedTab !== "today") {
-        setSelectedTab("today");
-      }
-    } catch (error) {
-      console.error("Error creating appointment:", error);
-      toast({
-        title: "Error",
-        description: "No se pudo crear la cita. Inténtalo de nuevo.",
-        variant: "destructive",
-      });
+    const formattedDate = formatISODate(formData.date);
+    console.log('Fecha seleccionada para la cita:', formattedDate);
+    
+    // Validar horas
+    let [startTime, endTime] = formData.timeBlock.split('-');
+    
+    // Convertir de formato 12h a 24h si es necesario
+    if (startTime.includes('AM') || startTime.includes('PM')) {
+      startTime = convert12To24Format(startTime);
     }
+    if (endTime.includes('AM') || endTime.includes('PM')) {
+      endTime = convert12To24Format(endTime);
+    }
+    
+    console.log(`Enviando cita con fecha ${formattedDate} y horas ${startTime}-${endTime}`);
+    
+    setIsLoading(true);
+    
+    appointmentService.create({
+      patientId: formData.patient,
+      doctorId: formData.doctor,
+      date: formattedDate,
+      startTime,
+      endTime,
+      notes: formData.notes || '',
+      treatmentType: formData.treatmentType || '',
+    })
+      .then((newAppointment) => {
+        setLastCreatedAppointment(newAppointment);
+        setOpen(false);
+        resetForm();
+        toast({
+          title: "Éxito",
+          description: "Cita creada correctamente",
+        });
+        
+        // Forzar recarga de citas
+        setForceRefresh(prev => prev + 1);
+        
+        // Programar múltiples intentos de recarga
+        setTimeout(() => refetchAppointments(), 1000);
+        setTimeout(() => refetchAppointments(), 3000);
+        setTimeout(() => refetchAppointments(), 5000);
+      })
+      .catch((error) => {
+        console.error("Error al crear cita:", error);
+        toast({
+          title: "Error",
+          description: error.message || "Error al crear la cita",
+          variant: "destructive",
+        });
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
   };
 
   // Función para iniciar la edición de una cita
@@ -624,13 +590,13 @@ const Appointments = () => {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Paciente</TableHead>
+                      <TableHead className="font-bold">Paciente</TableHead>
                       <TableHead>Doctor</TableHead>
                       <TableHead>Fecha</TableHead>
                       <TableHead>Hora</TableHead>
                       <TableHead>Tipo</TableHead>
                       <TableHead>Estado</TableHead>
-                      <TableHead className="text-right w-[100px]">Acciones</TableHead>
+                      <TableHead className="text-center w-[250px]">Acciones</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -641,7 +607,7 @@ const Appointments = () => {
                       >
                         <TableCell className="font-medium">{appointment.patientName || appointment.patientId}</TableCell>
                         <TableCell>{appointment.doctorName || appointment.doctorId}</TableCell>
-                        <TableCell>{formatDate(appointment.date)}</TableCell>
+                        <TableCell>{formatDisplayDate(appointment.date)}</TableCell>
                         <TableCell>{appointment.startTime} - {appointment.endTime}</TableCell>
                         <TableCell>
                           {appointment.treatmentType ? 
@@ -656,8 +622,8 @@ const Appointments = () => {
                         <TableCell>
                           <StatusBadge status={appointment.status} />
                         </TableCell>
-                        <TableCell className="text-right p-2">
-                          <div className="flex justify-end items-center">
+                        <TableCell className="p-0 text-center">
+                          <div className="flex justify-center items-center">
                             <AppointmentActions 
                               appointment={appointment}
                               onEdit={handleEditAppointment}
