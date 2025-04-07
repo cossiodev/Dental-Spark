@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback } from "react";
-import { useParams, Link, useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -12,7 +12,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { 
   Form, 
@@ -39,11 +38,11 @@ import {
 } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Check, Edit, FileText, Plus, X } from "lucide-react";
 import { format } from "date-fns";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
+import { Edit } from "lucide-react";
 import { 
   patientService, 
   appointmentService, 
@@ -109,26 +108,23 @@ const PatientDetails = () => {
 
   useEffect(() => {
     if (patient) {
-      console.log("[DIAGNÓSTICO] Actualizando formulario con datos del paciente:", patient);
-      setTimeout(() => {
-        form.reset({
-          firstName: patient.firstName || '',
-          lastName: patient.lastName || '',
-          email: patient.email || '',
-          phone: patient.phone || '',
-          dateOfBirth: patient.dateOfBirth || '',
-          gender: patient.gender || '',
-          address: patient.address || '',
-          city: patient.city || '',
-          postalCode: patient.postalCode || '',
-          insurance: patient.insurance || '',
-          insuranceNumber: patient.insuranceNumber || '',
-          medicalHistory: patient.medicalHistory || '',
-          allergies: patient.allergies || [],
-        });
-      }, 50); // Pequeño retraso para garantizar que el diálogo esté completamente abierto
+      form.reset({
+        firstName: patient.firstName || '',
+        lastName: patient.lastName || '',
+        email: patient.email || '',
+        phone: patient.phone || '',
+        dateOfBirth: patient.dateOfBirth || '',
+        gender: patient.gender || '',
+        address: patient.address || '',
+        city: patient.city || '',
+        postalCode: patient.postalCode || '',
+        insurance: patient.insurance || '',
+        insuranceNumber: patient.insuranceNumber || '',
+        medicalHistory: patient.medicalHistory || '',
+        allergies: patient.allergies || [],
+      });
     }
-  }, [patient, form, isEditDialogOpen]); // Añadir isEditDialogOpen como dependencia
+  }, [patient, form, isEditDialogOpen]);
 
   useEffect(() => {
     const loadPatient = async () => {
@@ -139,12 +135,10 @@ const PatientDetails = () => {
       }
 
       try {
-        console.log(`[DIAGNÓSTICO] Solicitando datos del paciente con ID: ${id}`);
         setIsLoading(true);
         const patientData = await patientService.getById(id);
         
         if (!patientData) {
-          console.error('[DIAGNÓSTICO] Paciente no encontrado');
           setError("No se encontró el paciente solicitado");
           setPatient(null);
           toast({
@@ -153,12 +147,10 @@ const PatientDetails = () => {
             variant: "destructive"
           });
         } else {
-          console.log(`[DIAGNÓSTICO] Paciente cargado correctamente: ${patientData.firstName} ${patientData.lastName}`);
           setPatient(patientData);
           setError(null);
         }
       } catch (err) {
-        console.error('[DIAGNÓSTICO] Error al cargar el paciente:', err);
         setError("Error al cargar los datos del paciente");
         toast({
           title: "Error",
@@ -198,588 +190,376 @@ const PatientDetails = () => {
         console.error("Error loading patient details:", error);
         toast({
           title: "Error",
-          description: "No se pudieron cargar los detalles del paciente",
+          description: "Error al cargar datos del paciente",
           variant: "destructive",
         });
       }
     };
 
-    loadData();
-  }, [id, toast]);
+    if (patient) {
+      loadData();
+    }
+  }, [patient, id, toast]);
 
   const handleUpdatePatient = async (data: PatientFormValues) => {
-    if (!patient) return;
-
     try {
-      console.log("[DIAGNÓSTICO] Actualizando paciente con ID:", patient.id);
-      console.log("[DIAGNÓSTICO] Datos a actualizar:", data);
-      console.log("[DIAGNÓSTICO] Valores del formulario:", form.getValues());
-
-      // Mostrar toast de carga
-      toast({
-        title: "Actualizando paciente",
-        description: "Guardando información del paciente...",
-      });
-
-      // Preparar los datos para actualización
-      const updatedPatient: Partial<Patient> = {
+      if (!id) return;
+      
+      const updatedPatient = await patientService.update(id, {
         firstName: data.firstName,
         lastName: data.lastName,
-        email: data.email || undefined,
-        phone: data.phone || undefined,
-        dateOfBirth: data.dateOfBirth || undefined,
-        gender: data.gender || undefined,
-        address: data.address || undefined,
-        city: data.city || undefined,
-        postalCode: data.postalCode || undefined,
-        insurance: data.insurance || undefined,
-        insuranceNumber: data.insuranceNumber || undefined,
-        medicalHistory: data.medicalHistory || undefined,
-        allergies: data.allergies || [],
-      };
-
-      // Actualizar el paciente
-      const updatedData = await patientService.update(patient.id, updatedPatient);
-      console.log("[DIAGNÓSTICO] Paciente actualizado:", updatedData);
-
-      // Actualizar el estado local con los datos actualizados
-      setPatient({
-        ...patient,
-        ...updatedData,
+        email: data.email,
+        phone: data.phone,
+        dateOfBirth: data.dateOfBirth,
+        gender: data.gender,
+        address: data.address,
+        city: data.city,
+        postalCode: data.postalCode,
+        insurance: data.insurance,
+        insuranceNumber: data.insuranceNumber,
+        medicalHistory: data.medicalHistory,
+        allergies: data.allergies,
       });
-
-      // Cerrar el diálogo
+      
+      setPatient(updatedPatient);
       setIsEditDialogOpen(false);
-
-      // Mostrar mensaje de éxito
+      
       toast({
-        title: "Paciente actualizado",
-        description: "La información del paciente ha sido actualizada correctamente",
+        title: "Éxito",
+        description: "Datos del paciente actualizados correctamente",
       });
     } catch (error) {
-      console.error("[DIAGNÓSTICO] Error al actualizar paciente:", error);
+      console.error("Error updating patient:", error);
       toast({
         title: "Error",
-        description: typeof error === 'string' 
-          ? error 
-          : "No se pudo actualizar la información del paciente. Intente nuevamente.",
+        description: "No se pudo actualizar el paciente",
         variant: "destructive",
       });
     }
   };
 
-  const handleEditClick = () => {
-    // Asegurarse de que los datos del paciente estén cargados en el formulario antes de abrir el diálogo
-    if (patient) {
-      form.reset({
-        firstName: patient.firstName || '',
-        lastName: patient.lastName || '',
-        email: patient.email || '',
-        phone: patient.phone || '',
-        dateOfBirth: patient.dateOfBirth || '',
-        gender: patient.gender || '',
-        address: patient.address || '',
-        city: patient.city || '',
-        postalCode: patient.postalCode || '',
-        insurance: patient.insurance || '',
-        insuranceNumber: patient.insuranceNumber || '',
-        medicalHistory: patient.medicalHistory || '',
-        allergies: patient.allergies || [],
-      });
-      setIsEditDialogOpen(true);
-    }
-  };
-
-  // Agregar un manejador para cuando cambia el estado del diálogo
-  const handleDialogChange = (open: boolean) => {
-    setIsEditDialogOpen(open);
-    
-    // Si el diálogo se está cerrando, no hacemos nada adicional
-    if (!open) return;
-    
-    // Si el diálogo se está abriendo, aseguramos que los datos del formulario estén actualizados
-    if (patient) {
-      console.log("[DIAGNÓSTICO] Diálogo abierto, reiniciando formulario con datos del paciente");
-      form.reset({
-        firstName: patient.firstName || '',
-        lastName: patient.lastName || '',
-        email: patient.email || '',
-        phone: patient.phone || '',
-        dateOfBirth: patient.dateOfBirth || '',
-        gender: patient.gender || '',
-        address: patient.address || '',
-        city: patient.city || '',
-        postalCode: patient.postalCode || '',
-        insurance: patient.insurance || '',
-        insuranceNumber: patient.insuranceNumber || '',
-        medicalHistory: patient.medicalHistory || '',
-        allergies: patient.allergies || [],
-      });
-    }
-  };
-
-  // Monitorear cambios en el formulario para fines de depuración
-  useEffect(() => {
-    const subscription = form.watch((value) => {
-      console.log("[DIAGNÓSTICO] Formulario actualizado:", value);
-    });
-    
-    return () => subscription.unsubscribe();
-  }, [form]);
-
   if (isLoading) {
     return (
-      <div className="flex h-screen items-center justify-center">
+      <div className="flex items-center justify-center h-full">
         <Spinner size="lg" />
       </div>
     );
   }
 
-  if (error || !patient) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <Card className="p-6">
-          <CardHeader>
-            <CardTitle className="text-xl text-red-600">
-              {error || "No se pudo cargar el paciente"}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-muted-foreground">
-              No se pudo encontrar el paciente con el ID especificado o ha ocurrido un error al cargar sus datos.
-            </p>
-          </CardContent>
-          <CardFooter>
-            <Button onClick={() => navigate("/pacientes")}>
-              Volver a la lista de pacientes
-            </Button>
-          </CardFooter>
-        </Card>
-      </div>
-    );
-  }
-
   return (
-    <div className="container py-8 space-y-8">
-      {isLoading ? (
-        <div className="flex justify-center items-center min-h-[50vh]">
-          <Spinner className="w-8 h-8" />
-        </div>
-      ) : error ? (
-        <div className="text-center py-8">
-          <div className="text-red-500 mb-4">{error}</div>
-          <Button onClick={() => navigate('/patients')}>
-            Volver a Pacientes
-          </Button>
-        </div>
-      ) : patient ? (
+    <div className="container mx-auto p-4">
+      {patient ? (
         <>
-          <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
-            <div>
-              <h1 className="text-3xl font-bold tracking-tight">Detalles del Paciente</h1>
-              <p className="text-muted-foreground">Gestiona la información y registros del paciente.</p>
-            </div>
-            <div className="flex gap-2">
-              <Dialog open={isEditDialogOpen} onOpenChange={handleDialogChange}>
-                <DialogTrigger asChild>
-                  <Button onClick={handleEditClick} className="h-10">
-                    <Edit className="mr-2 h-4 w-4" />
-                    Editar Paciente
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-[600px]">
-                  <DialogHeader>
-                    <DialogTitle>Editar Paciente</DialogTitle>
-                    <DialogDescription>
-                      Modifique los datos del paciente y haga clic en Guardar para actualizar.
-                    </DialogDescription>
-                  </DialogHeader>
-                  <Form {...form}>
-                    <form onSubmit={form.handleSubmit(handleUpdatePatient)} className="space-y-4">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <FormField
-                          control={form.control}
-                          name="firstName"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Nombre</FormLabel>
-                              <FormControl>
-                                <Input placeholder="Nombre" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        
-                        <FormField
-                          control={form.control}
-                          name="lastName"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Apellido</FormLabel>
-                              <FormControl>
-                                <Input placeholder="Apellido" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        
-                        <FormField
-                          control={form.control}
-                          name="email"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Email</FormLabel>
-                              <FormControl>
-                                <Input 
-                                  type="email" 
-                                  placeholder="correo@ejemplo.com" 
-                                  {...field} 
-                                  value={field.value || ""}
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        
-                        <FormField
-                          control={form.control}
-                          name="phone"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Teléfono</FormLabel>
-                              <FormControl>
-                                <Input placeholder="123-456-7890" {...field} value={field.value || ""} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        
-                        <FormField
-                          control={form.control}
-                          name="dateOfBirth"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Fecha de Nacimiento</FormLabel>
-                              <FormControl>
-                                <Input 
-                                  type="date" 
-                                  {...field} 
-                                  value={field.value || ""}
-                                  onChange={(e) => {
-                                    console.log("[DIAGNÓSTICO] Campo fecha cambiado:", e.target.value);
-                                    field.onChange(e);
-                                  }}
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        
-                        <FormField
-                          control={form.control}
-                          name="gender"
-                          render={({ field }) => {
-                            console.log("[DIAGNÓSTICO] Campo género:", field.value);
-                            return (
-                              <FormItem>
-                                <FormLabel>Género</FormLabel>
-                                <Select
-                                  onValueChange={(value) => {
-                                    console.log("[DIAGNÓSTICO] Género seleccionado:", value);
-                                    field.onChange(value);
-                                  }}
-                                  value={field.value || ""}
-                                >
-                                  <FormControl>
-                                    <SelectTrigger>
-                                      <SelectValue placeholder="Seleccione un género" />
-                                    </SelectTrigger>
-                                  </FormControl>
-                                  <SelectContent>
-                                    <SelectItem value="Masculino">Masculino</SelectItem>
-                                    <SelectItem value="Femenino">Femenino</SelectItem>
-                                    <SelectItem value="Otro">Otro</SelectItem>
-                                    <SelectItem value="Prefiero no decir">Prefiero no decir</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                                <FormMessage />
-                              </FormItem>
-                            );
-                          }}
-                        />
-                        
-                        <FormField
-                          control={form.control}
-                          name="address"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Dirección</FormLabel>
-                              <FormControl>
-                                <Input placeholder="Calle Principal 123" {...field} value={field.value || ""} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        
-                        <FormField
-                          control={form.control}
-                          name="city"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Ciudad</FormLabel>
-                              <FormControl>
-                                <Input placeholder="Ciudad" {...field} value={field.value || ""} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        
-                        <FormField
-                          control={form.control}
-                          name="postalCode"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Código Postal</FormLabel>
-                              <FormControl>
-                                <Input placeholder="12345" {...field} value={field.value || ""} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        
-                        <FormField
-                          control={form.control}
-                          name="insurance"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Seguro Médico</FormLabel>
-                              <FormControl>
-                                <Input placeholder="Nombre del seguro" {...field} value={field.value || ""} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        
-                        <FormField
-                          control={form.control}
-                          name="insuranceNumber"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Número de Seguro</FormLabel>
-                              <FormControl>
-                                <Input placeholder="Número de póliza" {...field} value={field.value || ""} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-                      
-                      <FormField
-                        control={form.control}
-                        name="medicalHistory"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Historial Médico</FormLabel>
-                            <FormControl>
-                              <Textarea
-                                placeholder="Historial médico relevante"
-                                className="h-24"
-                                {...field}
-                                value={field.value || ""}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <FormField
-                        control={form.control}
-                        name="allergies"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Alergias</FormLabel>
-                            <div className="flex gap-2">
-                              <FormControl>
-                                <div className="border rounded-md p-3 flex flex-wrap gap-2 bg-background">
-                                  {field.value && field.value.map((allergy, i) => (
-                                    <Badge key={i} variant="secondary" className="flex items-center gap-1">
-                                      {allergy}
-                                      <X 
-                                        className="h-3 w-3 cursor-pointer" 
-                                        onClick={() => {
-                                          const newAllergies = [...field.value];
-                                          newAllergies.splice(i, 1);
-                                          field.onChange(newAllergies);
-                                        }}
-                                      />
-                                    </Badge>
-                                  ))}
-                                  <Input
-                                    className="border-0 flex-1 min-w-[150px] p-0 text-sm focus-visible:ring-0"
-                                    placeholder="Añadir alergia y presionar Enter"
-                                    onKeyDown={(e) => {
-                                      if (e.key === 'Enter' && e.currentTarget.value.trim()) {
-                                        e.preventDefault();
-                                        const newAllergies = [...(field.value || []), e.currentTarget.value.trim()];
-                                        field.onChange(newAllergies);
-                                        e.currentTarget.value = '';
-                                      }
-                                    }}
-                                  />
-                                </div>
-                              </FormControl>
-                              <FormMessage />
-                            </div>
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <DialogFooter>
-                        <Button type="submit">Guardar Cambios</Button>
-                      </DialogFooter>
-                    </form>
-                  </Form>
-                </DialogContent>
-              </Dialog>
-            </div>
+          <div className="flex justify-between items-center mb-6">
+            <h1 className="text-3xl font-bold">
+              {patient.firstName} {patient.lastName}
+            </h1>
+            <Button onClick={() => setIsEditDialogOpen(true)} variant="outline">
+              <Edit className="mr-2 h-4 w-4" /> Editar
+            </Button>
           </div>
 
-          <Tabs
-            value={activeTab}
-            onValueChange={setActiveTab}
-            className="space-y-4"
-          >
-            <TabsList>
-              <TabsTrigger value="perfil">Perfil</TabsTrigger>
-              <TabsTrigger value="citas">Citas</TabsTrigger>
-              <TabsTrigger value="tratamientos">Tratamientos</TabsTrigger>
-              <TabsTrigger value="facturas">Facturas</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="perfil" className="space-y-4">
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle>Información del Paciente</CardTitle>
-                  <CardDescription>Detalles personales del paciente</CardDescription>
-                </CardHeader>
-                <CardContent className="grid md:grid-cols-2 gap-6">
-                  <div className="space-y-4">
-                    <div>
-                      <h3 className="text-sm font-medium leading-none mb-1.5 text-muted-foreground">Nombre</h3>
-                      <p className="text-base">{patient.firstName} {patient.lastName}</p>
-                    </div>
-                    
-                    <div>
-                      <h3 className="text-sm font-medium leading-none mb-1.5 text-muted-foreground">Teléfono</h3>
-                      <p className="text-base">{patient.phone || 'No especificado'}</p>
-                    </div>
-                    
-                    <div>
-                      <h3 className="text-sm font-medium leading-none mb-1.5 text-muted-foreground">Género</h3>
-                      <p className="text-base">{patient.gender || 'No especificado'}</p>
-                    </div>
-                    
-                    <div>
-                      <h3 className="text-sm font-medium leading-none mb-1.5 text-muted-foreground">Doctor asignado</h3>
-                      <p className="text-base">{patient.treatingDoctor ? 
-                        `Dr. ${patient.treatingDoctor.firstName} ${patient.treatingDoctor.lastName}` : 'No asignado'}</p>
-                    </div>
-                    
-                    <div>
-                      <h3 className="text-sm font-medium leading-none mb-1.5 text-muted-foreground">Número de Seguro</h3>
-                      <p className="text-base">{patient.insuranceNumber || 'NA'}</p>
-                    </div>
+          <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+            <DialogContent className="sm:max-w-[600px]">
+              <DialogHeader>
+                <DialogTitle>Editar paciente</DialogTitle>
+                <DialogDescription>
+                  Actualiza los datos del paciente
+                </DialogDescription>
+              </DialogHeader>
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(handleUpdatePatient)} className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="firstName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Nombre</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Nombre" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="lastName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Apellido</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Apellido" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                   </div>
                   
-                  <div className="space-y-4">
-                    <div>
-                      <h3 className="text-sm font-medium leading-none mb-1.5 text-muted-foreground">Email</h3>
-                      <p className="text-base">{patient.email || 'No especificado'}</p>
-                    </div>
-                    
-                    <div>
-                      <h3 className="text-sm font-medium leading-none mb-1.5 text-muted-foreground">Fecha de Nacimiento</h3>
-                      <p className="text-base">{patient.dateOfBirth ? 
-                        format(new Date(patient.dateOfBirth), 'dd/MM/yyyy') : 'No especificada'}</p>
-                    </div>
-                    
-                    <div>
-                      <h3 className="text-sm font-medium leading-none mb-1.5 text-muted-foreground">Dirección</h3>
-                      <p className="text-base">{patient.address ? 
-                        `${patient.address}, ${patient.city || ''} ${patient.postalCode || ''}` : 'No especificada'}</p>
-                    </div>
-                    
-                    <div>
-                      <h3 className="text-sm font-medium leading-none mb-1.5 text-muted-foreground">Seguro</h3>
-                      <p className="text-base">{patient.insurance || 'MediExcel'}</p>
-                    </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="email"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Email</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Email" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="phone"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Teléfono</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Teléfono" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="dateOfBirth"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Fecha de nacimiento</FormLabel>
+                          <FormControl>
+                            <Input type="date" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="gender"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Género</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Seleccionar género" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="masculino">Masculino</SelectItem>
+                              <SelectItem value="femenino">Femenino</SelectItem>
+                              <SelectItem value="otro">Otro</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  
+                  <FormField
+                    control={form.control}
+                    name="address"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Dirección</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Dirección" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="city"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Ciudad</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Ciudad" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="postalCode"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Código postal</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Código postal" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="insurance"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Seguro médico</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Seguro médico" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="insuranceNumber"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Número de seguro</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Número de seguro" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  
+                  <FormField
+                    control={form.control}
+                    name="medicalHistory"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Historia médica</FormLabel>
+                        <FormControl>
+                          <Textarea placeholder="Historia médica" className="h-20" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <DialogFooter>
+                    <Button onClick={() => setIsEditDialogOpen(false)} variant="outline">
+                      Cancelar
+                    </Button>
+                    <Button type="submit">Guardar cambios</Button>
+                  </DialogFooter>
+                </form>
+              </Form>
+            </DialogContent>
+          </Dialog>
+
+          <Tabs defaultValue={activeTab} onValueChange={setActiveTab} className="space-y-4">
+            <TabsList>
+              <TabsTrigger value="perfil">Perfil</TabsTrigger>
+              <TabsTrigger value="citas">Citas ({appointments.length})</TabsTrigger>
+              <TabsTrigger value="tratamientos">Tratamientos ({treatments.length})</TabsTrigger>
+              <TabsTrigger value="facturas">Facturas ({invoices.length})</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="perfil" className="space-y-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Información personal</CardTitle>
+                </CardHeader>
+                <CardContent className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm font-medium">Fecha de nacimiento</p>
+                    <p>{patient.dateOfBirth ? format(new Date(patient.dateOfBirth), "dd/MM/yyyy") : "N/A"}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium">Género</p>
+                    <p>{patient.gender || "N/A"}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium">Email</p>
+                    <p>{patient.email || "N/A"}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium">Teléfono</p>
+                    <p>{patient.phone || "N/A"}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium">Dirección</p>
+                    <p>{patient.address || "N/A"}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium">Ciudad</p>
+                    <p>{patient.city || "N/A"}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium">Código postal</p>
+                    <p>{patient.postalCode || "N/A"}</p>
                   </div>
                 </CardContent>
               </Card>
               
-              <div className="grid md:grid-cols-2 gap-4">
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle>Historial Médico</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-muted-foreground">
-                      {patient.medicalHistory || 'No le gustan las inyecciones..'}
-                    </p>
-                  </CardContent>
-                </Card>
-                
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle>Alergias</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    {patient.allergies && patient.allergies.length > 0 ? (
-                      <div className="flex flex-wrap gap-2">
-                        {patient.allergies.map((allergy, index) => (
-                          <Badge key={index} variant="outline" className="bg-red-50 text-red-700 border-red-200">
-                            {allergy}
-                          </Badge>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="text-muted-foreground">Penisila</p>
-                    )}
-                  </CardContent>
-                </Card>
-              </div>
-            </TabsContent>
-          
-            <TabsContent value="citas" className="space-y-6">
               <Card>
                 <CardHeader>
-                  <CardTitle>Citas</CardTitle>
+                  <CardTitle>Información médica</CardTitle>
+                </CardHeader>
+                <CardContent className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm font-medium">Seguro médico</p>
+                    <p>{patient.insurance || "N/A"}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium">Número de seguro</p>
+                    <p>{patient.insuranceNumber || "N/A"}</p>
+                  </div>
+                  <div className="md:col-span-2">
+                    <p className="text-sm font-medium">Historia médica</p>
+                    <p>{patient.medicalHistory || "N/A"}</p>
+                  </div>
+                  <div className="md:col-span-2">
+                    <p className="text-sm font-medium">Alergias</p>
+                    <div className="flex flex-wrap gap-2 mt-1">
+                      {patient.allergies && patient.allergies.length > 0 ? (
+                        patient.allergies.map((allergy, index) => (
+                          <Badge key={index} variant="secondary">{allergy}</Badge>
+                        ))
+                      ) : (
+                        <p>No registradas</p>
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+            
+            <TabsContent value="citas" className="space-y-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Historial de citas</CardTitle>
                   <CardDescription>
-                    Citas programadas para este paciente
+                    Registro de citas programadas y completadas
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
                   {appointments.length === 0 ? (
-                    <div>No hay citas programadas para este paciente.</div>
+                    <div>No hay citas registradas para este paciente.</div>
                   ) : (
                     <Table>
                       <TableHeader>
                         <TableRow>
                           <TableHead>Fecha</TableHead>
-                          <TableHead>Hora</TableHead>
+                          <TableHead>Horario</TableHead>
                           <TableHead>Doctor</TableHead>
                           <TableHead>Estado</TableHead>
+                          <TableHead>Notas</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -791,6 +571,7 @@ const PatientDetails = () => {
                             <TableCell>
                               <Badge variant="secondary">{appointment.status}</Badge>
                             </TableCell>
+                            <TableCell>{appointment.notes || "-"}</TableCell>
                           </TableRow>
                         ))}
                       </TableBody>
@@ -805,7 +586,7 @@ const PatientDetails = () => {
                 <CardHeader>
                   <CardTitle>Tratamientos</CardTitle>
                   <CardDescription>
-                    Tratamientos realizados a este paciente
+                    Tratamientos planificados y realizados
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -815,18 +596,22 @@ const PatientDetails = () => {
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead>Fecha</TableHead>
                           <TableHead>Tipo</TableHead>
-                          <TableHead>Descripción</TableHead>
+                          <TableHead>Doctor</TableHead>
+                          <TableHead>Estado</TableHead>
+                          <TableHead>Fecha inicio</TableHead>
                           <TableHead>Costo</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {treatments.map(treatment => (
                           <TableRow key={treatment.id}>
-                            <TableCell>{format(new Date(treatment.startDate), "dd/MM/yyyy")}</TableCell>
                             <TableCell>{treatment.type}</TableCell>
-                            <TableCell>{treatment.description}</TableCell>
+                            <TableCell>{treatment.doctorName}</TableCell>
+                            <TableCell>
+                              <Badge variant="secondary">{treatment.status}</Badge>
+                            </TableCell>
+                            <TableCell>{format(new Date(treatment.startDate), "dd/MM/yyyy")}</TableCell>
                             <TableCell>${treatment.cost.toFixed(2)}</TableCell>
                           </TableRow>
                         ))}
@@ -887,122 +672,4 @@ const PatientDetails = () => {
   );
 };
 
-export default PatientDetails;
-
-                      </TableBody>
-                    </Table>
-                  )}
-                </CardContent>
-              </Card>
-            </TabsContent>
-            
-            <TabsContent value="facturas" className="space-y-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Facturas</CardTitle>
-                  <CardDescription>
-                    Facturas generadas para este paciente
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {invoices.length === 0 ? (
-                    <div>No hay facturas generadas para este paciente.</div>
-                  ) : (
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Fecha</TableHead>
-                          <TableHead>Total</TableHead>
-                          <TableHead>Estado</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {invoices.map(invoice => (
-                          <TableRow key={invoice.id}>
-                            <TableCell>{format(new Date(invoice.date), "dd/MM/yyyy")}</TableCell>
-                            <TableCell>${invoice.total.toFixed(2)}</TableCell>
-                            <TableCell>
-                              <Badge variant="secondary">{invoice.status}</Badge>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  )}
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
-        </>
-      ) : (
-        <div className="text-center py-8">
-          <div className="text-yellow-500 mb-4">No se encontró información del paciente</div>
-          <Button onClick={() => navigate('/patients')}>
-            Volver a Pacientes
-          </Button>
-        </div>
-      )}
-    </div>
-  );
-};
-
-export default PatientDetails;
-
-                      </TableBody>
-                    </Table>
-                  )}
-                </CardContent>
-              </Card>
-            </TabsContent>
-            
-            <TabsContent value="facturas" className="space-y-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Facturas</CardTitle>
-                  <CardDescription>
-                    Facturas generadas para este paciente
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {invoices.length === 0 ? (
-                    <div>No hay facturas generadas para este paciente.</div>
-                  ) : (
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Fecha</TableHead>
-                          <TableHead>Total</TableHead>
-                          <TableHead>Estado</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {invoices.map(invoice => (
-                          <TableRow key={invoice.id}>
-                            <TableCell>{format(new Date(invoice.date), "dd/MM/yyyy")}</TableCell>
-                            <TableCell>${invoice.total.toFixed(2)}</TableCell>
-                            <TableCell>
-                              <Badge variant="secondary">{invoice.status}</Badge>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  )}
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
-        </>
-      ) : (
-        <div className="text-center py-8">
-          <div className="text-yellow-500 mb-4">No se encontró información del paciente</div>
-          <Button onClick={() => navigate('/patients')}>
-            Volver a Pacientes
-          </Button>
-        </div>
-      )}
-    </div>
-  );
-};
-
-export default PatientDetails;
+export default PatientDetails; 
