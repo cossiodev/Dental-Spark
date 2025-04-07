@@ -117,7 +117,7 @@ const convert12To24Format = (time: string): string => {
 const formatDateToYYYYMMDD = (date: Date | string): string => {
   if (!date) return '';
   
-  if (date instanceof Date) {
+  if (typeof date === 'object' && date instanceof Date) {
     return date.toISOString().split('T')[0];
   }
   
@@ -238,9 +238,14 @@ const Appointments = () => {
       let appointmentDate;
       if (typeof appointment.date === 'string') {
         // Extraer solo la parte de la fecha (YYYY-MM-DD)
-        appointmentDate = appointment.date.trim().split('T')[0];
-      } else if (appointment.date instanceof Date) {
-        appointmentDate = appointment.date.toISOString().split('T')[0];
+        appointmentDate = appointment.date.split('T')[0];
+      } else if (typeof appointment.date === 'object') {
+        try {
+          appointmentDate = (appointment.date as Date).toISOString().split('T')[0];
+        } catch (e) {
+          console.error('Error al convertir fecha:', e);
+          return false;
+        }
       } else {
         console.error('Fecha de cita con formato desconocido:', appointment.date);
         return false;
@@ -360,7 +365,7 @@ const Appointments = () => {
     // Normalizar y formatear la fecha para enviar a la API
     let formattedDate;
     
-    if (formData.date instanceof Date) {
+    if (typeof formData.date === 'object' && formData.date instanceof Date) {
       // CORRECCIÓN: Mantener la fecha exacta sin ajustes de timezone
       // Al usar UTC, nos aseguramos que la fecha se guarde sin conversiones
       const year = formData.date.getFullYear();
@@ -373,7 +378,7 @@ const Appointments = () => {
       console.log('🔍 Fecha con UTC forzado:', dateObject.toISOString());
     } else if (typeof formData.date === 'string') {
       // Si es string, asegurar que tenga el formato correcto
-      formattedDate = formData.date.trim().split('T')[0];
+      formattedDate = formData.date.split('T')[0];
     } else {
       const now = new Date();
       const year = now.getFullYear();
@@ -478,7 +483,7 @@ const Appointments = () => {
   };
 
   // Corrige los errores de tipo en status (líneas 385 y 464)
-  type AppointmentStatus = "scheduled" | "completed" | "cancelled" | "no-show";
+  type AppointmentStatus = "scheduled" | "confirmed" | "completed" | "cancelled" | "no-show";
 
   // Función para cambiar el estado de una cita
   const handleStatusChange = async (id: string, newStatus: AppointmentStatus) => {
@@ -486,7 +491,18 @@ const Appointments = () => {
       setIsLoading(true);
       
       console.log(`Cambiando estado de cita ${id} a: ${newStatus}`);
-      const updatedAppointment = { id, status: newStatus };
+      const updatedAppointment = { 
+        id, 
+        status: newStatus,
+        // Añadir los campos requeridos con valores para manejar el error de tipo
+        patientId: '',
+        patientName: '',
+        doctorId: '',
+        doctorName: '',
+        date: '',
+        startTime: '',
+        endTime: ''
+      };
       
       await appointmentService.update(updatedAppointment);
       
@@ -496,7 +512,8 @@ const Appointments = () => {
           newStatus === 'scheduled' ? 'programada' :
           newStatus === 'confirmed' ? 'confirmada' :
           newStatus === 'completed' ? 'completada' :
-          newStatus === 'cancelled' ? 'cancelada' : newStatus
+          newStatus === 'cancelled' ? 'cancelada' : 
+          newStatus === 'no-show' ? 'marcada como no asistida' : newStatus
         }.`,
       });
       
@@ -533,7 +550,7 @@ const Appointments = () => {
       // Normalizar y formatear la fecha para enviar a la API
       let formattedDate;
       
-      if (updatedData.date instanceof Date) {
+      if (updatedData.date && typeof updatedData.date === 'object' && 'getFullYear' in updatedData.date) {
         // CORRECCIÓN: Mantener la fecha exacta sin ajustes de timezone
         // Al usar UTC, nos aseguramos que la fecha se guarde sin conversiones
         const year = updatedData.date.getFullYear();
@@ -655,7 +672,7 @@ const Appointments = () => {
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
-            <Button className="ml-auto">
+            <Button>
               <PlusCircle className="mr-2 h-4 w-4" />
               Nueva Cita
             </Button>
@@ -882,28 +899,30 @@ const Appointments = () => {
       )}
 
       <Tabs defaultValue="today" value={selectedTab} onValueChange={setSelectedTab}>
-        <TabsList className="grid w-full md:w-auto grid-cols-3 mb-4">
-          <TabsTrigger value="today">Hoy</TabsTrigger>
-          <TabsTrigger value="tomorrow">Mañana</TabsTrigger>
-          <TabsTrigger value="upcoming">Próximas</TabsTrigger>
-        </TabsList>
+        <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-4">
+          <TabsList className="grid grid-cols-3 w-full sm:w-auto">
+            <TabsTrigger value="today">Hoy</TabsTrigger>
+            <TabsTrigger value="tomorrow">Mañana</TabsTrigger>
+            <TabsTrigger value="upcoming">Próximas</TabsTrigger>
+          </TabsList>
+        </div>
         
         {/* Combined content for all tabs */}
-        <Card className="shadow-sm">
-          <CardHeader className="pb-2 border-b">
-            <div className="flex justify-between items-center">
-              <div>
-                <CardTitle className="text-xl">Citas {selectedTab === "today" ? "de Hoy" : selectedTab === "tomorrow" ? "de Mañana" : "Próximas"}</CardTitle>
-                <CardDescription>
-                  {isLoadingAppointments ? "Cargando citas..." : 
-                    filteredAppointments.length > 0 
-                      ? `Mostrando ${filteredAppointments.length} citas`
-                      : "No hay citas programadas en este período"
-                  }
-                </CardDescription>
-              </div>
+        <Card className="border shadow">
+          <CardHeader className="py-3 px-4 flex flex-row items-center justify-between space-y-0">
+            <div>
+              <CardTitle className="text-xl font-semibold">{selectedTab === "today" ? "Citas de Hoy" : selectedTab === "tomorrow" ? "Citas de Mañana" : "Próximas Citas"}</CardTitle>
+              <CardDescription>
+                {isLoadingAppointments ? "Cargando citas..." : 
+                  filteredAppointments.length > 0 
+                    ? `Mostrando ${filteredAppointments.length} citas`
+                    : "No hay citas programadas en este período"
+                }
+              </CardDescription>
+            </div>
+            <div className="flex space-x-2">
               {filteredAppointments.length > 0 && (
-                <Button variant="outline" onClick={() => setOpen(true)} size="sm">
+                <Button variant="outline" onClick={() => setOpen(true)} className="h-9">
                   <PlusCircle className="mr-2 h-4 w-4" />
                   Nueva Cita
                 </Button>
@@ -917,35 +936,33 @@ const Appointments = () => {
               </div>
             ) : filteredAppointments.length > 0 ? (
               <div className="overflow-x-auto" style={{ width: '100%' }}>
-                <table className="w-full border-collapse">
+                <table className="w-full">
                   <thead>
-                    <tr className="bg-gray-50 text-sm font-medium">
-                      <th className="p-2 border-b text-left">Paciente</th>
-                      <th className="p-2 border-b text-left">Doctor</th>
-                      <th className="p-2 border-b text-left">Fecha</th>
-                      <th className="p-2 border-b text-left">Hora</th>
-                      <th className="p-2 border-b text-left">Tipo</th>
-                      <th className="p-2 border-b text-left">Estado</th>
-                      <th className="p-2 border-b text-center">Acciones</th>
+                    <tr>
+                      <th className="p-2 text-left font-medium">Paciente</th>
+                      <th className="p-2 text-left font-medium">Doctor</th>
+                      <th className="p-2 text-left font-medium">Fecha</th>
+                      <th className="p-2 text-left font-medium">Hora</th>
+                      <th className="p-2 text-left font-medium">Tipo</th>
+                      <th className="p-2 text-left font-medium">Estado</th>
+                      <th className="p-2 text-right font-medium">Acciones</th>
                     </tr>
                   </thead>
                   <tbody>
                     {filteredAppointments.map((appointment) => (
-                      <tr key={appointment.id} className="border-b hover:bg-gray-50">
-                        <td className="p-2 font-medium truncate">{appointment.patientName || appointment.patientId}</td>
-                        <td className="p-2 truncate">{appointment.doctorName || appointment.doctorId}</td>
+                      <tr key={appointment.id} className="border-t hover:bg-gray-50">
+                        <td className="p-2 font-medium">{appointment.patientName || appointment.patientId}</td>
+                        <td className="p-2">{appointment.doctorName || appointment.doctorId}</td>
                         <td className="p-2">{formatDisplayDate(appointment.date)}</td>
                         <td className="p-2">{appointment.startTime} - {appointment.endTime}</td>
-                        <td className="p-2 truncate">
-                          {appointment.treatmentType ? 
+                        <td className="p-2">{appointment.treatmentType ? 
                             appointment.treatmentType === "consultation" ? "Consulta" :
                             appointment.treatmentType === "cleaning" ? "Limpieza" :
                             appointment.treatmentType === "filling" ? "Empaste" :
                             appointment.treatmentType === "extraction" ? "Extracción" :
                             appointment.treatmentType === "rootcanal" ? "Endodoncia" :
                             appointment.treatmentType === "orthodontics" ? "Ortodoncia" : appointment.treatmentType
-                          : "-"}
-                        </td>
+                          : "-"}</td>
                         <td className="p-2">
                           <span
                             className={`inline-block px-2 py-1 rounded-md text-xs ${getStatusColor(
@@ -955,8 +972,8 @@ const Appointments = () => {
                             {getStatusText(appointment.status)}
                           </span>
                         </td>
-                        <td className="p-2 text-center">
-                          <div className="flex justify-center space-x-3">
+                        <td className="p-2 text-right">
+                          <div className="flex justify-end space-x-3">
                             <button
                               onClick={() => handleEditAppointment(appointment)}
                               className="text-blue-600 hover:text-blue-800"
