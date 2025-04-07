@@ -1,16 +1,16 @@
 {
   "version": 2,
   "framework": "vite",
+  "build": {
+    "env": {
+      "NODE_VERSION": "18.x"
+    }
+  },
+  "installCommand": "npm install",
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
-  "cleanUrls": true,
   "routes": [
-    {
-      "handle": "filesystem"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/index.html"
-    }
+    { "handle": "filesystem" },
+    { "src": "/(.*)", "dest": "/index.html" }
   ]
 } 
