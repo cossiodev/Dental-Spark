@@ -225,11 +225,15 @@ export function AppointmentForm({
               <SelectValue placeholder="Seleccione un paciente" />
             </SelectTrigger>
             <SelectContent>
-              {patients.map((patient) => (
-                <SelectItem key={patient.id} value={patient.id}>
-                  {patient.firstName} {patient.lastName}
-                </SelectItem>
-              ))}
+              {patients.length > 0 ? (
+                patients.map((patient) => (
+                  <SelectItem key={patient.id} value={patient.id || "placeholder-value"}>
+                    {patient.firstName} {patient.lastName}
+                  </SelectItem>
+                ))
+              ) : (
+                <SelectItem value="no-patients">No hay pacientes disponibles</SelectItem>
+              )}
             </SelectContent>
           </Select>
         </div>
@@ -247,11 +251,15 @@ export function AppointmentForm({
               <SelectValue placeholder="Seleccione un doctor" />
             </SelectTrigger>
             <SelectContent>
-              {doctors.map((doctor) => (
-                <SelectItem key={doctor.id} value={doctor.id}>
-                  {doctor.firstName} {doctor.lastName}
-                </SelectItem>
-              ))}
+              {doctors.length > 0 ? (
+                doctors.map((doctor) => (
+                  <SelectItem key={doctor.id} value={doctor.id || "placeholder-value"}>
+                    {doctor.firstName} {doctor.lastName}
+                  </SelectItem>
+                ))
+              ) : (
+                <SelectItem value="no-doctors">No hay doctores disponibles</SelectItem>
+              )}
             </SelectContent>
           </Select>
         </div>
