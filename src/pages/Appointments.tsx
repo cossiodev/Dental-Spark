@@ -946,22 +946,20 @@ const Appointments = () => {
                           </span>
                         </td>
                         <td className="p-2">
-                          <div className="flex space-x-2">
+                          <div className="flex space-x-2 justify-center">
                             <button
                               onClick={() => handleEditAppointment(appointment)}
-                              className="flex items-center space-x-1 bg-blue-50 hover:bg-blue-100 text-blue-700 px-2 py-1 rounded"
+                              className="text-blue-600 hover:text-blue-800 p-1.5"
                               title="Editar cita"
                             >
                               <Edit className="h-4 w-4" />
-                              <span className="text-xs">Editar</span>
                             </button>
                             <button
                               onClick={() => handleDeleteAppointment(appointment.id)}
-                              className="flex items-center space-x-1 bg-red-50 hover:bg-red-100 text-red-700 px-2 py-1 rounded"
+                              className="text-red-600 hover:text-red-800 p-1.5"
                               title="Eliminar cita"
                             >
                               <Trash2 className="h-4 w-4" />
-                              <span className="text-xs">Eliminar</span>
                             </button>
                           </div>
                         </td>
