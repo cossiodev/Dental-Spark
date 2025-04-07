@@ -655,7 +655,7 @@ const Appointments = () => {
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
-            <Button className="ml-auto">
+            <Button className="ml-auto bg-blue-600 hover:bg-blue-700 text-white">
               <PlusCircle className="mr-2 h-4 w-4" />
               Nueva Cita
             </Button>
@@ -881,18 +881,18 @@ const Appointments = () => {
         </div>
       )}
 
-      <Tabs defaultValue="today" value={selectedTab} onValueChange={setSelectedTab}>
-        <TabsList className="grid w-full md:w-auto grid-cols-3 mb-4">
-          <TabsTrigger value="today">Hoy</TabsTrigger>
-          <TabsTrigger value="tomorrow">Mañana</TabsTrigger>
-          <TabsTrigger value="upcoming">Próximas</TabsTrigger>
+      <Tabs defaultValue="today" value={selectedTab} onValueChange={setSelectedTab} className="w-full">
+        <TabsList className="grid w-full md:w-auto grid-cols-3 mb-4 rounded-md overflow-hidden bg-gray-100">
+          <TabsTrigger value="today" className="font-medium data-[state=active]:bg-blue-600 data-[state=active]:text-white">Hoy</TabsTrigger>
+          <TabsTrigger value="tomorrow" className="font-medium data-[state=active]:bg-blue-600 data-[state=active]:text-white">Mañana</TabsTrigger>
+          <TabsTrigger value="upcoming" className="font-medium data-[state=active]:bg-blue-600 data-[state=active]:text-white">Próximas</TabsTrigger>
         </TabsList>
         
         {/* Combined content for all tabs */}
         <Card>
-          <CardHeader className="pb-3">
-            <CardTitle>Citas {selectedTab === "today" ? "de Hoy" : selectedTab === "tomorrow" ? "de Mañana" : "Próximas"}</CardTitle>
-            <CardDescription>
+          <CardHeader className="pb-3 bg-gray-50">
+            <CardTitle className="text-xl">Citas {selectedTab === "today" ? "de Hoy" : selectedTab === "tomorrow" ? "de Mañana" : "Próximas"}</CardTitle>
+            <CardDescription className="text-sm font-normal">
               {isLoadingAppointments ? "Cargando citas..." : 
                 filteredAppointments.length > 0 
                   ? `Mostrando ${filteredAppointments.length} citas`
@@ -907,7 +907,7 @@ const Appointments = () => {
               </div>
             ) : filteredAppointments.length > 0 ? (
               <div className="overflow-x-auto" style={{ width: '100%' }}>
-                <table className="min-w-full border-collapse" style={{ tableLayout: 'fixed' }}>
+                <table className="min-w-full border-collapse bg-white" style={{ tableLayout: 'fixed' }}>
                   <thead>
                     <tr className="bg-gray-100 text-sm font-bold">
                       <th className="p-2 border-b w-1/6 text-left">Paciente</th>
@@ -915,7 +915,7 @@ const Appointments = () => {
                       <th className="p-2 border-b w-1/6 text-left">Fecha</th>
                       <th className="p-2 border-b w-1/6 text-left">Hora</th>
                       <th className="p-2 border-b w-1/6 text-left">Tipo</th>
-                      <th className="p-2 border-b w-1/6 text-left">Estado / Acciones</th>
+                      <th className="p-2 border-b w-1/6 text-left">Estado</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -932,39 +932,17 @@ const Appointments = () => {
                             appointment.treatmentType === "filling" ? "Empaste" :
                             appointment.treatmentType === "extraction" ? "Extracción" :
                             appointment.treatmentType === "rootcanal" ? "Endodoncia" :
-                            appointment.treatmentType === "orthodontics" ? "Ortodoncia" : "Otro"
+                            appointment.treatmentType === "orthodontics" ? "Ortodoncia" : appointment.treatmentType
                           : "-"}
                         </td>
                         <td className="p-2">
-                          <div className="flex items-center">
-                            <span
-                              className={`px-2 py-1 rounded text-xs ${getStatusColor(
-                                appointment.status
-                              )}`}
-                            >
-                              {getStatusText(appointment.status)}
-                            </span>
-                            {userPermissions.canEdit && (
-                              <div className="flex ml-2">
-                                <button
-                                  onClick={() => handleEditAppointment(appointment)}
-                                  className="p-1 text-blue-600 hover:text-blue-800 mr-1"
-                                  title="Editar cita"
-                                >
-                                  <Edit className="h-4 w-4" />
-                                </button>
-                                {userPermissions.canDelete && (
-                                  <button
-                                    onClick={() => handleDeleteAppointment(appointment.id)}
-                                    className="p-1 text-red-600 hover:text-red-800"
-                                    title="Eliminar cita"
-                                  >
-                                    <Trash2 className="h-4 w-4" />
-                                  </button>
-                                )}
-                              </div>
-                            )}
-                          </div>
+                          <span
+                            className={`inline-block px-2 py-1 rounded text-xs font-medium ${getStatusColor(
+                              appointment.status
+                            )}`}
+                          >
+                            {getStatusText(appointment.status)}
+                          </span>
                         </td>
                       </tr>
                     ))}
