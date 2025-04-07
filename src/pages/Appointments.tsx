@@ -59,24 +59,20 @@ const formatDisplayDate = (dateString: string) => {
     
     // Asegurar que la fecha esté en formato YYYY-MM-DD antes de parsear
     const normalizedDate = dateString.trim().split('T')[0];
-    console.log(`⚠️ Formateando fecha para mostrar: "${normalizedDate}"`);
+    console.log(`🔴 REFORMATEO DE FECHA - Input: "${dateString}", Normalizada: "${normalizedDate}"`);
     
-    // Crear fecha como UTC para evitar problemas de timezone
+    // Dividir la fecha en componentes
     const [year, month, day] = normalizedDate.split('-').map(Number);
     
-    // Crear una fecha UTC pero ajustada para mostrar correctamente
-    // Esto evita problemas donde la fecha se ajusta por timezone y se muestra un día antes
-    const date = new Date(Date.UTC(year, month - 1, day));
-    
-    console.log(`⚠️ Fecha después de parsear: ${date.toISOString()}`);
-    
-    // Verificar que la fecha es válida
-    if (isNaN(date.getTime())) {
-      console.error(`⚠️ Fecha inválida: "${normalizedDate}"`);
-      return normalizedDate; // Devolver el string original si no se puede parsear
+    if (!year || !month || !day) {
+      console.error(`🔴 COMPONENTES INVÁLIDOS: año=${year}, mes=${month}, día=${day}`);
+      return normalizedDate;
     }
     
-    // Mostrar fecha como aparece en Supabase, sin conversión de zona horaria
+    // Log de depuración
+    console.log(`🔴 COMPONENTES: año=${year}, mes=${month}, día=${day}`);
+    
+    // Mostrar fecha directamente como está en Supabase
     return `${day} de ${
       month === 1 ? 'enero' :
       month === 2 ? 'febrero' :
@@ -92,7 +88,7 @@ const formatDisplayDate = (dateString: string) => {
       'diciembre'
     } de ${year}`;
   } catch (error) {
-    console.error(`⚠️ Error al formatear fecha "${dateString}":`, error);
+    console.error(`🔴 ERROR FATAL al formatear fecha "${dateString}":`, error);
     return dateString || 'Sin fecha';
   }
 };
@@ -268,6 +264,28 @@ const Appointments = () => {
       return () => clearTimeout(timer);
     }
   }, [appointments.length, isLoadingAppointments, lastCreatedAppointment, refetchAppointments]);
+
+  // Función de depuración que se ejecutará una vez al cargar
+  useEffect(() => {
+    const debugAppointments = () => {
+      if (appointments && appointments.length > 0) {
+        console.log('🔴 DEPURACIÓN DE CITAS:');
+        appointments.forEach((a, i) => {
+          console.log(`🔴 CITA #${i+1} - ID: ${a.id}`);
+          console.log(`   - Fecha en DB: "${a.date}"`);
+          console.log(`   - Fecha formateada: "${formatDisplayDate(a.date)}"`);
+          console.log(`   - Paciente: ${a.patientName}`);
+          console.log(`   - Doctor: ${a.doctorName}`);
+          console.log(`   - Hora: ${a.startTime}-${a.endTime}`);
+        });
+      }
+    };
+    
+    // Solo ejecutar una vez cuando se cargan las citas
+    if (!isLoadingAppointments && appointments.length > 0) {
+      debugAppointments();
+    }
+  }, [appointments, isLoadingAppointments]);
 
   // Handle form change
   const handleChange = (field: string, value: any) => {
@@ -812,7 +830,12 @@ const Appointments = () => {
                       >
                         <TableCell className="font-medium">{appointment.patientName || appointment.patientId}</TableCell>
                         <TableCell>{appointment.doctorName || appointment.doctorId}</TableCell>
-                        <TableCell>{formatDisplayDate(appointment.date)}</TableCell>
+                        <TableCell>
+                          <div className="space-y-1">
+                            <div className="text-sm">{formatDisplayDate(appointment.date)}</div>
+                            <div className="text-xs text-muted-foreground">DB: {appointment.date}</div>
+                          </div>
+                        </TableCell>
                         <TableCell>{appointment.startTime} - {appointment.endTime}</TableCell>
                         <TableCell>
                           {appointment.treatmentType ? 

@@ -179,7 +179,7 @@ export const appointmentService = {
         return [];
       }
 
-      console.log(`Se encontraron ${appointments.length} citas en total:`, appointments);
+      console.log('🔴 DATOS CRUDOS DE CITAS DE SUPABASE:', JSON.stringify(appointments, null, 2));
       
       // Mapear los resultados al formato esperado por la aplicación
       const result = appointments.map(appointment => {
@@ -195,6 +195,12 @@ export const appointmentService = {
                             appointment.doctors.first_name && 
                             appointment.doctors.last_name;
           
+          // Asegurar que el formato de fecha es correcto
+          const origDate = appointment.date;
+          const normalizedDate = origDate ? String(origDate).trim().split('T')[0] : new Date().toISOString().split('T')[0];
+          
+          console.log(`🔴 CITA ${appointment.id} - Fecha original: "${origDate}", Normalizada: "${normalizedDate}"`);
+          
           return {
             id: appointment.id,
             patientId: appointment.patient_id,
@@ -205,7 +211,7 @@ export const appointmentService = {
             doctorName: hasDoctor 
               ? `${appointment.doctors.first_name} ${appointment.doctors.last_name}`
               : 'Doctor sin nombre',
-            date: appointment.date,
+            date: normalizedDate,
             startTime: appointment.start_time,
             endTime: appointment.end_time,
             status: appointment.status || 'scheduled',
@@ -252,10 +258,18 @@ export const appointmentService = {
       // Formatear fecha si es necesario
       let formattedDate = appointment.date;
       if (appointment.date instanceof Date) {
-        formattedDate = appointment.date.toISOString().split('T')[0];
+        // Asegurar que se crea como YYYY-MM-DD sin componente de tiempo
+        const year = appointment.date.getFullYear();
+        const month = (appointment.date.getMonth() + 1).toString().padStart(2, '0');
+        const day = appointment.date.getDate().toString().padStart(2, '0');
+        formattedDate = `${year}-${month}-${day}`;
+      } else if (typeof appointment.date === 'string') {
+        // Si es string, asegurar que tenga el formato correcto
+        formattedDate = appointment.date.trim().split('T')[0];
       }
       
-      console.log('Fecha formateada para la cita:', formattedDate);
+      console.log('🔴 CREACIÓN - Fecha original:', appointment.date);
+      console.log('🔴 CREACIÓN - Fecha formateada para Supabase:', formattedDate);
       
       const appointmentData = {
         patient_id: appointment.patientId,
@@ -457,8 +471,18 @@ export const appointmentService = {
       // Formatear fecha si es necesario
       let formattedDate = appointment.date;
       if (appointment.date instanceof Date) {
-        formattedDate = appointment.date.toISOString().split('T')[0];
+        // Asegurar que se crea como YYYY-MM-DD sin componente de tiempo
+        const year = appointment.date.getFullYear();
+        const month = (appointment.date.getMonth() + 1).toString().padStart(2, '0');
+        const day = appointment.date.getDate().toString().padStart(2, '0');
+        formattedDate = `${year}-${month}-${day}`;
+      } else if (typeof appointment.date === 'string') {
+        // Si es string, asegurar que tenga el formato correcto
+        formattedDate = appointment.date.trim().split('T')[0];
       }
+      
+      console.log('🔴 ACTUALIZACIÓN - Fecha original:', appointment.date);
+      console.log('🔴 ACTUALIZACIÓN - Fecha formateada para Supabase:', formattedDate);
       
       // Preparar datos para Supabase
       const appointmentData = {
@@ -489,7 +513,12 @@ export const appointmentService = {
       await new Promise(resolve => setTimeout(resolve, 500));
       
       console.log('Cita actualizada exitosamente');
-      return appointment;
+      
+      // Devolver el objeto actualizado con la fecha formateada
+      return {
+        ...appointment,
+        date: formattedDate as string
+      };
     } catch (error) {
       console.error('Error al actualizar cita:', error);
       throw error;
