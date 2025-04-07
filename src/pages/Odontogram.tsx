@@ -721,16 +721,9 @@ const Odontogram = () => {
           <p className="text-muted-foreground">Visualiza y edita el odontograma de tus pacientes.</p>
         </div>
         <div className="flex gap-2">
-          <Button 
-            variant="outline" 
-            onClick={() => setSelectedDate(format(new Date(), "yyyy-MM-dd"))}
-            className="h-10"
-          >
-            <span className="hidden sm:inline mr-2">Hoy:</span> {format(new Date(), "dd/MM/yyyy")}
-          </Button>
           <Button variant="outline" onClick={loadPatients} className="h-10">
             <RefreshCw className="mr-2 h-4 w-4" />
-            <span className="hidden sm:inline">Actualizar</span> Pacientes
+            <span>Actualizar Pacientes</span>
           </Button>
         </div>
       </div>
