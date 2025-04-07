@@ -271,9 +271,9 @@ const Appointments = () => {
       
       // Comparación exacta de strings para mayor precisión
       let result;
-      if (selectedTab === "today") {
+    if (selectedTab === "today") {
         result = appointmentDate === todayStr;
-      } else if (selectedTab === "tomorrow") { 
+    } else if (selectedTab === "tomorrow") {
         result = appointmentDate === tomorrowStr;
       } else { // upcoming
         // La fecha de la cita debe ser mayor o igual que hoy
@@ -520,7 +520,7 @@ const Appointments = () => {
       };
       
       await appointmentService.update(updatedAppointment);
-      
+
       toast({
         title: "Estado actualizado",
         description: `La cita ahora está ${
@@ -685,7 +685,7 @@ const Appointments = () => {
     <div className="container py-8 space-y-8">
       <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Citas</h1>
+        <h1 className="text-3xl font-bold tracking-tight">Citas</h1>
           <p className="text-muted-foreground">Gestiona las citas de los pacientes en el sistema.</p>
         </div>
         <div className="flex gap-2">
@@ -693,20 +693,20 @@ const Appointments = () => {
             <RefreshCw className="mr-2 h-4 w-4" />
             Actualizar Lista
           </Button>
-          <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
+        <Dialog open={open} onOpenChange={setOpen}>
+          <DialogTrigger asChild>
               <Button className="h-10">
                 <PlusCircle className="mr-2 h-4 w-4" />
                 Nueva Cita
-              </Button>
-            </DialogTrigger>
+            </Button>
+          </DialogTrigger>
             <DialogContent className="sm:max-w-[700px]">
-              <DialogHeader>
+            <DialogHeader>
                 <DialogTitle>Agregar Nueva Cita</DialogTitle>
-                <DialogDescription>
+              <DialogDescription>
                   Complete el formulario para agregar una nueva cita al sistema.
-                </DialogDescription>
-              </DialogHeader>
+              </DialogDescription>
+            </DialogHeader>
               
               <AppointmentForm
                 onSubmit={(data) => {
@@ -757,8 +757,8 @@ const Appointments = () => {
                 onCancel={() => setOpen(false)}
                 isEditing={false}
               />
-            </DialogContent>
-          </Dialog>
+          </DialogContent>
+        </Dialog>
         </div>
       </div>
 
@@ -789,10 +789,10 @@ const Appointments = () => {
       <Tabs defaultValue="today" value={selectedTab} onValueChange={setSelectedTab}>
         <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-4">
           <TabsList className="grid grid-cols-3 w-full sm:w-auto">
-            <TabsTrigger value="today">Hoy</TabsTrigger>
-            <TabsTrigger value="tomorrow">Mañana</TabsTrigger>
-            <TabsTrigger value="upcoming">Próximas</TabsTrigger>
-          </TabsList>
+          <TabsTrigger value="today">Hoy</TabsTrigger>
+          <TabsTrigger value="tomorrow">Mañana</TabsTrigger>
+          <TabsTrigger value="upcoming">Próximas</TabsTrigger>
+        </TabsList>
         </div>
         
         <Card>

@@ -612,3 +612,123 @@ const Dashboard = () => {
 };
 
 export default Dashboard;
+
+                        <Button variant="outline" size="sm" className="w-full">
+                          Ir a Inventario
+                        </Button>
+                      </Link>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle>Facturas pendientes</CardTitle>
+                  {unpaidInvoices.length > 0 && (
+                    <div className="rounded-full bg-dental-warning/20 text-dental-warning p-1">
+                      <AlertTriangle className="h-4 w-4" />
+                    </div>
+                  )}
+                </div>
+                <CardDescription>Facturas por cobrar</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {unpaidInvoices.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">No hay facturas pendientes</p>
+                ) : (
+                  <div className="space-y-2">
+                    {unpaidInvoices.slice(0, 5).map((invoice) => (
+                      <div key={invoice.id} className="flex items-center justify-between border-b pb-2">
+                        <div>
+                          <p className="font-medium">{invoice.patientName}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {format(new Date(invoice.date), "dd/MM/yyyy")}
+                          </p>
+                        </div>
+                        <div className="text-sm">
+                          <span className="font-medium text-dental-error">${invoice.total.toFixed(2)}</span>
+                        </div>
+                      </div>
+                    ))}
+                    <div className="pt-2">
+                      <Link to="/billing">
+                        <Button variant="outline" size="sm" className="w-full">
+                          Ir a Facturación
+                        </Button>
+                      </Link>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+};
+
+export default Dashboard;
+
+                        <Button variant="outline" size="sm" className="w-full">
+                          Ir a Inventario
+                        </Button>
+                      </Link>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle>Facturas pendientes</CardTitle>
+                  {unpaidInvoices.length > 0 && (
+                    <div className="rounded-full bg-dental-warning/20 text-dental-warning p-1">
+                      <AlertTriangle className="h-4 w-4" />
+                    </div>
+                  )}
+                </div>
+                <CardDescription>Facturas por cobrar</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {unpaidInvoices.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">No hay facturas pendientes</p>
+                ) : (
+                  <div className="space-y-2">
+                    {unpaidInvoices.slice(0, 5).map((invoice) => (
+                      <div key={invoice.id} className="flex items-center justify-between border-b pb-2">
+                        <div>
+                          <p className="font-medium">{invoice.patientName}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {format(new Date(invoice.date), "dd/MM/yyyy")}
+                          </p>
+                        </div>
+                        <div className="text-sm">
+                          <span className="font-medium text-dental-error">${invoice.total.toFixed(2)}</span>
+                        </div>
+                      </div>
+                    ))}
+                    <div className="pt-2">
+                      <Link to="/billing">
+                        <Button variant="outline" size="sm" className="w-full">
+                          Ir a Facturación
+                        </Button>
+                      </Link>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+};
+
+export default Dashboard;

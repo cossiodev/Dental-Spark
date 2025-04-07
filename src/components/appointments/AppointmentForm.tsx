@@ -451,3 +451,241 @@ export function AppointmentForm({
     </form>
   );
 } 
+              <SelectValue placeholder="Seleccione un tipo" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="consultation">Consulta</SelectItem>
+              <SelectItem value="cleaning">Limpieza</SelectItem>
+              <SelectItem value="filling">Empaste</SelectItem>
+              <SelectItem value="extraction">Extracción</SelectItem>
+              <SelectItem value="rootcanal">Endodoncia</SelectItem>
+              <SelectItem value="orthodontics">Ortodoncia</SelectItem>
+              <SelectItem value="other">Otro</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        
+        <div>
+          <Label htmlFor="timeBlock" className="font-medium">
+            Horario *
+          </Label>
+          <TimeBlockSelector
+            className="mt-1.5"
+            value={formData.timeBlock || "09:00-10:00"}
+            onChange={(value) => handleChange("timeBlock", value)}
+            disabled={isSubmitting}
+          />
+        </div>
+        
+        <div>
+          <Label htmlFor="status" className="font-medium">
+            Estado *
+          </Label>
+          <Select 
+            value={formData.status || "scheduled"} 
+            onValueChange={(value) => handleChange("status", value)}
+            disabled={isSubmitting}
+          >
+            <SelectTrigger id="status" className="mt-1.5">
+              <SelectValue placeholder="Seleccione un estado" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="scheduled">Programada</SelectItem>
+              <SelectItem value="confirmed">Confirmada</SelectItem>
+              <SelectItem value="completed">Completada</SelectItem>
+              <SelectItem value="cancelled">Cancelada</SelectItem>
+              <SelectItem value="no-show">No asistió</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+      
+      <div>
+        <Label htmlFor="notes" className="font-medium">
+          Notas
+        </Label>
+        <div className="mt-1.5">
+          <div className="flex gap-2 mb-2">
+            <Input
+              id="notes-input"
+              value={notesInput}
+              onChange={(e) => setNotesInput(e.target.value)}
+              onKeyDown={handleNotesKeyDown}
+              placeholder="Añadir nota y presionar Enter"
+              className="flex-1"
+              disabled={isSubmitting}
+            />
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={addNoteTag}
+              disabled={!notesInput.trim() || isSubmitting}
+            >
+              Añadir
+            </Button>
+          </div>
+          
+          {notesTags.length > 0 && (
+            <div className="flex flex-wrap gap-2 mt-2">
+              {notesTags.map((tag, index) => (
+                <Badge 
+                  key={index} 
+                  variant="outline" 
+                  className="py-1.5 pl-2 pr-1.5 flex items-center gap-1 bg-slate-100"
+                >
+                  {tag}
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-5 w-5 rounded-full hover:bg-slate-200"
+                    onClick={() => removeNoteTag(index)}
+                    disabled={isSubmitting}
+                  >
+                    <X className="h-3 w-3" />
+                  </Button>
+                </Badge>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+      
+      <div className="flex justify-end gap-2 pt-4">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={onCancel}
+          disabled={isSubmitting}
+        >
+          Cancelar
+        </Button>
+        <Button 
+          type="submit"
+          disabled={isSubmitting}
+        >
+          {isSubmitting ? 'Guardando...' : isEditing ? 'Actualizar Cita' : 'Crear Cita'}
+        </Button>
+      </div>
+    </form>
+  );
+} 
+              <SelectValue placeholder="Seleccione un tipo" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="consultation">Consulta</SelectItem>
+              <SelectItem value="cleaning">Limpieza</SelectItem>
+              <SelectItem value="filling">Empaste</SelectItem>
+              <SelectItem value="extraction">Extracción</SelectItem>
+              <SelectItem value="rootcanal">Endodoncia</SelectItem>
+              <SelectItem value="orthodontics">Ortodoncia</SelectItem>
+              <SelectItem value="other">Otro</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        
+        <div>
+          <Label htmlFor="timeBlock" className="font-medium">
+            Horario *
+          </Label>
+          <TimeBlockSelector
+            className="mt-1.5"
+            value={formData.timeBlock || "09:00-10:00"}
+            onChange={(value) => handleChange("timeBlock", value)}
+            disabled={isSubmitting}
+          />
+        </div>
+        
+        <div>
+          <Label htmlFor="status" className="font-medium">
+            Estado *
+          </Label>
+          <Select 
+            value={formData.status || "scheduled"} 
+            onValueChange={(value) => handleChange("status", value)}
+            disabled={isSubmitting}
+          >
+            <SelectTrigger id="status" className="mt-1.5">
+              <SelectValue placeholder="Seleccione un estado" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="scheduled">Programada</SelectItem>
+              <SelectItem value="confirmed">Confirmada</SelectItem>
+              <SelectItem value="completed">Completada</SelectItem>
+              <SelectItem value="cancelled">Cancelada</SelectItem>
+              <SelectItem value="no-show">No asistió</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+      
+      <div>
+        <Label htmlFor="notes" className="font-medium">
+          Notas
+        </Label>
+        <div className="mt-1.5">
+          <div className="flex gap-2 mb-2">
+            <Input
+              id="notes-input"
+              value={notesInput}
+              onChange={(e) => setNotesInput(e.target.value)}
+              onKeyDown={handleNotesKeyDown}
+              placeholder="Añadir nota y presionar Enter"
+              className="flex-1"
+              disabled={isSubmitting}
+            />
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={addNoteTag}
+              disabled={!notesInput.trim() || isSubmitting}
+            >
+              Añadir
+            </Button>
+          </div>
+          
+          {notesTags.length > 0 && (
+            <div className="flex flex-wrap gap-2 mt-2">
+              {notesTags.map((tag, index) => (
+                <Badge 
+                  key={index} 
+                  variant="outline" 
+                  className="py-1.5 pl-2 pr-1.5 flex items-center gap-1 bg-slate-100"
+                >
+                  {tag}
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-5 w-5 rounded-full hover:bg-slate-200"
+                    onClick={() => removeNoteTag(index)}
+                    disabled={isSubmitting}
+                  >
+                    <X className="h-3 w-3" />
+                  </Button>
+                </Badge>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+      
+      <div className="flex justify-end gap-2 pt-4">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={onCancel}
+          disabled={isSubmitting}
+        >
+          Cancelar
+        </Button>
+        <Button 
+          type="submit"
+          disabled={isSubmitting}
+        >
+          {isSubmitting ? 'Guardando...' : isEditing ? 'Actualizar Cita' : 'Crear Cita'}
+        </Button>
+      </div>
+    </form>
+  );
+} 

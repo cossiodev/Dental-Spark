@@ -888,3 +888,121 @@ const PatientDetails = () => {
 };
 
 export default PatientDetails;
+
+                      </TableBody>
+                    </Table>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+            
+            <TabsContent value="facturas" className="space-y-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Facturas</CardTitle>
+                  <CardDescription>
+                    Facturas generadas para este paciente
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {invoices.length === 0 ? (
+                    <div>No hay facturas generadas para este paciente.</div>
+                  ) : (
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Fecha</TableHead>
+                          <TableHead>Total</TableHead>
+                          <TableHead>Estado</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {invoices.map(invoice => (
+                          <TableRow key={invoice.id}>
+                            <TableCell>{format(new Date(invoice.date), "dd/MM/yyyy")}</TableCell>
+                            <TableCell>${invoice.total.toFixed(2)}</TableCell>
+                            <TableCell>
+                              <Badge variant="secondary">{invoice.status}</Badge>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
+        </>
+      ) : (
+        <div className="text-center py-8">
+          <div className="text-yellow-500 mb-4">No se encontró información del paciente</div>
+          <Button onClick={() => navigate('/patients')}>
+            Volver a Pacientes
+          </Button>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default PatientDetails;
+
+                      </TableBody>
+                    </Table>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+            
+            <TabsContent value="facturas" className="space-y-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Facturas</CardTitle>
+                  <CardDescription>
+                    Facturas generadas para este paciente
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {invoices.length === 0 ? (
+                    <div>No hay facturas generadas para este paciente.</div>
+                  ) : (
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Fecha</TableHead>
+                          <TableHead>Total</TableHead>
+                          <TableHead>Estado</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {invoices.map(invoice => (
+                          <TableRow key={invoice.id}>
+                            <TableCell>{format(new Date(invoice.date), "dd/MM/yyyy")}</TableCell>
+                            <TableCell>${invoice.total.toFixed(2)}</TableCell>
+                            <TableCell>
+                              <Badge variant="secondary">{invoice.status}</Badge>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
+        </>
+      ) : (
+        <div className="text-center py-8">
+          <div className="text-yellow-500 mb-4">No se encontró información del paciente</div>
+          <Button onClick={() => navigate('/patients')}>
+            Volver a Pacientes
+          </Button>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default PatientDetails;

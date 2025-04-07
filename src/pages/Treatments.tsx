@@ -621,3 +621,5 @@ const TreatmentsList = ({ treatments, isLoading, getStatusBadge }: TreatmentsLis
 };
 
 export default Treatments;
+
+
