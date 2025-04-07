@@ -232,173 +232,160 @@ const Treatments = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold tracking-tight">Tratamientos</h1>
-        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="mr-2 h-4 w-4" />
-              Nuevo Tratamiento
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Agregar Nuevo Tratamiento</DialogTitle>
-              <DialogDescription>
-                Complete el formulario para agregar un nuevo tratamiento
-              </DialogDescription>
-            </DialogHeader>
-            <Form {...form}>
-              <form
-                onSubmit={form.handleSubmit(handleAddTreatment)}
-                className="space-y-4"
-              >
-                <div className="grid grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="patientId"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Paciente</FormLabel>
-                        <Select
-                          onValueChange={field.onChange}
-                          defaultValue={field.value}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Seleccione un paciente" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {patients.map(patient => (
-                              <SelectItem key={patient.id} value={patient.id}>
-                                {patient.firstName} {patient.lastName}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+    <div className="container py-8 space-y-8">
+      <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Tratamientos</h1>
+          <p className="text-muted-foreground">Gestiona los tratamientos de los pacientes en el sistema.</p>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={loadData} className="h-10">
+            <Search className="mr-2 h-4 w-4" />
+            Actualizar Lista
+          </Button>
+          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+            <DialogTrigger asChild>
+              <Button className="h-10">
+                <Plus className="mr-2 h-4 w-4" />
+                Nuevo Tratamiento
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[600px]">
+              <DialogHeader>
+                <DialogTitle>Agregar Nuevo Tratamiento</DialogTitle>
+                <DialogDescription>
+                  Complete el formulario para agregar un nuevo tratamiento.
+                </DialogDescription>
+              </DialogHeader>
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(handleAddTreatment)} className="space-y-6">
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="patientId"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Paciente</FormLabel>
+                          <Select
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Seleccione un paciente" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {patients.map(patient => (
+                                <SelectItem key={patient.id} value={patient.id}>
+                                  {patient.firstName} {patient.lastName}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="doctorId"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Doctor</FormLabel>
+                          <Select
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Seleccione un doctor" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {doctors.map(doctor => (
+                                <SelectItem key={doctor.id} value={doctor.id}>
+                                  Dr. {doctor.firstName} {doctor.lastName}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="type"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Tipo de Tratamiento</FormLabel>
+                          <Select
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Seleccione un tipo" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="Limpieza Dental">Limpieza Dental</SelectItem>
+                              <SelectItem value="Extracción">Extracción</SelectItem>
+                              <SelectItem value="Empaste">Empaste</SelectItem>
+                              <SelectItem value="Corona">Corona</SelectItem>
+                              <SelectItem value="Tratamiento de Conducto">Tratamiento de Conducto</SelectItem>
+                              <SelectItem value="Ortodoncia">Ortodoncia</SelectItem>
+                              <SelectItem value="Implante">Implante</SelectItem>
+                              <SelectItem value="Revisión">Revisión</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="status"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Estado</FormLabel>
+                          <Select
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Seleccione un estado" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="planned">Planificado</SelectItem>
+                              <SelectItem value="in-progress">En Progreso</SelectItem>
+                              <SelectItem value="completed">Completado</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
 
                   <FormField
                     control={form.control}
-                    name="doctorId"
+                    name="description"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Doctor</FormLabel>
-                        <Select
-                          onValueChange={field.onChange}
-                          defaultValue={field.value}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Seleccione un doctor" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {doctors.map(doctor => (
-                              <SelectItem key={doctor.id} value={doctor.id}>
-                                Dr. {doctor.firstName} {doctor.lastName}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="type"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Tipo de Tratamiento</FormLabel>
-                        <Select
-                          onValueChange={field.onChange}
-                          defaultValue={field.value}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Seleccione un tipo" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="Limpieza Dental">Limpieza Dental</SelectItem>
-                            <SelectItem value="Extracción">Extracción</SelectItem>
-                            <SelectItem value="Empaste">Empaste</SelectItem>
-                            <SelectItem value="Corona">Corona</SelectItem>
-                            <SelectItem value="Tratamiento de Conducto">Tratamiento de Conducto</SelectItem>
-                            <SelectItem value="Ortodoncia">Ortodoncia</SelectItem>
-                            <SelectItem value="Implante">Implante</SelectItem>
-                            <SelectItem value="Revisión">Revisión</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="status"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Estado</FormLabel>
-                        <Select
-                          onValueChange={field.onChange}
-                          defaultValue={field.value}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Seleccione un estado" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="planned">Planificado</SelectItem>
-                            <SelectItem value="in-progress">En Progreso</SelectItem>
-                            <SelectItem value="completed">Completado</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
-                <FormField
-                  control={form.control}
-                  name="description"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Descripción</FormLabel>
-                      <FormControl>
-                        <Textarea
-                          placeholder="Describa el tratamiento"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <div className="grid grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="teeth"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Dientes (números separados por comas)</FormLabel>
+                        <FormLabel>Descripción</FormLabel>
                         <FormControl>
-                          <Input 
-                            placeholder="Ej: 1, 2, 13, 14" 
-                            {...field} 
+                          <Textarea
+                            placeholder="Describa el tratamiento"
+                            {...field}
                           />
                         </FormControl>
                         <FormMessage />
@@ -406,145 +393,143 @@ const Treatments = () => {
                     )}
                   />
 
-                  <FormField
-                    control={form.control}
-                    name="cost"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Costo</FormLabel>
-                        <FormControl>
-                          <div className="relative">
-                            <span className="absolute left-3 top-2.5">$</span>
-                            <Input
-                              type="number"
-                              className="pl-6"
-                              {...field}
-                              onChange={e => field.onChange(parseFloat(e.target.value))}
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="teeth"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Dientes (números separados por comas)</FormLabel>
+                          <FormControl>
+                            <Input 
+                              placeholder="Ej: 1, 2, 13, 14" 
+                              {...field} 
                             />
-                          </div>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
-                <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="cost"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Costo</FormLabel>
+                          <FormControl>
+                            <div className="relative">
+                              <span className="absolute left-3 top-2.5">$</span>
+                              <Input
+                                type="number"
+                                className="pl-6"
+                                {...field}
+                                onChange={e => field.onChange(parseFloat(e.target.value))}
+                              />
+                            </div>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="startDate"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Fecha de Inicio</FormLabel>
+                          <FormControl>
+                            <Input type="date" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="endDate"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Fecha de Finalización (opcional)</FormLabel>
+                          <FormControl>
+                            <Input type="date" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
                   <FormField
                     control={form.control}
-                    name="startDate"
+                    name="notes"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Fecha de Inicio</FormLabel>
+                        <FormLabel>Notas Adicionales</FormLabel>
                         <FormControl>
-                          <Input type="date" {...field} />
+                          <Textarea
+                            placeholder="Notas adicionales sobre el tratamiento"
+                            {...field}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
 
-                  <FormField
-                    control={form.control}
-                    name="endDate"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Fecha de Finalización (opcional)</FormLabel>
-                        <FormControl>
-                          <Input type="date" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
-                <FormField
-                  control={form.control}
-                  name="notes"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Notas Adicionales</FormLabel>
-                      <FormControl>
-                        <Textarea
-                          placeholder="Notas adicionales sobre el tratamiento"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <DialogFooter>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setIsAddDialogOpen(false)}
-                  >
-                    Cancelar
-                  </Button>
-                  <Button type="submit">Guardar Tratamiento</Button>
-                </DialogFooter>
-              </form>
-            </Form>
-          </DialogContent>
-        </Dialog>
-      </div>
-
-      <div className="flex items-center">
-        <div className="relative w-full max-w-sm">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            type="search"
-            placeholder="Buscar tratamientos..."
-            className="pl-8"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
+                  <DialogFooter>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setIsAddDialogOpen(false)}
+                    >
+                      Cancelar
+                    </Button>
+                    <Button type="submit">Guardar Tratamiento</Button>
+                  </DialogFooter>
+                </form>
+              </Form>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
 
-      <Tabs defaultValue="all">
-        <TabsList>
-          <TabsTrigger value="all">Todos</TabsTrigger>
-          <TabsTrigger value="planned">Planificados</TabsTrigger>
-          <TabsTrigger value="in-progress">En Progreso</TabsTrigger>
-          <TabsTrigger value="completed">Completados</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="all">
-          <TreatmentsList
-            treatments={filteredTreatments}
-            isLoading={isLoading}
-            getStatusBadge={getStatusBadge}
-          />
-        </TabsContent>
-
-        <TabsContent value="planned">
-          <TreatmentsList
-            treatments={filteredTreatments.filter(t => t.status === "planned")}
-            isLoading={isLoading}
-            getStatusBadge={getStatusBadge}
-          />
-        </TabsContent>
-
-        <TabsContent value="in-progress">
-          <TreatmentsList
-            treatments={filteredTreatments.filter(t => t.status === "in-progress")}
-            isLoading={isLoading}
-            getStatusBadge={getStatusBadge}
-          />
-        </TabsContent>
-
-        <TabsContent value="completed">
-          <TreatmentsList
-            treatments={filteredTreatments.filter(t => t.status === "completed")}
-            isLoading={isLoading}
-            getStatusBadge={getStatusBadge}
-          />
-        </TabsContent>
-      </Tabs>
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-col md:flex-row items-start md:items-center gap-4">
+          <div className="relative w-full md:w-80">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              type="search"
+              placeholder="Buscar por paciente, doctor o tipo..."
+              className="pl-8 w-full md:w-80"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+          
+          <Tabs defaultValue="all" className="w-full md:w-auto">
+            <TabsList className="grid grid-cols-3 w-full md:w-[400px]">
+              <TabsTrigger value="all">Todos</TabsTrigger>
+              <TabsTrigger value="in-progress">En Progreso</TabsTrigger>
+              <TabsTrigger value="completed">Completados</TabsTrigger>
+            </TabsList>
+          </Tabs>
+        </div>
+        
+        <Card>
+          <CardContent className="p-0">
+            <TreatmentsList
+              treatments={filteredTreatments}
+              isLoading={isLoading}
+              getStatusBadge={getStatusBadge}
+            />
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 };
@@ -560,61 +545,77 @@ const TreatmentsList = ({ treatments, isLoading, getStatusBadge }: TreatmentsLis
   if (isLoading) {
     return (
       <div className="flex justify-center py-8">
-        <div className="text-center text-muted-foreground">Cargando tratamientos...</div>
+        <p>Cargando tratamientos...</p>
       </div>
     );
   }
 
   if (treatments.length === 0) {
     return (
-      <div className="flex justify-center py-8">
-        <div className="text-center text-muted-foreground">No se encontraron tratamientos</div>
+      <div className="flex flex-col items-center justify-center py-12">
+        <ToothIcon className="h-16 w-16 text-muted-foreground/50 mb-4" />
+        <p className="text-muted-foreground">No se encontraron tratamientos</p>
       </div>
     );
   }
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-      {treatments.map(treatment => (
-        <Card key={treatment.id} className="overflow-hidden">
-          <CardHeader className="p-4 pb-2">
-            <div className="flex justify-between items-start">
-              <CardTitle className="text-lg">{treatment.type}</CardTitle>
-              {getStatusBadge(treatment.status)}
-            </div>
-            <CardDescription>
-              {format(new Date(treatment.startDate), "dd/MM/yyyy")}
-              {treatment.endDate && ` - ${format(new Date(treatment.endDate), "dd/MM/yyyy")}`}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="p-4 pt-0 space-y-2">
-            <div className="flex items-center gap-2">
-              <User className="h-4 w-4 text-muted-foreground" />
-              <span>{treatment.patientName}</span>
-            </div>
-            
-            <div className="flex items-center gap-2">
-              <User className="h-4 w-4 text-muted-foreground" />
-              <span>Dr. {treatment.doctorName}</span>
-            </div>
-            
-            {treatment.teeth && treatment.teeth.length > 0 && (
-              <div className="flex items-center gap-2 text-sm">
-                <ToothIcon className="h-4 w-4 text-muted-foreground" />
-                <span>Dientes: {treatment.teeth.join(", ")}</span>
-              </div>
-            )}
-            
-            <div className="text-sm mt-2">{treatment.description}</div>
-            
-            {treatment.notes && (
-              <div className="text-sm text-muted-foreground mt-1">{treatment.notes}</div>
-            )}
-            
-            <div className="mt-2 font-medium">Costo: ${treatment.cost.toFixed(2)}</div>
-          </CardContent>
-        </Card>
-      ))}
+    <div className="relative w-full overflow-auto">
+      <table className="w-full">
+        <thead>
+          <tr className="bg-muted/50 border-b">
+            <th className="h-12 px-4 text-left align-middle font-medium">Paciente</th>
+            <th className="h-12 px-4 text-left align-middle font-medium">Doctor</th>
+            <th className="h-12 px-4 text-left align-middle font-medium">Tipo</th>
+            <th className="h-12 px-4 text-left align-middle font-medium">Estado</th>
+            <th className="h-12 px-4 text-left align-middle font-medium">Fecha Inicio</th>
+            <th className="h-12 px-4 text-left align-middle font-medium">Costo</th>
+            <th className="h-12 px-4 text-right align-middle font-medium">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          {treatments.map((treatment) => (
+            <tr key={treatment.id} className="border-b hover:bg-muted/50">
+              <td className="p-4 align-middle">
+                <div className="flex items-center">
+                  <User className="h-4 w-4 mr-2 text-muted-foreground" />
+                  <span className="font-medium">{treatment.patientName}</span>
+                </div>
+              </td>
+              <td className="p-4 align-middle">{treatment.doctorName}</td>
+              <td className="p-4 align-middle">
+                <div className="flex items-center">
+                  <ToothIcon className="h-4 w-4 mr-2 text-muted-foreground" />
+                  {treatment.type === "limpieza" ? "Limpieza" :
+                   treatment.type === "empaste" ? "Empaste" :
+                   treatment.type === "extraccion" ? "Extracción" :
+                   treatment.type === "ortodoncia" ? "Ortodoncia" :
+                   treatment.type === "endodoncia" ? "Endodoncia" :
+                   treatment.type === "implante" ? "Implante" :
+                   treatment.type}
+                </div>
+              </td>
+              <td className="p-4 align-middle">{getStatusBadge(treatment.status)}</td>
+              <td className="p-4 align-middle">{format(new Date(treatment.startDate), "dd/MM/yyyy")}</td>
+              <td className="p-4 align-middle">${treatment.cost.toFixed(2)}</td>
+              <td className="p-4 align-middle text-right">
+                <div className="flex justify-end gap-2">
+                  <Button variant="outline" size="sm">
+                    <FileText className="h-4 w-4 mr-2" />
+                    Detalles
+                  </Button>
+                  {treatment.status !== "completed" && (
+                    <Button variant="outline" size="sm">
+                      <Check className="h-4 w-4 mr-2" />
+                      Completar
+                    </Button>
+                  )}
+                </div>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 };
