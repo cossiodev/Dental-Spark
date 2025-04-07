@@ -163,7 +163,7 @@ const Appointments = () => {
   // Estado para manejar la edición de citas
   const [isEditingAppointment, setIsEditingAppointment] = useState(false);
   const [appointmentToEdit, setAppointmentToEdit] = useState<Appointment | null>(null);
-  const [showEditForm, setShowEditForm] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
 
   // Estado para indicar si se está enviando el formulario
   const [isLoading, setIsLoading] = useState(false);
@@ -445,7 +445,7 @@ const Appointments = () => {
   const handleEditAppointment = (appointment: Appointment) => {
     setAppointmentToEdit(appointment);
     setIsEditingAppointment(true);
-    setShowEditForm(true);
+    setShowEditDialog(true);
   };
 
   // Función para eliminar una cita
@@ -576,7 +576,7 @@ const Appointments = () => {
       // Resetear estado de edición
       setIsEditingAppointment(false);
       setAppointmentToEdit(null);
-      setShowEditForm(false);
+      setShowEditDialog(false);
       
       // Refrescar datos de citas
       await refetchAppointments();
@@ -598,7 +598,7 @@ const Appointments = () => {
   const handleCancelEdit = () => {
     setIsEditingAppointment(false);
     setAppointmentToEdit(null);
-    setShowEditForm(false);
+    setShowEditDialog(false);
   };
 
   // Función para restablecer el formulario
@@ -865,21 +865,26 @@ const Appointments = () => {
         </Dialog>
       </div>
 
-      {/* Formulario de edición de cita */}
-      {showEditForm && appointmentToEdit && (
-        <div className="my-6">
-          <div className="mb-4">
-            <h2 className="text-xl font-semibold">Editar Cita</h2>
-            <p className="text-muted-foreground">Modifica los detalles de la cita seleccionada.</p>
-          </div>
-          <AppointmentForm 
-            initialData={appointmentToEdit}
-            onSubmit={handleUpdateAppointment}
-            onCancel={handleCancelEdit}
-            isEditing={true}
-          />
-        </div>
-      )}
+      {/* Diálogo para editar cita */}
+      <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>Modificar Cita</DialogTitle>
+            <DialogDescription>
+              Modifica los detalles de la cita seleccionada.
+            </DialogDescription>
+          </DialogHeader>
+          
+          {appointmentToEdit && (
+            <AppointmentForm 
+              initialData={appointmentToEdit}
+              onSubmit={handleUpdateAppointment}
+              onCancel={handleCancelEdit}
+              isEditing={true}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
 
       <Tabs defaultValue="today" value={selectedTab} onValueChange={setSelectedTab} className="w-full">
         <TabsList className="grid w-full md:w-auto grid-cols-3 mb-4 rounded-md overflow-hidden bg-gray-100">
@@ -915,7 +920,7 @@ const Appointments = () => {
                       <th className="p-2 border-b w-1/6 text-left">Fecha</th>
                       <th className="p-2 border-b w-1/6 text-left">Hora</th>
                       <th className="p-2 border-b w-1/6 text-left">Tipo</th>
-                      <th className="p-2 border-b w-1/6 text-left">Estado</th>
+                      <th className="p-2 border-b w-1/6 text-left">Estado / Acciones</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -936,13 +941,31 @@ const Appointments = () => {
                           : "-"}
                         </td>
                         <td className="p-2">
-                          <span
-                            className={`inline-block px-2 py-1 rounded text-xs font-medium ${getStatusColor(
-                              appointment.status
-                            )}`}
-                          >
-                            {getStatusText(appointment.status)}
-                          </span>
+                          <div className="flex items-center">
+                            <span
+                              className={`inline-block px-2 py-1 rounded text-xs font-medium ${getStatusColor(
+                                appointment.status
+                              )}`}
+                            >
+                              {getStatusText(appointment.status)}
+                            </span>
+                            <div className="flex ml-2">
+                              <button
+                                onClick={() => handleEditAppointment(appointment)}
+                                className="p-1 text-blue-600 hover:text-blue-800 mr-1"
+                                title="Editar cita"
+                              >
+                                <Edit className="h-4 w-4" />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteAppointment(appointment.id)}
+                                className="p-1 text-red-600 hover:text-red-800"
+                                title="Eliminar cita"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </button>
+                            </div>
+                          </div>
                         </td>
                       </tr>
                     ))}
