@@ -32,13 +32,16 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Save, User, AlertCircle, Baby, ChevronDown, ChevronUp, Search, RefreshCw, PlusCircle, Lightbulb } from "lucide-react";
+import { Save, User, AlertCircle, Baby, ChevronDown, ChevronUp, Search, RefreshCw, PlusCircle, Lightbulb, CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 import { patientService, Patient, odontogramService, Treatment, treatmentService } from "@/lib/data-service";
 import ToothIcon from "@/components/icons/ToothIcon";
 import { Badge } from "@/components/ui/badge";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { PersonStanding } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { es } from "date-fns/locale";
 
 interface ToothCondition {
   status: "healthy" | "caries" | "filling" | "crown" | "extraction" | "implant" | "root-canal";
@@ -1182,12 +1185,25 @@ const Odontogram = () => {
             </CardDescription>
             
             <div className="flex items-center justify-end mt-2">
-              <Input
-                type="date"
-                value={selectedDate}
-                onChange={(e) => setSelectedDate(e.target.value)}
-                className="w-40 text-sm"
-              />
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className="w-[240px] justify-start text-left font-normal"
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {selectedDate ? format(new Date(selectedDate), "PPP", { locale: es }) : <span>Seleccione una fecha</span>}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="end">
+                  <Calendar
+                    mode="single"
+                    selected={selectedDate ? new Date(selectedDate) : undefined}
+                    onSelect={(date) => date && setSelectedDate(format(date, "yyyy-MM-dd"))}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
             </div>
           </CardHeader>
           <CardContent className="p-6">
