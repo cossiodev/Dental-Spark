@@ -334,9 +334,30 @@ CREATE TRIGGER inventory_min_stock_check
   FOR EACH ROW
   EXECUTE FUNCTION check_min_stock();
 
--- Políticas específicas para las citas
--- Al habilitar RLS, por defecto se deniega todo acceso
--- Creamos políticas para permitir acciones específicas
+-- POLÍTICAS RLS PARA APPOINTMENTS
+-- Habilitar RLS en la tabla appointments
+ALTER TABLE appointments ENABLE ROW LEVEL SECURITY;
+
+-- Crear política para visualizar appointments (para todos los usuarios)
+CREATE POLICY "Cualquiera puede ver appointments"
+ON appointments FOR SELECT
+USING (true);
+
+-- Crear política para insertar appointments (para todos los usuarios)
+CREATE POLICY "Cualquiera puede insertar appointments"
+ON appointments FOR INSERT
+WITH CHECK (true);
+
+-- Crear política para actualizar appointments (para todos los usuarios)
+CREATE POLICY "Cualquiera puede actualizar appointments"
+ON appointments FOR UPDATE
+USING (true)
+WITH CHECK (true);
+
+-- Crear política para eliminar appointments (para todos los usuarios)
+CREATE POLICY "Cualquiera puede eliminar appointments"
+ON appointments FOR DELETE
+USING (true);
 
 -- Permitir a todos los usuarios autenticados ver todas las citas
 CREATE POLICY "Todos pueden ver citas" ON appointments
