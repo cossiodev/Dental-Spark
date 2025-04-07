@@ -853,100 +853,81 @@ const Appointments = () => {
                 <p>Cargando citas...</p>
               </div>
             ) : filteredAppointments.length > 0 ? (
-              <div className="overflow-auto max-h-[500px]">
-                <div className="grid grid-cols-7 gap-2 p-2 bg-gray-100 font-bold text-sm">
-                  <div className="p-2">Paciente</div>
-                  <div className="p-2">Doctor</div>
-                  <div className="p-2">Fecha</div>
-                  <div className="p-2">Hora</div>
-                  <div className="p-2">Tipo</div>
-                  <div className="p-2">Estado</div>
-                  <div className="p-2 text-center">Acciones</div>
-                </div>
-                
-                {filteredAppointments.map((appointment) => (
-                  <div key={appointment.id} className="grid grid-cols-7 gap-2 p-2 border-b hover:bg-gray-50">
-                    <div className="p-2 font-medium">{appointment.patientName || appointment.patientId}</div>
-                    <div className="p-2">{appointment.doctorName || appointment.doctorId}</div>
-                    <div className="p-2 font-medium">{formatDisplayDate(appointment.date)}</div>
-                    <div className="p-2">{appointment.startTime} - {appointment.endTime}</div>
-                    <div className="p-2">
-                      {appointment.treatmentType ? 
-                        appointment.treatmentType === "consultation" ? "Consulta" :
-                        appointment.treatmentType === "cleaning" ? "Limpieza" :
-                        appointment.treatmentType === "filling" ? "Empaste" :
-                        appointment.treatmentType === "extraction" ? "Extracción" :
-                        appointment.treatmentType === "rootcanal" ? "Endodoncia" :
-                        appointment.treatmentType === "orthodontics" ? "Ortodoncia" : "Otro"
-                      : "-"}
-                    </div>
-                    <div className="p-2">
-                      <StatusBadge status={appointment.status} />
-                    </div>
-                    <div className="p-2 text-center">
-                      <div style={{
-                        background: '#ff9999',
-                        border: '3px solid red',
-                        borderRadius: '10px',
-                        padding: '10px',
-                        display: 'flex',
-                        gap: '10px',
-                        justifyContent: 'center'
-                      }}>
-                        <button
-                          onClick={() => {
-                            console.log('⚡ EDITAR CITA ID:', appointment.id);
-                            alert(`Editando cita ID: ${appointment.id}`);
-                            handleEditAppointment(appointment);
-                          }}
-                          style={{
-                            background: 'blue',
-                            color: 'white',
-                            padding: '8px 16px',
-                            borderRadius: '5px',
-                            fontWeight: 'bold',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '8px'
-                          }}
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                          </svg>
-                          EDITAR
-                        </button>
-                        
-                        <button
-                          onClick={() => {
-                            console.log('⚡ ELIMINAR CITA ID:', appointment.id);
-                            alert(`Eliminando cita ID: ${appointment.id}`);
-                            handleDeleteAppointment(appointment.id);
-                          }}
-                          style={{
-                            background: 'red',
-                            color: 'white',
-                            padding: '8px 16px',
-                            borderRadius: '5px',
-                            fontWeight: 'bold',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '8px'
-                          }}
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M3 6h18"></path>
-                            <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
-                            <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
-                            <line x1="10" y1="11" x2="10" y2="17"></line>
-                            <line x1="14" y1="11" x2="14" y2="17"></line>
-                          </svg>
-                          ELIMINAR
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
+              <div className="overflow-x-auto" style={{ width: '100%' }}>
+                <table className="min-w-full border-collapse" style={{ tableLayout: 'fixed' }}>
+                  <thead>
+                    <tr className="bg-gray-100 text-sm font-bold">
+                      <th className="p-2 border-b w-1/6 text-left">Paciente</th>
+                      <th className="p-2 border-b w-1/6 text-left">Doctor</th>
+                      <th className="p-2 border-b w-1/12 text-left">Fecha</th>
+                      <th className="p-2 border-b w-1/12 text-left">Hora</th>
+                      <th className="p-2 border-b w-1/12 text-left">Tipo</th>
+                      <th className="p-2 border-b w-1/12 text-left">Estado</th>
+                      <th className="p-2 border-b w-1/3 text-center text-red-700 text-lg">ACCIONES</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredAppointments.map((appointment) => (
+                      <tr key={appointment.id} className="border-b hover:bg-gray-50">
+                        <td className="p-2 font-medium truncate">{appointment.patientName || appointment.patientId}</td>
+                        <td className="p-2 truncate">{appointment.doctorName || appointment.doctorId}</td>
+                        <td className="p-2 font-medium">{formatDisplayDate(appointment.date)}</td>
+                        <td className="p-2">{appointment.startTime} - {appointment.endTime}</td>
+                        <td className="p-2 truncate">
+                          {appointment.treatmentType ? 
+                            appointment.treatmentType === "consultation" ? "Consulta" :
+                            appointment.treatmentType === "cleaning" ? "Limpieza" :
+                            appointment.treatmentType === "filling" ? "Empaste" :
+                            appointment.treatmentType === "extraction" ? "Extracción" :
+                            appointment.treatmentType === "rootcanal" ? "Endodoncia" :
+                            appointment.treatmentType === "orthodontics" ? "Ortodoncia" : "Otro"
+                          : "-"}
+                        </td>
+                        <td className="p-2">
+                          <StatusBadge status={appointment.status} />
+                        </td>
+                        <td className="p-2 text-center">
+                          <div className="flex gap-2 justify-center items-center">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                console.log('⚡ EDITAR CITA ID:', appointment.id);
+                                alert(`Editando cita ID: ${appointment.id}`);
+                                handleEditAppointment(appointment);
+                              }}
+                              className="flex items-center gap-1 bg-blue-600 text-white py-1 px-3 rounded font-bold hover:bg-blue-700"
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                              </svg>
+                              EDITAR
+                            </button>
+                            
+                            <button
+                              type="button"
+                              onClick={() => {
+                                console.log('⚡ ELIMINAR CITA ID:', appointment.id);
+                                alert(`Eliminando cita ID: ${appointment.id}`);
+                                handleDeleteAppointment(appointment.id);
+                              }}
+                              className="flex items-center gap-1 bg-red-600 text-white py-1 px-3 rounded font-bold hover:bg-red-700"
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M3 6h18"></path>
+                                <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
+                                <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
+                                <line x1="10" y1="11" x2="10" y2="17"></line>
+                                <line x1="14" y1="11" x2="14" y2="17"></line>
+                              </svg>
+                              ELIMINAR
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             ) : (
               <div className="flex flex-col items-center justify-center py-8 text-center">
