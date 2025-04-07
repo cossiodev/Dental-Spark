@@ -60,18 +60,26 @@ export function AppointmentForm({
   // Cargar datos iniciales si estamos editando
   useEffect(() => {
     if (initialData) {
-      // Preservar la fecha original sin conversiones para prevenir cambios accidentales
-      const originalDate = typeof initialData.date === 'string' 
-        ? new Date(initialData.date)
-        : initialData.date || new Date();
-        
-      // Asegurar que la fecha se mantenga exactamente como estaba
-      const year = originalDate.getFullYear();
-      const month = originalDate.getMonth();
-      const day = originalDate.getDate();
+      // Preservar la fecha original sin conversiones
+      let preservedDate;
       
-      // Crear una nueva fecha para evitar problemas de referencia
-      const preservedDate = new Date(year, month, day);
+      if (typeof initialData.date === 'string') {
+        // Asegurarse de que la fecha se cree correctamente desde el string
+        // Evitar problemas de zona horaria al dividir el string y crear la fecha manualmente
+        const [year, month, day] = initialData.date.split('-').map(Number);
+        // Importante: En JavaScript los meses van de 0-11, por eso restamos 1 al mes
+        preservedDate = new Date(year, month - 1, day, 12, 0, 0);
+      } else if (initialData.date instanceof Date) {
+        // Si ya es un objeto Date, crear una nueva instancia para evitar referencias
+        preservedDate = new Date(initialData.date);
+      } else {
+        // Valor predeterminado
+        preservedDate = new Date();
+      }
+      
+      // Para debugging
+      console.log('Fecha original:', initialData.date);
+      console.log('Fecha preservada:', preservedDate);
       
       setFormData({
         id: initialData.id,
@@ -165,16 +173,25 @@ export function AppointmentForm({
     const [startTime, endTime] = formData.timeBlock.split('-');
     
     // Asegurar que la fecha se preserva correctamente
+    let formattedDate = '';
     const date = formData.date;
-    let formattedDate;
     
     if (date instanceof Date) {
       // Usar formato YYYY-MM-DD sin ajustes de timezone
+      // Importante: SIEMPRE usar getUTCDate() para evitar problemas de zona horaria
       formattedDate = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}`;
+      console.log('Fecha formateada desde objeto Date:', formattedDate);
     } else if (typeof date === 'string') {
-      // Si ya es string, asegurarse que esté en formato correcto (YYYY-MM-DD)
-      formattedDate = date.split('T')[0];
+      // Si ya es string, verificar que esté en formato correcto (YYYY-MM-DD)
+      if (date.includes('T')) {
+        formattedDate = date.split('T')[0];
+      } else {
+        formattedDate = date;
+      }
+      console.log('Fecha formateada desde string:', formattedDate);
     }
+    
+    console.log('Fecha final para enviar:', formattedDate);
     
     // Crear objeto con datos para enviar
     const appointmentData = {
