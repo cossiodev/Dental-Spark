@@ -22,7 +22,7 @@ export function TimeBlockSelector({
   className,
   disabled = false,
 }: TimeBlockSelectorProps) {
-  // Horarios disponibles durante las horas de operación de la clínica (9AM-6PM)
+  // Horarios disponibles en formato simplificado
   const availableHours = [
     { value: "09:00-10:00", label: "9AM - 10AM" },
     { value: "10:00-11:00", label: "10AM - 11AM" },
@@ -74,6 +74,27 @@ export function TimeBlockSelector({
     }
   };
 
+  // Función para obtener la etiqueta del valor actual
+  const getCurrentLabel = () => {
+    const found = availableHours.find(hour => hour.value === value);
+    if (found) return found.label;
+    
+    // Si no está en las opciones predefinidas, convertir al formato AM/PM
+    if (value && value.includes('-')) {
+      const [start, end] = value.split('-');
+      // Convertir a formato 12h con AM/PM
+      const formatHour = (time: string) => {
+        const [hours, minutes] = time.split(':').map(num => parseInt(num, 10));
+        const period = hours >= 12 ? 'PM' : 'AM';
+        const hour12 = hours % 12 || 12;
+        return `${hour12}${minutes > 0 ? ':' + minutes.toString().padStart(2, '0') : ''}${period}`;
+      };
+      return `${formatHour(start)} - ${formatHour(end)}`;
+    }
+    
+    return value || "Seleccionar horario";
+  };
+
   return (
     <div className={className}>
       <Select
@@ -83,8 +104,8 @@ export function TimeBlockSelector({
       >
         <SelectTrigger className="w-full">
           <Clock className="mr-2 h-4 w-4 text-muted-foreground" />
-          <SelectValue placeholder="Seleccionar horario">
-            {availableHours.find(hour => hour.value === value)?.label || (value || "Seleccionar horario")}
+          <SelectValue>
+            {getCurrentLabel()}
           </SelectValue>
         </SelectTrigger>
         <SelectContent>
@@ -100,14 +121,14 @@ export function TimeBlockSelector({
         <div className="mt-2">
           <Input
             type="text"
-            placeholder="Ej: 09:00-10:00"
+            placeholder="Ej: 9AM-10AM"
             value={customTime}
             onChange={handleCustomTimeChange}
             className="w-full"
             disabled={disabled}
           />
           <p className="text-xs text-muted-foreground mt-1">
-            Ingresa el horario en formato 24h (HH:MM-HH:MM)
+            Ingresa el horario en formato AM/PM (HH:MMAM-HH:MMPM)
           </p>
         </div>
       )}
