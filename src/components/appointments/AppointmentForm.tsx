@@ -60,16 +60,24 @@ export function AppointmentForm({
   // Cargar datos iniciales si estamos editando
   useEffect(() => {
     if (initialData) {
-      const formattedDate = 
-        typeof initialData.date === 'string' 
-          ? new Date(initialData.date) 
-          : initialData.date;
+      // Preservar la fecha original sin conversiones para prevenir cambios accidentales
+      const originalDate = typeof initialData.date === 'string' 
+        ? new Date(initialData.date)
+        : initialData.date || new Date();
+        
+      // Asegurar que la fecha se mantenga exactamente como estaba
+      const year = originalDate.getFullYear();
+      const month = originalDate.getMonth();
+      const day = originalDate.getDate();
+      
+      // Crear una nueva fecha para evitar problemas de referencia
+      const preservedDate = new Date(year, month, day);
       
       setFormData({
         id: initialData.id,
         patientId: initialData.patientId,
         doctorId: initialData.doctorId,
-        date: formattedDate || new Date(),
+        date: preservedDate,
         timeBlock: `${initialData.startTime}-${initialData.endTime}`,
         status: initialData.status || "scheduled",
         notes: initialData.notes || "",
@@ -156,9 +164,22 @@ export function AppointmentForm({
     // Extraer horas de inicio y fin del timeBlock
     const [startTime, endTime] = formData.timeBlock.split('-');
     
+    // Asegurar que la fecha se preserva correctamente
+    const date = formData.date;
+    let formattedDate;
+    
+    if (date instanceof Date) {
+      // Usar formato YYYY-MM-DD sin ajustes de timezone
+      formattedDate = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}`;
+    } else if (typeof date === 'string') {
+      // Si ya es string, asegurarse que esté en formato correcto (YYYY-MM-DD)
+      formattedDate = date.split('T')[0];
+    }
+    
     // Crear objeto con datos para enviar
     const appointmentData = {
       ...formData,
+      date: formattedDate,
       startTime,
       endTime
     };

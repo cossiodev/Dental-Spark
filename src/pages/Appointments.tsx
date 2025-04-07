@@ -562,62 +562,45 @@ const Appointments = () => {
       
       setIsLoading(true);
       
-      // Normalizar y formatear la fecha para enviar a la API
-      let formattedDate;
-      
-      if (updatedData.date && typeof updatedData.date === 'object' && 'getFullYear' in updatedData.date) {
-        // CORRECCIÓN: Mantener la fecha exacta sin ajustes de timezone
-        // Al usar UTC, nos aseguramos que la fecha se guarde sin conversiones
-        const year = updatedData.date.getFullYear();
-        const month = (updatedData.date.getMonth() + 1).toString().padStart(2, '0');
-        const day = updatedData.date.getDate().toString().padStart(2, '0');
-        formattedDate = `${year}-${month}-${day}`;
-
-        // Añadir hora UTC+0 para forzar que la fecha se mantenga
-        const dateObject = new Date(`${formattedDate}T12:00:00Z`);
-        console.log('🔍 Fecha de actualización con UTC forzado:', dateObject.toISOString());
-      } else if (typeof updatedData.date === 'string') {
-        // Si es string, asegurar que tenga el formato correcto
-        formattedDate = updatedData.date.trim().split('T')[0];
-      } else {
-        const now = new Date();
-        const year = now.getFullYear();
-        const month = (now.getMonth() + 1).toString().padStart(2, '0');
-        const day = now.getDate().toString().padStart(2, '0');
-        formattedDate = `${year}-${month}-${day}`;
-      }
-      
-      console.log('🔍 Fecha seleccionada para actualizar (original):', updatedData.date);
-      console.log('🔍 Fecha formateada para enviar:', formattedDate);
-      
-      const appointmentData = {
-        ...appointmentToEdit,
-        ...updatedData,
-        date: formattedDate,
-        patientName: appointmentToEdit.patientName, // Mantener el nombre del paciente para la UI
-        doctorName: appointmentToEdit.doctorName,   // Mantener el nombre del doctor para la UI
+      // Preparar datos para actualización
+      const appointmentUpdate = {
+        id: appointmentToEdit.id,
+        patientId: updatedData.patientId || appointmentToEdit.patientId,
+        doctorId: updatedData.doctorId || appointmentToEdit.doctorId,
+        
+        // Preservar la fecha original si no se cambió explícitamente
+        date: updatedData.date || appointmentToEdit.date,
+        
+        status: updatedData.status || appointmentToEdit.status,
+        notes: updatedData.notes !== undefined ? updatedData.notes : appointmentToEdit.notes,
+        treatmentType: updatedData.treatmentType || appointmentToEdit.treatmentType,
+        startTime: updatedData.startTime || appointmentToEdit.startTime,
+        endTime: updatedData.endTime || appointmentToEdit.endTime,
+        patientName: appointmentToEdit.patientName, // Preservar datos adicionales
+        doctorName: appointmentToEdit.doctorName,   // Preservar datos adicionales
       };
       
-      await appointmentService.update(appointmentData as Appointment);
+      console.log(`Actualizando cita ${appointmentToEdit.id}:`, appointmentUpdate);
+      
+      // Enviar actualización a la API
+      await appointmentService.update(appointmentUpdate);
       
       toast({
-        title: "¡Cita actualizada!",
-        description: "La cita ha sido actualizada exitosamente.",
+        title: "Cita actualizada",
+        description: "La cita ha sido actualizada correctamente",
       });
       
-      // Resetear estado de edición
+      // Ocultar formulario de edición
       setIsEditingAppointment(false);
       setAppointmentToEdit(null);
       
       // Refrescar datos de citas
-      await refetchAppointments();
-      setForceRefresh(prev => prev + 1);
-      
+      refetchAppointments();
     } catch (error) {
       console.error("Error al actualizar cita:", error);
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "No se pudo actualizar la cita. Por favor intente nuevamente.",
+        description: "No se pudo actualizar la cita. Inténtelo de nuevo.",
         variant: "destructive",
       });
     } finally {
