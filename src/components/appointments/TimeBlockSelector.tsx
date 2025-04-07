@@ -1,5 +1,4 @@
 import React from 'react';
-import { Clock } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -7,7 +6,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 interface TimeBlockSelectorProps {
   value: string; // Formato: "HH:MM-HH:MM" (ej. "09:00-10:00")
@@ -22,109 +21,75 @@ export function TimeBlockSelector({
   className,
   disabled = false,
 }: TimeBlockSelectorProps) {
-  // Extraer la hora de inicio del valor actual
-  const getStartHour = () => {
-    if (!value) return "09:00";
-    const parts = value.split('-');
-    return parts[0] || "09:00";
-  };
-
-  const startTime = getStartHour();
-  
-  // Generar la hora de fin (startTime + 1 hora)
-  const calculateEndTime = (start: string) => {
-    try {
-      const [hours, minutes] = start.split(':').map(Number);
-      let endHours = hours + 1;
-      const period = endHours >= 12 ? 'PM' : 'AM';
-      
-      // Ajustar para formato 12 horas si es necesario
-      if (endHours > 12) endHours -= 12;
-      
-      return `${endHours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
-    } catch (e) {
-      return "10:00";
-    }
-  };
-
-  // Opciones de bloques de tiempo disponibles
-  const timeBlocks = [
-    { start: "08:00", end: "09:00", label: "8:00 AM - 9:00 AM" },
-    { start: "09:00", end: "10:00", label: "9:00 AM - 10:00 AM" },
-    { start: "10:00", end: "11:00", label: "10:00 AM - 11:00 AM" },
-    { start: "11:00", end: "12:00", label: "11:00 AM - 12:00 PM" },
-    { start: "12:00", end: "13:00", label: "12:00 PM - 1:00 PM" },
-    { start: "13:00", end: "14:00", label: "1:00 PM - 2:00 PM" },
-    { start: "14:00", end: "15:00", label: "2:00 PM - 3:00 PM" },
-    { start: "15:00", end: "16:00", label: "3:00 PM - 4:00 PM" },
-    { start: "16:00", end: "17:00", label: "4:00 PM - 5:00 PM" },
-    { start: "17:00", end: "18:00", label: "5:00 PM - 6:00 PM" },
-    { start: "18:00", end: "19:00", label: "6:00 PM - 7:00 PM" },
+  // Horarios comunes preestablecidos
+  const commonHours = [
+    { value: "08:00-09:00", label: "8:00 - 9:00" },
+    { value: "09:00-10:00", label: "9:00 - 10:00" },
+    { value: "10:00-11:00", label: "10:00 - 11:00" },
+    { value: "11:00-12:00", label: "11:00 - 12:00" },
+    { value: "12:00-13:00", label: "12:00 - 13:00" },
+    { value: "13:00-14:00", label: "13:00 - 14:00" },
+    { value: "14:00-15:00", label: "14:00 - 15:00" },
+    { value: "15:00-16:00", label: "15:00 - 16:00" },
+    { value: "16:00-17:00", label: "16:00 - 17:00" },
+    { value: "17:00-18:00", label: "17:00 - 18:00" },
+    { value: "18:00-19:00", label: "18:00 - 19:00" },
+    { value: "otro", label: "Otro horario" },
   ];
 
-  // Actualizar el valor cuando se selecciona un bloque de tiempo
-  const handleSelectTimeBlock = (startTime: string) => {
-    const endTime = calculateEndTime(startTime);
-    onChange(`${startTime}-${endTime}`);
+  // Manejar el caso de "Otro horario"
+  const [showCustomInput, setShowCustomInput] = React.useState(false);
+  const [customTime, setCustomTime] = React.useState("");
+
+  // Al seleccionar una opción
+  const handleSelectChange = (selectedValue: string) => {
+    if (selectedValue === "otro") {
+      setShowCustomInput(true);
+      return;
+    }
+    
+    setShowCustomInput(false);
+    onChange(selectedValue);
   };
 
-  // Seleccionar un bloque de tiempo predefinido
-  const selectTimeBlock = (block: { start: string, end: string }) => {
-    onChange(`${block.start}-${block.end}`);
-  };
-
-  // Encontrar el bloque de tiempo actual para mostrar en el selector
-  const getCurrentBlock = () => {
-    const startHour = getStartHour();
-    const found = timeBlocks.find(block => block.start === startHour);
-    return found ? found.label : "Seleccionar horario";
+  // Al ingresar un horario personalizado
+  const handleCustomTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const customValue = e.target.value;
+    setCustomTime(customValue);
+    onChange(customValue);
   };
 
   return (
-    <div className={`flex flex-col space-y-2 ${className}`}>
-      <div className="flex flex-wrap gap-2 mb-2">
-        <Button 
-          variant="outline" 
-          size="sm" 
-          onClick={() => selectTimeBlock(timeBlocks[1])}
-          disabled={disabled}
-        >
-          9AM
-        </Button>
-        <Button 
-          variant="outline" 
-          size="sm" 
-          onClick={() => selectTimeBlock(timeBlocks[4])}
-          disabled={disabled}
-        >
-          12PM
-        </Button>
-        <Button 
-          variant="outline" 
-          size="sm" 
-          onClick={() => selectTimeBlock(timeBlocks[8])}
-          disabled={disabled}
-        >
-          4PM
-        </Button>
-      </div>
-
+    <div className={className}>
       <Select
-        value={startTime}
-        onValueChange={(val) => handleSelectTimeBlock(val)}
+        value={commonHours.some(hour => hour.value === value) ? value : "otro"}
+        onValueChange={handleSelectChange}
         disabled={disabled}
       >
         <SelectTrigger className="w-full">
-          <SelectValue placeholder={getCurrentBlock()} />
+          <SelectValue placeholder="Seleccionar horario" />
         </SelectTrigger>
         <SelectContent>
-          {timeBlocks.map((block) => (
-            <SelectItem key={block.start} value={block.start}>
-              {block.label}
+          {commonHours.map((hour) => (
+            <SelectItem key={hour.value} value={hour.value}>
+              {hour.label}
             </SelectItem>
           ))}
         </SelectContent>
       </Select>
+
+      {showCustomInput && (
+        <div className="mt-2">
+          <Input
+            type="text"
+            placeholder="Ej: 9:30-10:30"
+            value={customTime}
+            onChange={handleCustomTimeChange}
+            className="w-full"
+            disabled={disabled}
+          />
+        </div>
+      )}
     </div>
   );
 } 
