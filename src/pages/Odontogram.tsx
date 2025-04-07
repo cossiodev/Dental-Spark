@@ -541,6 +541,47 @@ const Odontogram = () => {
     // Implementation of loadPatients function
   };
 
+  const saveTeethConditions = async () => {
+    if (!selectedPatient) {
+      toast({
+        title: "Error",
+        description: "Por favor seleccione un paciente",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    try {
+      const odontogramData = {
+        patientId: selectedPatient,
+        date: selectedDate,
+        teeth: teethConditions,
+        notes: generalNotes,
+        isPediatric: isPediatric,
+      };
+      
+      const savedOdontogram = await odontogramService.create(odontogramData);
+      
+      toast({
+        title: "Odontograma guardado",
+        description: "El odontograma ha sido guardado exitosamente",
+      });
+      
+      // Si hay tratamientos sugeridos, mostrarlos
+      const suggestions = generateTreatmentSuggestions();
+      if (suggestions.length > 0) {
+        setSuggestedTreatments(suggestions);
+      }
+    } catch (error) {
+      console.error("Error saving odontogram:", error);
+      toast({
+        title: "Error",
+        description: "No se pudo guardar el odontograma",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <div className="container py-8 space-y-8">
       <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
@@ -711,13 +752,145 @@ const Odontogram = () => {
       )}
 
       <ToothConditionDialog
-        open={conditionDialogOpen}
-        onOpenChange={setConditionDialogOpen}
+        open={isToothDialogOpen}
+        onOpenChange={setIsToothDialogOpen}
         toothNumber={selectedTooth}
-        currentCondition={selectedToothCondition}
-        onSave={handleConditionSave}
+        currentCondition={selectedCondition}
+        onSave={handleSaveToothCondition}
       />
     </div>
+  );
+};
+
+// Componente de diálogo para condición del diente
+interface ToothConditionDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  toothNumber: number | null;
+  currentCondition: ToothCondition["status"];
+  onSave: () => void;
+}
+
+const ToothConditionDialog = ({
+  open,
+  onOpenChange,
+  toothNumber,
+  currentCondition,
+  onSave
+}: ToothConditionDialogProps) => {
+  const [condition, setCondition] = useState<ToothCondition["status"]>("healthy");
+  const [notes, setNotes] = useState<string>("");
+  const [surfaces, setSurfaces] = useState<ToothCondition["surfaces"]>([]);
+
+  // Actualiza los estados locales cuando cambian las props
+  useEffect(() => {
+    if (open) {
+      setCondition(currentCondition);
+    }
+  }, [open, currentCondition]);
+
+  const handleSurfaceToggle = (surface: "top" | "bottom" | "left" | "right" | "center") => {
+    setSurfaces(prev => {
+      if (prev?.includes(surface)) {
+        return prev.filter(s => s !== surface);
+      } else {
+        return [...(prev || []), surface];
+      }
+    });
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>
+            Condición del Diente {toothNumber}
+          </DialogTitle>
+          <DialogDescription>
+            Seleccione la condición actual del diente
+          </DialogDescription>
+        </DialogHeader>
+        
+        <div className="space-y-4 py-4">
+          <div className="space-y-2">
+            <Label htmlFor="condition">Condición</Label>
+            <Select
+              value={condition}
+              onValueChange={(value) => setCondition(value as ToothCondition["status"])}
+            >
+              <SelectTrigger id="condition">
+                <SelectValue placeholder="Seleccione una condición" />
+              </SelectTrigger>
+              <SelectContent className="z-[100] max-h-[50vh]">
+                {Object.entries(toothConditionLabels).map(([value, label]) => (
+                  <SelectItem key={value} value={value}>
+                    {label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          
+          <div className="space-y-2">
+            <Label>Superficies Afectadas</Label>
+            <div className="grid grid-cols-5 gap-2 p-4 border rounded-md">
+              <Button 
+                variant={surfaces?.includes("top") ? "default" : "outline"} 
+                size="sm"
+                onClick={() => handleSurfaceToggle("top")}
+              >
+                Superior
+              </Button>
+              <Button 
+                variant={surfaces?.includes("left") ? "default" : "outline"} 
+                size="sm"
+                onClick={() => handleSurfaceToggle("left")}
+              >
+                Izquierda
+              </Button>
+              <Button 
+                variant={surfaces?.includes("center") ? "default" : "outline"} 
+                size="sm"
+                onClick={() => handleSurfaceToggle("center")}
+              >
+                Centro
+              </Button>
+              <Button 
+                variant={surfaces?.includes("right") ? "default" : "outline"} 
+                size="sm"
+                onClick={() => handleSurfaceToggle("right")}
+              >
+                Derecha
+              </Button>
+              <Button 
+                variant={surfaces?.includes("bottom") ? "default" : "outline"} 
+                size="sm"
+                onClick={() => handleSurfaceToggle("bottom")}
+              >
+                Inferior
+              </Button>
+            </div>
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="toothNotes">Notas</Label>
+            <Textarea
+              id="toothNotes"
+              placeholder="Notas específicas sobre este diente"
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+            />
+          </div>
+        </div>
+        
+        <DialogFooter>
+          <DialogClose asChild>
+            <Button variant="outline">Cancelar</Button>
+          </DialogClose>
+          <Button onClick={onSave}>Guardar</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 };
 
