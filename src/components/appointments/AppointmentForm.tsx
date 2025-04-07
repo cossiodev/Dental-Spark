@@ -5,11 +5,9 @@ import { CalendarIcon, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 // UI Components
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import {
   Select,
@@ -174,237 +172,227 @@ export function AppointmentForm({
   }
 
   return (
-    <Card className="border shadow-sm">
-      <CardHeader className="pb-3">
-        <CardTitle>{isEditing ? "Editar Detalles de la Cita" : "Agregar Nueva Cita"}</CardTitle>
-        <CardDescription>
-          {isEditing ? "Actualice la información de la cita" : "Complete el formulario para agregar una nueva cita al sistema"}
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="pt-0">
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="patient" className="font-medium">
-                Paciente *
-              </Label>
-              <Select 
-                value={formData.patientId || ""} 
-                onValueChange={(value) => handleChange("patientId", value)}
-                disabled={isEditing || isSubmitting}
-              >
-                <SelectTrigger id="patient" className="mt-1.5">
-                  <SelectValue placeholder="Seleccione un paciente" />
-                </SelectTrigger>
-                <SelectContent>
-                  {patients.map((patient) => (
-                    <SelectItem key={patient.id} value={patient.id}>
-                      {patient.firstName} {patient.lastName}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div>
-              <Label htmlFor="doctor" className="font-medium">
-                Doctor *
-              </Label>
-              <Select 
-                value={formData.doctorId || ""} 
-                onValueChange={(value) => handleChange("doctorId", value)}
+    <form onSubmit={handleSubmit} className="space-y-4 pt-2">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <Label htmlFor="patient" className="font-medium">
+            Paciente *
+          </Label>
+          <Select 
+            value={formData.patientId || ""} 
+            onValueChange={(value) => handleChange("patientId", value)}
+            disabled={isEditing || isSubmitting}
+          >
+            <SelectTrigger id="patient" className="mt-1.5">
+              <SelectValue placeholder="Seleccione un paciente" />
+            </SelectTrigger>
+            <SelectContent>
+              {patients.map((patient) => (
+                <SelectItem key={patient.id} value={patient.id}>
+                  {patient.firstName} {patient.lastName}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        
+        <div>
+          <Label htmlFor="doctor" className="font-medium">
+            Doctor *
+          </Label>
+          <Select 
+            value={formData.doctorId || ""} 
+            onValueChange={(value) => handleChange("doctorId", value)}
+            disabled={isSubmitting}
+          >
+            <SelectTrigger id="doctor" className="mt-1.5">
+              <SelectValue placeholder="Seleccione un doctor" />
+            </SelectTrigger>
+            <SelectContent>
+              {doctors.map((doctor) => (
+                <SelectItem key={doctor.id} value={doctor.id}>
+                  {doctor.firstName} {doctor.lastName}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        
+        <div>
+          <Label htmlFor="date" className="font-medium">
+            Fecha *
+          </Label>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                id="date"
+                variant={"outline"}
+                className={cn(
+                  "w-full justify-start text-left font-normal mt-1.5",
+                  !formData.date && "text-muted-foreground"
+                )}
+                type="button"
                 disabled={isSubmitting}
               >
-                <SelectTrigger id="doctor" className="mt-1.5">
-                  <SelectValue placeholder="Seleccione un doctor" />
-                </SelectTrigger>
-                <SelectContent>
-                  {doctors.map((doctor) => (
-                    <SelectItem key={doctor.id} value={doctor.id}>
-                      {doctor.firstName} {doctor.lastName}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div>
-              <Label htmlFor="date" className="font-medium">
-                Fecha *
-              </Label>
-              <Popover>
-                <PopoverTrigger asChild>
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                {formData.date ? format(formData.date, "dd/MM/yyyy", { locale: es }) : <span>Selecciona una fecha</span>}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar
+                mode="single"
+                selected={formData.date}
+                onSelect={(date) => {
+                  if (date) {
+                    handleChange("date", date);
+                  }
+                }}
+                initialFocus
+                className="p-3 pointer-events-auto"
+                disabled={(date) => {
+                  // Deshabilitar fechas pasadas excepto si estamos editando
+                  if (!isEditing) {
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+                    return date < today;
+                  }
+                  return false;
+                }}
+                classNames={{
+                  day_selected: "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground",
+                  day_today: "bg-accent text-accent-foreground",
+                }}
+              />
+            </PopoverContent>
+          </Popover>
+        </div>
+        
+        <div>
+          <Label htmlFor="treatmentType" className="font-medium">
+            Tipo de Tratamiento
+          </Label>
+          <Select 
+            value={formData.treatmentType || ""} 
+            onValueChange={(value) => handleChange("treatmentType", value)}
+            disabled={isSubmitting}
+          >
+            <SelectTrigger id="treatmentType" className="mt-1.5">
+              <SelectValue placeholder="Seleccione un tipo" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="consultation">Consulta</SelectItem>
+              <SelectItem value="cleaning">Limpieza</SelectItem>
+              <SelectItem value="filling">Empaste</SelectItem>
+              <SelectItem value="extraction">Extracción</SelectItem>
+              <SelectItem value="rootcanal">Endodoncia</SelectItem>
+              <SelectItem value="orthodontics">Ortodoncia</SelectItem>
+              <SelectItem value="other">Otro</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        
+        <div>
+          <Label htmlFor="timeBlock" className="font-medium">
+            Horario *
+          </Label>
+          <TimeBlockSelector
+            className="mt-1.5"
+            value={formData.timeBlock || "09:00-10:00"}
+            onChange={(value) => handleChange("timeBlock", value)}
+            disabled={isSubmitting}
+          />
+        </div>
+        
+        <div>
+          <Label htmlFor="status" className="font-medium">
+            Estado *
+          </Label>
+          <Select 
+            value={formData.status || "scheduled"} 
+            onValueChange={(value) => handleChange("status", value)}
+            disabled={isSubmitting}
+          >
+            <SelectTrigger id="status" className="mt-1.5">
+              <SelectValue placeholder="Seleccione un estado" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="scheduled">Programada</SelectItem>
+              <SelectItem value="confirmed">Confirmada</SelectItem>
+              <SelectItem value="completed">Completada</SelectItem>
+              <SelectItem value="cancelled">Cancelada</SelectItem>
+              <SelectItem value="no-show">No asistió</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+      
+      <div>
+        <Label htmlFor="notes" className="font-medium">
+          Notas
+        </Label>
+        <div className="mt-1.5">
+          <div className="flex gap-2 mb-2">
+            <Input
+              id="notes-input"
+              value={notesInput}
+              onChange={(e) => setNotesInput(e.target.value)}
+              onKeyDown={handleNotesKeyDown}
+              placeholder="Añadir nota y presionar Enter"
+              className="flex-1"
+              disabled={isSubmitting}
+            />
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={addNoteTag}
+              disabled={!notesInput.trim() || isSubmitting}
+            >
+              Añadir
+            </Button>
+          </div>
+          
+          {notesTags.length > 0 && (
+            <div className="flex flex-wrap gap-2 mt-2">
+              {notesTags.map((tag, index) => (
+                <Badge 
+                  key={index} 
+                  variant="outline" 
+                  className="py-1.5 pl-2 pr-1.5 flex items-center gap-1 bg-slate-100"
+                >
+                  {tag}
                   <Button
-                    id="date"
-                    variant={"outline"}
-                    className={cn(
-                      "w-full justify-start text-left font-normal mt-1.5",
-                      !formData.date && "text-muted-foreground"
-                    )}
                     type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-5 w-5 rounded-full hover:bg-slate-200"
+                    onClick={() => removeNoteTag(index)}
                     disabled={isSubmitting}
                   >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {formData.date ? format(formData.date, "dd/MM/yyyy", { locale: es }) : <span>Selecciona una fecha</span>}
+                    <X className="h-3 w-3" />
                   </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={formData.date}
-                    onSelect={(date) => {
-                      if (date) {
-                        handleChange("date", date);
-                      }
-                    }}
-                    initialFocus
-                    className="p-3 pointer-events-auto"
-                    disabled={(date) => {
-                      // Deshabilitar fechas pasadas excepto si estamos editando
-                      if (!isEditing) {
-                        const today = new Date();
-                        today.setHours(0, 0, 0, 0);
-                        return date < today;
-                      }
-                      return false;
-                    }}
-                    classNames={{
-                      day_selected: "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground",
-                      day_today: "bg-accent text-accent-foreground",
-                    }}
-                  />
-                </PopoverContent>
-              </Popover>
+                </Badge>
+              ))}
             </div>
-            
-            <div>
-              <Label htmlFor="treatmentType" className="font-medium">
-                Tipo de Tratamiento
-              </Label>
-              <Select 
-                value={formData.treatmentType || ""} 
-                onValueChange={(value) => handleChange("treatmentType", value)}
-                disabled={isSubmitting}
-              >
-                <SelectTrigger id="treatmentType" className="mt-1.5">
-                  <SelectValue placeholder="Seleccione un tipo" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="consultation">Consulta</SelectItem>
-                  <SelectItem value="cleaning">Limpieza</SelectItem>
-                  <SelectItem value="filling">Empaste</SelectItem>
-                  <SelectItem value="extraction">Extracción</SelectItem>
-                  <SelectItem value="rootcanal">Endodoncia</SelectItem>
-                  <SelectItem value="orthodontics">Ortodoncia</SelectItem>
-                  <SelectItem value="other">Otro</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div>
-              <Label htmlFor="timeBlock" className="font-medium">
-                Horario *
-              </Label>
-              <TimeBlockSelector
-                className="mt-1.5"
-                value={formData.timeBlock || "09:00-10:00"}
-                onChange={(value) => handleChange("timeBlock", value)}
-                disabled={isSubmitting}
-              />
-            </div>
-            
-            <div>
-              <Label htmlFor="status" className="font-medium">
-                Estado *
-              </Label>
-              <Select 
-                value={formData.status || "scheduled"} 
-                onValueChange={(value) => handleChange("status", value)}
-                disabled={isSubmitting}
-              >
-                <SelectTrigger id="status" className="mt-1.5">
-                  <SelectValue placeholder="Seleccione un estado" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="scheduled">Programada</SelectItem>
-                  <SelectItem value="confirmed">Confirmada</SelectItem>
-                  <SelectItem value="completed">Completada</SelectItem>
-                  <SelectItem value="cancelled">Cancelada</SelectItem>
-                  <SelectItem value="no-show">No asistió</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          
-          <div>
-            <Label htmlFor="notes" className="font-medium">
-              Notas
-            </Label>
-            <div className="mt-1.5">
-              <div className="flex gap-2 mb-2">
-                <Input
-                  id="notes-input"
-                  value={notesInput}
-                  onChange={(e) => setNotesInput(e.target.value)}
-                  onKeyDown={handleNotesKeyDown}
-                  placeholder="Añadir nota y presionar Enter"
-                  className="flex-1"
-                  disabled={isSubmitting}
-                />
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  onClick={addNoteTag}
-                  disabled={!notesInput.trim() || isSubmitting}
-                >
-                  Añadir
-                </Button>
-              </div>
-              
-              {notesTags.length > 0 && (
-                <div className="flex flex-wrap gap-2 mt-2">
-                  {notesTags.map((tag, index) => (
-                    <Badge 
-                      key={index} 
-                      variant="outline" 
-                      className="py-1.5 pl-2 pr-1.5 flex items-center gap-1 bg-slate-100"
-                    >
-                      {tag}
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="h-5 w-5 rounded-full hover:bg-slate-200"
-                        onClick={() => removeNoteTag(index)}
-                        disabled={isSubmitting}
-                      >
-                        <X className="h-3 w-3" />
-                      </Button>
-                    </Badge>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-          
-          <div className="flex justify-end gap-2 pt-4">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={onCancel}
-              disabled={isSubmitting}
-            >
-              Cancelar
-            </Button>
-            <Button 
-              type="submit"
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? 'Guardando...' : isEditing ? 'Guardar Cambios' : 'Guardar Cita'}
-            </Button>
-          </div>
-        </form>
-      </CardContent>
-    </Card>
+          )}
+        </div>
+      </div>
+      
+      <div className="flex justify-end gap-2 pt-4">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={onCancel}
+          disabled={isSubmitting}
+        >
+          Cancelar
+        </Button>
+        <Button 
+          type="submit"
+          disabled={isSubmitting}
+        >
+          {isSubmitting ? 'Guardando...' : isEditing ? 'Actualizar Cita' : 'Crear Cita'}
+        </Button>
+      </div>
+    </form>
   );
 } 

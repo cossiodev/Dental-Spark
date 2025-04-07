@@ -180,7 +180,6 @@ const Appointments = () => {
   // Estado para manejar la edición de citas
   const [isEditingAppointment, setIsEditingAppointment] = useState(false);
   const [appointmentToEdit, setAppointmentToEdit] = useState<Appointment | null>(null);
-  const [showEditForm, setShowEditForm] = useState(false);
 
   // Estado para indicar si se está enviando el formulario
   const [isLoading, setIsLoading] = useState(false);
@@ -467,7 +466,6 @@ const Appointments = () => {
   const handleEditAppointment = (appointment: Appointment) => {
     setAppointmentToEdit(appointment);
     setIsEditingAppointment(true);
-    setShowEditForm(true);
   };
 
   // Función para eliminar una cita
@@ -610,7 +608,6 @@ const Appointments = () => {
       // Resetear estado de edición
       setIsEditingAppointment(false);
       setAppointmentToEdit(null);
-      setShowEditForm(false);
       
       // Refrescar datos de citas
       await refetchAppointments();
@@ -632,7 +629,6 @@ const Appointments = () => {
   const handleCancelEdit = () => {
     setIsEditingAppointment(false);
     setAppointmentToEdit(null);
-    setShowEditForm(false);
   };
 
   // Función para restablecer el formulario
@@ -718,7 +714,7 @@ const Appointments = () => {
             <DialogHeader>
               <DialogTitle>Agregar Nueva Cita</DialogTitle>
               <DialogDescription>
-                Complete el formulario para agregar un nuevo paciente al sistema.
+                Complete el formulario para agregar una nueva cita al sistema.
               </DialogDescription>
             </DialogHeader>
             
@@ -775,17 +771,29 @@ const Appointments = () => {
         </Dialog>
       </div>
 
-      {/* Formulario de edición de cita */}
-      {showEditForm && appointmentToEdit && (
-        <div className="my-6">
-          <AppointmentForm 
-            initialData={appointmentToEdit}
-            onSubmit={handleUpdateAppointment}
-            onCancel={handleCancelEdit}
-            isEditing={true}
-          />
-        </div>
-      )}
+      {/* Diálogo de edición de cita */}
+      <Dialog open={isEditingAppointment} onOpenChange={(open) => {
+        if (!open) handleCancelEdit();
+        setIsEditingAppointment(open);
+      }}>
+        <DialogContent className="sm:max-w-[700px]">
+          <DialogHeader>
+            <DialogTitle>Editar Cita</DialogTitle>
+            <DialogDescription>
+              Modifica los detalles de la cita seleccionada.
+            </DialogDescription>
+          </DialogHeader>
+          
+          {appointmentToEdit && (
+            <AppointmentForm 
+              initialData={appointmentToEdit}
+              onSubmit={handleUpdateAppointment}
+              onCancel={handleCancelEdit}
+              isEditing={true}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
 
       <Tabs defaultValue="today" value={selectedTab} onValueChange={setSelectedTab}>
         <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-4">
