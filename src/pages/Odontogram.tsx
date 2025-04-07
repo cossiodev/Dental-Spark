@@ -481,6 +481,56 @@ const Odontogram = () => {
     const upperTeethToRender = teethType === "adult" ? upperTeeth : upperPediatricTeeth;
     const lowerTeethToRender = teethType === "adult" ? lowerTeeth : lowerPediatricTeeth;
     
+    const getToothIcon = (toothNumber: number) => {
+      // Incisors: 11, 12, 21, 22, 31, 32, 41, 42 (adult)
+      // Canines: 13, 23, 33, 43 (adult)
+      // Premolars: 14, 15, 24, 25, 34, 35, 44, 45 (adult)
+      // Molars: 16, 17, 18, 26, 27, 28, 36, 37, 38, 46, 47, 48 (adult)
+      
+      if ([11, 12, 21, 22, 31, 32, 41, 42].includes(toothNumber)) {
+        // Incisor shape (rectangular)
+        return (
+          <path 
+            d="M32 8 C38 8, 44 12, 44 24 C44 40, 38 56, 32 56 C26 56, 20 40, 20 24 C20 12, 26 8, 32 8 Z" 
+            stroke="#999"
+            strokeWidth="1"
+          />
+        );
+      } else if ([13, 23, 33, 43].includes(toothNumber)) {
+        // Canine shape (pointed)
+        return (
+          <path 
+            d="M32 4 C40 8, 46 12, 46 24 C46 40, 38 56, 32 56 C26 56, 18 40, 18 24 C18 12, 24 8, 32 4 Z" 
+            stroke="#999"
+            strokeWidth="1"
+          />
+        );
+      } else if ([14, 15, 24, 25, 34, 35, 44, 45].includes(toothNumber)) {
+        // Premolar shape (oval with small bumps)
+        return (
+          <path 
+            d="M32 8 C42 8, 46 12, 46 24 C46 40, 39 56, 32 56 C25 56, 18 40, 18 24 C18 12, 22 8, 32 8 Z 
+               M25 14 C23 16, 28 20, 33 17 M39 14 C41 16, 36 20, 31 17" 
+            stroke="#999"
+            strokeWidth="1"
+          />
+        );
+      } else {
+        // Molar shape (rectangular with cusps)
+        return (
+          <path 
+            d="M20 12 L44 12 L44 52 L20 52 Z 
+               M26 12 C26 8, 30 8, 30 12 
+               M38 12 C38 8, 34 8, 34 12 
+               M26 52 C26 56, 30 56, 30 52 
+               M38 52 C38 56, 34 56, 34 52" 
+            stroke="#999"
+            strokeWidth="1"
+          />
+        );
+      }
+    };
+    
     const renderToothGroup = (teethGroup: typeof upperTeeth) => {
       return teethGroup.map((tooth) => {
         const condition = teethConditions[tooth.number];
@@ -491,7 +541,7 @@ const Odontogram = () => {
         return (
           <button
             key={tooth.number}
-            className={`relative group p-0 w-20 h-20 flex items-center justify-center border rounded-md 
+            className={`relative group p-0 w-16 h-20 flex items-center justify-center border rounded-md 
               transition-all duration-200 hover:scale-105 hover:shadow-md 
               ${isSelected ? 'ring-2 ring-primary shadow-md' : 'ring-0'} 
               ${condition ? `tooth-${condition.status}` : 'bg-white'}`}
@@ -504,12 +554,12 @@ const Odontogram = () => {
           >
             <div className="absolute inset-0 flex items-center justify-center">
               <svg width="64" height="64" viewBox="0 0 64 64" className="absolute inset-0">
-                <path 
-                  d="M32 8 C40 8, 48 12, 48 24 C48 40, 40 56, 32 56 C24 56, 16 40, 16 24 C16 12, 24 8, 32 8 Z" 
-                  fill={hasSurfaces ? "white" : fillColor}
-                  stroke="#999"
-                  strokeWidth="1"
-                />
+                {getToothIcon(tooth.number)}
+                
+                {/* Fill the tooth based on condition */}
+                <g fill={hasSurfaces ? "white" : fillColor}>
+                  {getToothIcon(tooth.number)}
+                </g>
                 
                 {hasSurfaces && (
                   <>
@@ -587,7 +637,7 @@ const Odontogram = () => {
               {teethType === "adult" ? "1-16" : "A-J"}
             </Badge>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-8 lg:grid-cols-8 gap-3 mt-4">
+          <div className="grid grid-cols-8 gap-1 mt-4 justify-items-center">
             {renderToothGroup(upperTeethToRender)}
           </div>
         </div>
@@ -599,7 +649,7 @@ const Odontogram = () => {
               {teethType === "adult" ? "17-32" : "K-T"}
             </Badge>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-8 lg:grid-cols-8 gap-3 mt-4">
+          <div className="grid grid-cols-8 gap-1 mt-4 justify-items-center">
             {renderToothGroup(lowerTeethToRender)}
           </div>
         </div>
