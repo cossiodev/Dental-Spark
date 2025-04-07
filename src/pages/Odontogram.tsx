@@ -468,68 +468,114 @@ const Odontogram = () => {
     }
   };
 
-  const getToothConditionIndicator = (condition: string) => {
-    return (
-      <div 
-        className="w-3 h-3 rounded-full" 
-        style={{ backgroundColor: toothConditionColors[condition] }}
-      />
-    );
+  const getToothIcon = (toothNumber: number) => {
+    // Dental numbering system groups:
+    // Incisors: 11, 12, 21, 22, 31, 32, 41, 42
+    // Canines: 13, 23, 33, 43
+    // Premolars: 14, 15, 24, 25, 34, 35, 44, 45
+    // Molars: 16, 17, 18, 26, 27, 28, 36, 37, 38, 46, 47, 48
+    
+    // Determine if it's an upper or lower tooth
+    const isUpper = [11, 12, 13, 14, 15, 16, 17, 18, 21, 22, 23, 24, 25, 26, 27, 28].includes(toothNumber);
+    
+    if ([11, 12, 21, 22, 31, 32, 41, 42].includes(toothNumber)) {
+      // Incisor shape - more anatomically correct
+      if (isUpper) {
+        // Upper incisor
+        return (
+          <path 
+            d="M32 8 C38 8, 44 12, 44 32 C44 45, 38 56, 32 56 C26 56, 20 45, 20 32 C20 12, 26 8, 32 8 Z
+               M26 10 L38 10 L36 14 L28 14 Z" 
+            stroke="#666"
+            strokeWidth="1"
+          />
+        );
+      } else {
+        // Lower incisor
+        return (
+          <path 
+            d="M32 8 C38 8, 44 18, 44 45 C44 52, 38 56, 32 56 C26 56, 20 52, 20 45 C20 18, 26 8, 32 8 Z
+               M26 52 L38 52 L36 48 L28 48 Z" 
+            stroke="#666"
+            strokeWidth="1"
+          />
+        );
+      }
+    } else if ([13, 23, 33, 43].includes(toothNumber)) {
+      // Canine shape - sharper cusp
+      if (isUpper) {
+        // Upper canine
+        return (
+          <path 
+            d="M32 4 C38 4, 45 10, 46 32 C46 45, 38 56, 32 56 C26 56, 18 45, 18 32 C19 10, 26 4, 32 4 Z
+               M32 4 L32 10 M26 9 L38 9" 
+            stroke="#666"
+            strokeWidth="1"
+          />
+        );
+      } else {
+        // Lower canine
+        return (
+          <path 
+            d="M32 6 C38 6, 46 14, 46 42 C46 52, 38 58, 32 58 C26 58, 18 52, 18 42 C18 14, 26 6, 32 6 Z
+               M32 58 L32 52 M26 54 L38 54" 
+            stroke="#666"
+            strokeWidth="1"
+          />
+        );
+      }
+    } else if ([14, 15, 24, 25, 34, 35, 44, 45].includes(toothNumber)) {
+      // Premolar shape - with two distinct cusps
+      if (isUpper) {
+        // Upper premolar
+        return (
+          <path 
+            d="M32 8 C42 8, 48 12, 48 32 C48 45, 39 56, 32 56 C25 56, 16 45, 16 32 C16 12, 22 8, 32 8 Z" 
+            stroke="#666"
+            strokeWidth="1"
+          />
+        );
+      } else {
+        // Lower premolar
+        return (
+          <path 
+            d="M32 8 C42 8, 48 14, 48 40 C48 50, 39 58, 32 58 C25 58, 16 50, 16 40 C16 14, 22 8, 32 8 Z" 
+            stroke="#666"
+            strokeWidth="1"
+          />
+        );
+      }
+    } else {
+      // Molar shape - with multiple cusps
+      if (isUpper) {
+        // Upper molar
+        return (
+          <path 
+            d="M18 14 L46 14 L46 50 C46 54, 40 58, 32 58 C24 58, 18 54, 18 50 Z
+               M18 14 C18 10, 24 6, 32 6 C40 6, 46 10, 46 14
+               M25 14 L25 8 M39 14 L39 8" 
+            stroke="#666"
+            strokeWidth="1"
+          />
+        );
+      } else {
+        // Lower molar
+        return (
+          <path 
+            d="M18 14 C18 10, 24 6, 32 6 C40 6, 46 10, 46 14 L46 50 L18 50 Z
+               M18 50 C18 54, 24 58, 32 58 C40 58, 46 54, 46 50
+               M25 50 L25 56 M39 50 L39 56" 
+            stroke="#666"
+            strokeWidth="1"
+          />
+        );
+      }
+    }
   };
 
   const renderTeeth = () => {
     const upperTeethToRender = teethType === "adult" ? upperTeeth : upperPediatricTeeth;
     const lowerTeethToRender = teethType === "adult" ? lowerTeeth : lowerPediatricTeeth;
-    
-    const getToothIcon = (toothNumber: number) => {
-      // Incisors: 11, 12, 21, 22, 31, 32, 41, 42 (adult)
-      // Canines: 13, 23, 33, 43 (adult)
-      // Premolars: 14, 15, 24, 25, 34, 35, 44, 45 (adult)
-      // Molars: 16, 17, 18, 26, 27, 28, 36, 37, 38, 46, 47, 48 (adult)
-      
-      if ([11, 12, 21, 22, 31, 32, 41, 42].includes(toothNumber)) {
-        // Incisor shape (rectangular)
-        return (
-          <path 
-            d="M32 8 C38 8, 44 12, 44 24 C44 40, 38 56, 32 56 C26 56, 20 40, 20 24 C20 12, 26 8, 32 8 Z" 
-            stroke="#999"
-            strokeWidth="1"
-          />
-        );
-      } else if ([13, 23, 33, 43].includes(toothNumber)) {
-        // Canine shape (pointed)
-        return (
-          <path 
-            d="M32 4 C40 8, 46 12, 46 24 C46 40, 38 56, 32 56 C26 56, 18 40, 18 24 C18 12, 24 8, 32 4 Z" 
-            stroke="#999"
-            strokeWidth="1"
-          />
-        );
-      } else if ([14, 15, 24, 25, 34, 35, 44, 45].includes(toothNumber)) {
-        // Premolar shape (oval with small bumps)
-        return (
-          <path 
-            d="M32 8 C42 8, 46 12, 46 24 C46 40, 39 56, 32 56 C25 56, 18 40, 18 24 C18 12, 22 8, 32 8 Z 
-               M25 14 C23 16, 28 20, 33 17 M39 14 C41 16, 36 20, 31 17" 
-            stroke="#999"
-            strokeWidth="1"
-          />
-        );
-      } else {
-        // Molar shape (rectangular with cusps)
-        return (
-          <path 
-            d="M20 12 L44 12 L44 52 L20 52 Z 
-               M26 12 C26 8, 30 8, 30 12 
-               M38 12 C38 8, 34 8, 34 12 
-               M26 52 C26 56, 30 56, 30 52 
-               M38 52 C38 56, 34 56, 34 52" 
-            stroke="#999"
-            strokeWidth="1"
-          />
-        );
-      }
-    };
     
     const renderToothGroup = (teethGroup: typeof upperTeeth) => {
       return teethGroup.map((tooth) => {
@@ -1015,17 +1061,17 @@ const Odontogram = () => {
                 
                 <div className="relative w-48 h-48 mx-auto my-4 border rounded-md bg-white">
                   <svg width="100%" height="100%" viewBox="0 0 100 100">
-                    {/* Contorno del diente */}
+                    {/* Improved tooth contour for the dialog */}
                     <path 
-                      d="M50 10 C65 10, 80 20, 80 40 C80 65, 65 90, 50 90 C35 90, 20 65, 20 40 C20 20, 35 10, 50 10 Z" 
+                      d="M50 10 C65 10, 80 20, 80 45 C80 65, 65 90, 50 90 C35 90, 20 65, 20 45 C20 20, 35 10, 50 10 Z" 
                       fill="white"
-                      stroke="#999"
-                      strokeWidth="1"
+                      stroke="#666"
+                      strokeWidth="1.5"
                     />
                     
-                    {/* Superficies interactivas */}
+                    {/* Surfaces with improved anatomical accuracy */}
                     <path 
-                      d="M35 15 L65 15 C55 25, 45 25, 35 15 Z" 
+                      d="M35 15 L65 15 C60 25, 40 25, 35 15 Z" 
                       fill={selectedSurfaces?.includes("top") ? toothConditionColors[selectedCondition] : "transparent"}
                       stroke="#ddd"
                       strokeWidth="1"
@@ -1052,7 +1098,7 @@ const Odontogram = () => {
                     />
                     
                     <path 
-                      d="M40 80 L60 80 C55 85, 45 85, 40 80 Z" 
+                      d="M40 80 L60 80 C55 88, 45 88, 40 80 Z" 
                       fill={selectedSurfaces?.includes("bottom") ? toothConditionColors[selectedCondition] : "transparent"}
                       stroke="#ddd"
                       strokeWidth="1"
