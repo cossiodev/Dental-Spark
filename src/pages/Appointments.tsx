@@ -103,14 +103,21 @@ const Appointments = () => {
   const { 
     data: appointments = [], 
     isLoading: isLoadingAppointments,
-    refetch: refetchAppointments
+    refetch: refetchAppointments,
+    isError: isErrorAppointments
   } = useQuery({
     queryKey: ["appointments"],
     queryFn: () => appointmentService.getAll(),
     refetchOnWindowFocus: true,
-    refetchInterval: 5000, // Refrescar automáticamente cada 5 segundos
-    retry: 3
+    refetchInterval: 3000, // Refrescar automáticamente cada 3 segundos (más rápido)
+    retry: 3,
+    staleTime: 0, // Considerar los datos obsoletos inmediatamente
+    refetchOnMount: true // Refrescar los datos cada vez que el componente se monta
   });
+
+  // State para rastrear la última cita creada y forzar recarga visual
+  const [lastCreatedAppointment, setLastCreatedAppointment] = useState<string | null>(null);
+  const [forceRefresh, setForceRefresh] = useState(0);
 
   // Filter appointments based on selected tab
   const filteredAppointments = appointments.filter((appointment) => {
@@ -129,11 +136,24 @@ const Appointments = () => {
     return true;
   });
   
-  // Efecto para recargar las citas al cambiar de pestaña
+  // Efecto para recargar las citas al cambiar de pestaña o cuando se fuerza un refresco
   useEffect(() => {
-    refetchAppointments();
     console.log("Recargando citas al cambiar pestaña:", selectedTab);
-  }, [selectedTab, refetchAppointments]);
+    refetchAppointments();
+  }, [selectedTab, refetchAppointments, forceRefresh]);
+
+  // Efecto para mostrar mensaje cuando no hay citas pero deberían cargarse
+  useEffect(() => {
+    if (lastCreatedAppointment && appointments.length === 0 && !isLoadingAppointments) {
+      console.log("No hay citas cargadas a pesar de haber creado una nueva. Intentando recargar...");
+      const timer = setTimeout(() => {
+        refetchAppointments();
+        setForceRefresh(prev => prev + 1);
+      }, 2000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [appointments.length, isLoadingAppointments, lastCreatedAppointment, refetchAppointments]);
 
   // Handle form change
   const handleChange = (field: string, value: any) => {
@@ -235,28 +255,32 @@ const Appointments = () => {
       });
       setOpen(false);
       
+      // Guardar ID de la última cita creada para seguimiento
+      setLastCreatedAppointment(newAppointment.id);
+      
       // Configurar múltiples intentos de recarga para asegurar que aparezca la cita
-      const reloadAppointments = async () => {
-        console.log("Iniciando secuencia de recarga de citas");
-        
-        // Inmediatamente después de crear la cita
+      const reloadWithDelay = async () => {
+        // Inmediatamente
         await refetchAppointments();
         console.log("Primera recarga de citas completada");
         
-        // Recargar citas después de 1 segundo
+        // Después de 1 segundo
         setTimeout(async () => {
           await refetchAppointments();
           console.log("Segunda recarga de citas después de 1 segundo");
           
-          // Recargar citas después de 3 segundos
+          // Después de 3 segundos
           setTimeout(async () => {
             await refetchAppointments();
             console.log("Tercera recarga de citas después de 3 segundos");
+            
+            // Forzar actualización del estado para re-renderizar
+            setForceRefresh(prev => prev + 1);
           }, 2000);
         }, 1000);
       };
       
-      reloadAppointments();
+      reloadWithDelay();
       
       // Si la cita es para hoy, asegurarse de mostrar la pestaña "hoy"
       const today = new Date().toISOString().split("T")[0];

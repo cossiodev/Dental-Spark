@@ -158,18 +158,13 @@ export const appointmentService = {
     try {
       console.log('Obteniendo todas las citas...');
       
+      // Asegurar que siempre obtenemos datos actualizados
       const { data: appointments, error } = await supabase
         .from('appointments')
         .select(`
           *,
-          doctors (
-            first_name,
-            last_name
-          ),
-          patients (
-            first_name,
-            last_name
-          )
+          doctors:doctor_id (*),
+          patients:patient_id (*)
         `)
         .order('date', { ascending: true })
         .order('start_time', { ascending: true });
@@ -184,43 +179,63 @@ export const appointmentService = {
         return [];
       }
 
-      console.log(`Se encontraron ${appointments.length} citas en total`);
+      console.log(`Se encontraron ${appointments.length} citas en total:`, appointments);
       
       // Mapear los resultados al formato esperado por la aplicación
       const result = appointments.map(appointment => {
-        // Verificar que los datos relacionados existan
-        const hasPatient = appointment.patients && 
-                          appointment.patients.first_name && 
-                          appointment.patients.last_name;
-        
-        const hasDoctor = appointment.doctors && 
-                         appointment.doctors.first_name && 
-                         appointment.doctors.last_name;
-        
-        return {
-          id: appointment.id,
-          patientId: appointment.patient_id,
-          patientName: hasPatient 
-            ? `${appointment.patients.first_name} ${appointment.patients.last_name}`
-            : 'Paciente no encontrado',
-          doctorId: appointment.doctor_id,
-          doctorName: hasDoctor 
-            ? `${appointment.doctors.first_name} ${appointment.doctors.last_name}`
-            : 'Doctor no encontrado',
-          date: appointment.date,
-          startTime: appointment.start_time,
-          endTime: appointment.end_time,
-          status: appointment.status,
-          notes: appointment.notes || '',
-          treatmentType: appointment.treatment_type || '',
-        };
+        try {
+          // Verificar que los datos relacionados existan
+          const hasPatient = appointment.patients && 
+                            typeof appointment.patients === 'object' &&
+                            appointment.patients.first_name && 
+                            appointment.patients.last_name;
+          
+          const hasDoctor = appointment.doctors && 
+                            typeof appointment.doctors === 'object' &&
+                            appointment.doctors.first_name && 
+                            appointment.doctors.last_name;
+          
+          return {
+            id: appointment.id,
+            patientId: appointment.patient_id,
+            patientName: hasPatient 
+              ? `${appointment.patients.first_name} ${appointment.patients.last_name}`
+              : 'Paciente sin nombre',
+            doctorId: appointment.doctor_id,
+            doctorName: hasDoctor 
+              ? `${appointment.doctors.first_name} ${appointment.doctors.last_name}`
+              : 'Doctor sin nombre',
+            date: appointment.date,
+            startTime: appointment.start_time,
+            endTime: appointment.end_time,
+            status: appointment.status || 'scheduled',
+            notes: appointment.notes || '',
+            treatmentType: appointment.treatment_type || '',
+          };
+        } catch (err) {
+          console.error('Error procesando cita:', appointment, err);
+          // Devolver un objeto básico para no romper la aplicación
+          return {
+            id: appointment.id || 'error',
+            patientId: appointment.patient_id || '',
+            patientName: 'Error al cargar datos',
+            doctorId: appointment.doctor_id || '',
+            doctorName: 'Error al cargar datos',
+            date: appointment.date || new Date().toISOString().split('T')[0],
+            startTime: appointment.start_time || '00:00',
+            endTime: appointment.end_time || '00:00',
+            status: appointment.status || 'scheduled',
+            notes: '',
+            treatmentType: '',
+          };
+        }
       });
       
-      console.log('Datos de citas procesados correctamente');
+      console.log('Datos de citas procesados correctamente:', result);
       return result;
     } catch (error) {
       console.error('Error al obtener todas las citas:', error);
-      throw error; // Re-lanzar el error para manejarlo en el componente
+      return []; // Devolver array vacío en lugar de propagar el error
     }
   },
 
