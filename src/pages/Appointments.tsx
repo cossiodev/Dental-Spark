@@ -48,25 +48,14 @@ import type { Appointment, Patient } from "@/lib/models/types";
 
 // Importar el componente TimeBlockSelector
 import { TimeBlockSelector } from "@/components/appointments/TimeBlockSelector";
+import { StatusBadge } from "@/components/appointments/StatusBadge";
+import { AppointmentActions } from "@/components/appointments/AppointmentActions";
+import { AppointmentForm } from "@/components/appointments/AppointmentForm";
 
 // Helper function to format date
 const formatDate = (dateString: string) => {
   const date = new Date(dateString);
   return format(date, "PPP", { locale: es });
-};
-
-// Status badge component
-const StatusBadge = ({ status }: { status: string }) => {
-  const statusMap: Record<string, { label: string; variant: "default" | "outline" | "secondary" | "destructive" }> = {
-    scheduled: { label: "Programada", variant: "outline" },
-    confirmed: { label: "Confirmada", variant: "secondary" },
-    completed: { label: "Completada", variant: "default" },
-    cancelled: { label: "Cancelada", variant: "destructive" },
-  };
-
-  const { label, variant } = statusMap[status] || { label: status, variant: "outline" };
-  
-  return <Badge variant={variant}>{label}</Badge>;
 };
 
 const Appointments = () => {
@@ -83,6 +72,11 @@ const Appointments = () => {
     notes: "",
     treatmentType: ""
   });
+
+  // Estado para manejar la edición de citas
+  const [isEditingAppointment, setIsEditingAppointment] = useState(false);
+  const [appointmentToEdit, setAppointmentToEdit] = useState<Appointment | null>(null);
+  const [showEditForm, setShowEditForm] = useState(false);
 
   // Fetch patients
   const { data: patients = [] } = useQuery({
@@ -294,24 +288,128 @@ const Appointments = () => {
     }
   };
 
+  // Función para iniciar la edición de una cita
+  const handleEditAppointment = (appointment: Appointment) => {
+    setAppointmentToEdit(appointment);
+    setIsEditingAppointment(true);
+    setShowEditForm(true);
+  };
+
+  // Función para eliminar una cita
+  const handleDeleteAppointment = async (appointmentId: string) => {
+    try {
+      await appointmentService.delete(appointmentId);
+      await refetchAppointments();
+      setForceRefresh(prev => prev + 1);
+      
+      toast({
+        title: "Cita eliminada",
+        description: "La cita ha sido eliminada exitosamente.",
+      });
+    } catch (error) {
+      console.error("Error al eliminar cita:", error);
+      toast({
+        title: "Error",
+        description: "No se pudo eliminar la cita. Por favor intente nuevamente.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Función para cambiar el estado de una cita
+  const handleStatusChange = async (appointment: Appointment, newStatus: string) => {
+    try {
+      const updatedAppointment = { ...appointment, status: newStatus };
+      await appointmentService.update(updatedAppointment);
+      await refetchAppointments();
+      setForceRefresh(prev => prev + 1);
+      
+      toast({
+        title: "Estado actualizado",
+        description: `La cita ahora está ${
+          newStatus === 'scheduled' ? 'programada' :
+          newStatus === 'confirmed' ? 'confirmada' :
+          newStatus === 'completed' ? 'completada' :
+          newStatus === 'cancelled' ? 'cancelada' : newStatus
+        }.`,
+      });
+    } catch (error) {
+      console.error("Error al cambiar estado de la cita:", error);
+      toast({
+        title: "Error",
+        description: "No se pudo actualizar el estado. Por favor intente nuevamente.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Función para guardar cambios en una cita
+  const handleUpdateAppointment = async (updatedData: Partial<Appointment>) => {
+    try {
+      if (!appointmentToEdit) return;
+      
+      const appointmentData = {
+        ...appointmentToEdit,
+        ...updatedData,
+        patientName: appointmentToEdit.patientName, // Mantener el nombre del paciente para la UI
+        doctorName: appointmentToEdit.doctorName,   // Mantener el nombre del doctor para la UI
+      };
+      
+      await appointmentService.update(appointmentData as Appointment);
+      
+      toast({
+        title: "¡Cita actualizada!",
+        description: "La cita ha sido actualizada exitosamente.",
+      });
+      
+      // Resetear estado de edición
+      setIsEditingAppointment(false);
+      setAppointmentToEdit(null);
+      setShowEditForm(false);
+      
+      // Refrescar datos de citas
+      await refetchAppointments();
+      setForceRefresh(prev => prev + 1);
+      
+    } catch (error) {
+      console.error("Error al actualizar cita:", error);
+      toast({
+        title: "Error",
+        description: "No se pudo actualizar la cita. Por favor intente nuevamente.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Función para cancelar la edición
+  const handleCancelEdit = () => {
+    setIsEditingAppointment(false);
+    setAppointmentToEdit(null);
+    setShowEditForm(false);
+  };
+
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold tracking-tight">Citas</h1>
+    <div className="container py-8 space-y-8">
+      <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Citas</h1>
+          <p className="text-muted-foreground">Gestiona las citas de los pacientes en el sistema.</p>
+        </div>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
-            <Button className="flex items-center gap-2">
-              <PlusCircle className="h-4 w-4" />
-              <span>Nueva Cita</span>
+            <Button className="ml-auto">
+              <PlusCircle className="mr-2 h-4 w-4" />
+              Nueva Cita
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-[550px]">
+          <DialogContent className="sm:max-w-[600px]">
             <DialogHeader>
               <DialogTitle>Crear Nueva Cita</DialogTitle>
               <DialogDescription>
-                Ingresa los detalles de la nueva cita. Todos los campos marcados con * son obligatorios.
+                Completa la información para agendar una nueva cita.
               </DialogDescription>
             </DialogHeader>
+            
             <form onSubmit={handleSubmit}>
               <div className="grid gap-4 py-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -479,6 +577,22 @@ const Appointments = () => {
         </Dialog>
       </div>
 
+      {/* Formulario de edición de cita */}
+      {showEditForm && appointmentToEdit && (
+        <div className="my-6">
+          <div className="mb-4">
+            <h2 className="text-xl font-semibold">Editar Cita</h2>
+            <p className="text-muted-foreground">Modifica los detalles de la cita seleccionada.</p>
+          </div>
+          <AppointmentForm 
+            initialData={appointmentToEdit}
+            onSubmit={handleUpdateAppointment}
+            onCancel={handleCancelEdit}
+            isEditing={true}
+          />
+        </div>
+      )}
+
       <Tabs defaultValue="today" value={selectedTab} onValueChange={setSelectedTab}>
         <TabsList className="grid w-full md:w-auto grid-cols-3 mb-4">
           <TabsTrigger value="today">Hoy</TabsTrigger>
@@ -514,6 +628,7 @@ const Appointments = () => {
                       <TableHead>Hora</TableHead>
                       <TableHead>Tipo</TableHead>
                       <TableHead>Estado</TableHead>
+                      <TableHead className="text-right">Acciones</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -536,6 +651,14 @@ const Appointments = () => {
                         <TableCell>
                           <StatusBadge status={appointment.status} />
                         </TableCell>
+                        <TableCell className="text-right">
+                          <AppointmentActions 
+                            appointment={appointment}
+                            onEdit={handleEditAppointment}
+                            onDelete={handleDeleteAppointment}
+                            onStatusChange={handleStatusChange}
+                          />
+                        </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -544,7 +667,7 @@ const Appointments = () => {
             ) : (
               <div className="flex flex-col items-center justify-center py-8 text-center">
                 <p className="text-muted-foreground mb-4">No hay citas programadas para este período</p>
-                <Button variant="outline" onClick={() => setOpen(true)}>
+                <Button onClick={() => setOpen(true)}>
                   <PlusCircle className="mr-2 h-4 w-4" />
                   Crear Nueva Cita
                 </Button>

@@ -1,5 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
-import type { Appointment } from "../models/types";
+import type { Appointment, Patient } from "../models/types";
 
 // Datos de muestra para cuando falle la conexión a Supabase
 const SAMPLE_APPOINTMENTS: Appointment[] = [
@@ -437,6 +437,112 @@ export const appointmentService = {
       console.error('Error al obtener próximas citas:', error);
       // Devolver las citas de ejemplo (simulando que son próximas)
       return SAMPLE_APPOINTMENTS.slice(0, limit);
+    }
+  },
+
+  // Actualizar una cita existente
+  update: async (appointment: Appointment): Promise<Appointment> => {
+    try {
+      console.log('Actualizando cita con ID:', appointment.id, 'Datos:', appointment);
+      
+      // Verificar que tenemos los datos obligatorios
+      if (!appointment.id || !appointment.patientId || !appointment.doctorId || 
+          !appointment.date || !appointment.startTime || !appointment.endTime) {
+        console.error('Error al actualizar cita: Datos obligatorios faltantes');
+        throw new Error('Faltan datos obligatorios para actualizar la cita');
+      }
+      
+      // Formatear fecha si es necesario
+      let formattedDate = appointment.date;
+      if (appointment.date instanceof Date) {
+        formattedDate = appointment.date.toISOString().split('T')[0];
+      }
+      
+      // Preparar datos para Supabase
+      const appointmentData = {
+        patient_id: appointment.patientId,
+        doctor_id: appointment.doctorId,
+        date: formattedDate,
+        start_time: appointment.startTime,
+        end_time: appointment.endTime,
+        status: appointment.status || 'scheduled',
+        notes: appointment.notes || '',
+        treatment_type: appointment.treatmentType || ''
+      };
+      
+      console.log('Datos formateados para Supabase:', appointmentData);
+      
+      // Actualizar la cita en Supabase
+      const { error: updateError } = await supabase
+        .from('appointments')
+        .update(appointmentData)
+        .eq('id', appointment.id);
+      
+      if (updateError) {
+        console.error('Error al actualizar cita en Supabase:', updateError);
+        throw new Error(`Error al actualizar cita: ${updateError.message}`);
+      }
+      
+      // Breve espera para asegurar que la BD haya procesado completamente la actualización
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      console.log('Cita actualizada exitosamente');
+      return appointment;
+    } catch (error) {
+      console.error('Error al actualizar cita:', error);
+      throw error;
+    }
+  },
+  
+  // Eliminar una cita por su ID
+  delete: async (appointmentId: string): Promise<void> => {
+    try {
+      console.log('Eliminando cita con ID:', appointmentId);
+      
+      // Eliminar la cita en Supabase
+      const { error } = await supabase
+        .from('appointments')
+        .delete()
+        .eq('id', appointmentId);
+      
+      if (error) {
+        console.error('Error al eliminar cita en Supabase:', error);
+        throw new Error(`Error al eliminar cita: ${error.message}`);
+      }
+      
+      console.log('Cita eliminada exitosamente');
+    } catch (error) {
+      console.error('Error al eliminar cita:', error);
+      throw error;
+    }
+  },
+
+  // Obtener lista de pacientes para el selector
+  getPatientsList: async (): Promise<Patient[]> => {
+    try {
+      console.log('Obteniendo lista de pacientes...');
+      
+      const { data: patients, error } = await supabase
+        .from('patients')
+        .select('id, first_name, last_name')
+        .order('last_name', { ascending: true });
+      
+      if (error) {
+        console.error('Error al obtener lista de pacientes:', error);
+        throw new Error(`Error al obtener pacientes: ${error.message}`);
+      }
+      
+      const formattedPatients = patients.map(p => ({
+        id: p.id,
+        firstName: p.first_name,
+        lastName: p.last_name
+      }));
+      
+      console.log(`Obtenidos ${formattedPatients.length} pacientes`);
+      return formattedPatients;
+    } catch (error) {
+      console.error('Error al obtener lista de pacientes:', error);
+      return [];
     }
   }
 };
