@@ -863,7 +863,7 @@ const Appointments = () => {
                       <TableHead>Hora</TableHead>
                       <TableHead>Tipo</TableHead>
                       <TableHead>Estado</TableHead>
-                      <TableHead className="text-center" style={{ width: "300px" }}>Acciones</TableHead>
+                      <TableHead className="w-[300px] text-center">Acciones</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -893,55 +893,48 @@ const Appointments = () => {
                         <TableCell>
                           <StatusBadge status={appointment.status} />
                         </TableCell>
-                        <TableCell className="p-2">
-                          {/* BOTONES DE ACCIÓN DIRECTOS Y VISIBLES */}
-                          <div className="flex flex-row gap-2 justify-center" style={{ border: '2px solid #ff6b6b', padding: '8px', borderRadius: '8px', background: '#fff1f1' }}>
+                        <TableCell className="text-center">
+                          <div style={{ background: '#ff9999', border: '3px solid red', borderRadius: '10px', padding: '10px', display: 'flex', gap: '10px', justifyContent: 'center' }}>
                             <Button 
                               variant="default"
                               size="sm" 
-                              onClick={() => {
-                                console.log('⚡ BOTÓN EDITAR CLICKEADO para cita ID:', appointment.id);
-                                console.log('Permisos de edición:', userPermissions.canEdit);
-                                if (!userPermissions.canEdit) {
-                                  toast({
-                                    title: "Permiso denegado",
-                                    description: "No tienes permisos para editar citas. Contacta al administrador.",
-                                    variant: "destructive",
-                                  });
-                                  return;
-                                }
-                                alert('Editando cita: ' + appointment.id);
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                console.log('⚡ EDITAR CITA ID:', appointment.id);
+                                alert(`Editando cita ID: ${appointment.id}`);
                                 handleEditAppointment(appointment);
                               }}
-                              className="bg-blue-500 hover:bg-blue-600 text-white font-bold h-9"
-                              disabled={!userPermissions.canEdit}
+                              style={{ 
+                                background: 'blue', 
+                                color: 'white', 
+                                fontWeight: 'bold',
+                                minWidth: '100px',
+                                fontSize: '16px'
+                              }}
                             >
                               <Edit className="h-5 w-5 mr-2" />
-                              <span className="text-base">EDITAR</span>
+                              EDITAR
                             </Button>
                             
                             <Button 
                               variant="destructive"
                               size="sm" 
-                              onClick={() => {
-                                console.log('⚡ BOTÓN ELIMINAR CLICKEADO para cita ID:', appointment.id);
-                                console.log('Permisos de eliminación:', userPermissions.canDelete);
-                                if (!userPermissions.canDelete) {
-                                  toast({
-                                    title: "Permiso denegado",
-                                    description: "No tienes permisos para eliminar citas. Contacta al administrador.",
-                                    variant: "destructive",
-                                  });
-                                  return;
-                                }
-                                alert('Eliminando cita: ' + appointment.id);
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                console.log('⚡ ELIMINAR CITA ID:', appointment.id);
+                                alert(`Eliminando cita ID: ${appointment.id}`);
                                 handleDeleteAppointment(appointment.id);
                               }}
-                              className="bg-red-500 hover:bg-red-600 text-white font-bold h-9"
-                              disabled={!userPermissions.canDelete}
+                              style={{ 
+                                background: 'red', 
+                                color: 'white', 
+                                fontWeight: 'bold',
+                                minWidth: '100px',
+                                fontSize: '16px'
+                              }}
                             >
                               <Trash2 className="h-5 w-5 mr-2" />
-                              <span className="text-base">ELIMINAR</span>
+                              ELIMINAR
                             </Button>
                           </div>
                         </TableCell>
