@@ -115,12 +115,12 @@ const allPediatricTeeth = [...upperPediatricTeeth, ...lowerPediatricTeeth];
 
 const toothConditionColors: Record<string, string> = {
   healthy: "#ffffff",
-  caries: "#ffc107",  // Amarillo más vibrante
+  caries: "#ffc107",
   filling: "#e0e0e0",
   crown: "#ffd700",
-  extraction: "#ff5252", // Rojo más visible
-  implant: "#2196f3", // Azul más brillante
-  "root-canal": "#4caf50", // Verde más distinguible
+  extraction: "#ff5252",
+  implant: "#2196f3",
+  "root-canal": "#4caf50",
 };
 
 const toothConditionLabels: Record<string, string> = {
@@ -165,6 +165,7 @@ const Odontogram = () => {
   const [teethType, setTeethType] = useState<"adult" | "child">("adult");
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredPatients, setFilteredPatients] = useState<Patient[]>([]);
+  const [toothHistory, setToothHistory] = useState<{ date: string, condition: string }[]>([]);
 
   useEffect(() => {
     const params = new URLSearchParams(search);
@@ -467,17 +468,13 @@ const Odontogram = () => {
     }
   };
 
-  const getToothConditionIcon = (condition: string) => {
-    switch (condition) {
-      case "healthy": return "🦷";
-      case "caries": return "🔴";
-      case "filling": return "⬜";
-      case "crown": return "👑";
-      case "extraction": return "❌";
-      case "implant": return "🔩";
-      case "root-canal": return "🌱";
-      default: return "🦷";
-    }
+  const getToothConditionIndicator = (condition: string) => {
+    return (
+      <div 
+        className="w-3 h-3 rounded-full" 
+        style={{ backgroundColor: toothConditionColors[condition] }}
+      />
+    );
   };
 
   const renderTeeth = () => {
@@ -506,41 +503,65 @@ const Odontogram = () => {
             }}
           >
             <div className="absolute inset-0 flex items-center justify-center">
-              <div 
-                className="w-10 h-10 rounded-full flex items-center justify-center"
-                style={{ backgroundColor: hasSurfaces && condition.surfaces?.includes("center") ? fillColor : "transparent" }}
-              />
+              <svg width="64" height="64" viewBox="0 0 64 64" className="absolute inset-0">
+                <path 
+                  d="M32 8 C40 8, 48 12, 48 24 C48 40, 40 56, 32 56 C24 56, 16 40, 16 24 C16 12, 24 8, 32 8 Z" 
+                  fill={hasSurfaces ? "white" : fillColor}
+                  stroke="#999"
+                  strokeWidth="1"
+                />
+                
+                {hasSurfaces && (
+                  <>
+                    {condition.surfaces?.includes("top") && (
+                      <path 
+                        d="M24 12 L40 12 C36 18, 28 18, 24 12 Z" 
+                        fill={fillColor} 
+                      />
+                    )}
+                    {condition.surfaces?.includes("left") && (
+                      <path 
+                        d="M18 20 C18 30, 22 40, 26 50 C22 44, 18 35, 18 20 Z" 
+                        fill={fillColor} 
+                      />
+                    )}
+                    {condition.surfaces?.includes("right") && (
+                      <path 
+                        d="M46 20 C46 30, 42 40, 38 50 C42 44, 46 35, 46 20 Z" 
+                        fill={fillColor} 
+                      />
+                    )}
+                    {condition.surfaces?.includes("bottom") && (
+                      <path 
+                        d="M26 50 L38 50 C36 54, 28 54, 26 50 Z" 
+                        fill={fillColor} 
+                      />
+                    )}
+                    {condition.surfaces?.includes("center") && (
+                      <circle 
+                        cx="32" 
+                        cy="32" 
+                        r="10" 
+                        fill={fillColor} 
+                      />
+                    )}
+                  </>
+                )}
+              </svg>
               
-              {hasSurfaces && (
-                <>
-                  {condition.surfaces?.includes("top") && (
-                    <div className="absolute top-0 left-1/4 right-1/4 h-1/4" style={{ backgroundColor: fillColor }} />
-                  )}
-                  {condition.surfaces?.includes("bottom") && (
-                    <div className="absolute bottom-0 left-1/4 right-1/4 h-1/4" style={{ backgroundColor: fillColor }} />
-                  )}
-                  {condition.surfaces?.includes("left") && (
-                    <div className="absolute left-0 top-1/4 bottom-1/4 w-1/4" style={{ backgroundColor: fillColor }} />
-                  )}
-                  {condition.surfaces?.includes("right") && (
-                    <div className="absolute right-0 top-1/4 bottom-1/4 w-1/4" style={{ backgroundColor: fillColor }} />
-                  )}
-                </>
-              )}
+              <span className="text-base font-bold z-10">{tooth.number}</span>
             </div>
             
-            <span className="text-lg font-bold z-10">{tooth.number}</span>
-            
             {condition && (
-              <span className="absolute top-1 right-1 text-xs">
-                {getToothConditionIcon(condition.status)}
-              </span>
+              <div className="absolute top-1 right-1 z-10">
+                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: toothConditionColors[condition.status] }} />
+              </div>
             )}
             
             {condition?.notes && (
-              <span className="absolute bottom-1 right-1 text-xs text-blue-500">
-                📝
-              </span>
+              <div className="absolute bottom-1 right-1 text-xs text-blue-500">
+                <span className="w-3 h-3 flex items-center justify-center rounded-full bg-blue-100 text-blue-500">i</span>
+              </div>
             )}
             
             <div className="absolute opacity-0 group-hover:opacity-100 -bottom-12 bg-popover text-popover-foreground p-2 rounded shadow-lg text-xs z-50 transition-opacity min-w-32 text-center pointer-events-none">
@@ -590,7 +611,6 @@ const Odontogram = () => {
               <div key={condition} className="flex items-center gap-2 bg-background border rounded-full px-3 py-1.5">
                 <div className="w-4 h-4 rounded-full" style={{ backgroundColor: toothConditionColors[condition] }}></div>
                 <span className="text-sm">{label}</span>
-                <span className="text-sm">{getToothConditionIcon(condition)}</span>
               </div>
             ))}
           </div>
@@ -894,245 +914,213 @@ const Odontogram = () => {
           </CardContent>
         </Card>
       )}
-    </div>
-  );
-};
 
-// Componente de diálogo para condición del diente
-interface ToothConditionDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  toothNumber: number | null;
-  currentCondition: ToothCondition["status"];
-  onSave: () => void;
-}
-
-const ToothConditionDialog = ({
-  open,
-  onOpenChange,
-  toothNumber,
-  currentCondition,
-  onSave
-}: ToothConditionDialogProps) => {
-  const [condition, setCondition] = useState<ToothCondition["status"]>("healthy");
-  const [notes, setNotes] = useState<string>("");
-  const [surfaces, setSurfaces] = useState<ToothCondition["surfaces"]>([]);
-  const [toothHistory, setToothHistory] = useState<{ date: string, condition: string }[]>([]);
-
-  // Actualiza los estados locales cuando cambian las props
-  useEffect(() => {
-    if (open) {
-      setCondition(currentCondition || "healthy");
-      // Simular historial (en producción, esto vendría de la base de datos)
-      setToothHistory([
-        { date: "2023-12-10", condition: "healthy" },
-        { date: "2024-01-15", condition: "caries" },
-        { date: "2024-03-20", condition: "filling" },
-      ]);
-    }
-  }, [open, currentCondition]);
-
-  const handleSurfaceToggle = (surface: "top" | "bottom" | "left" | "right" | "center") => {
-    setSurfaces(prev => {
-      if (prev?.includes(surface)) {
-        return prev.filter(s => s !== surface);
-      } else {
-        return [...(prev || []), surface];
-      }
-    });
-  };
-
-  // Diagrama visual del diente en el diálogo
-  const renderToothDiagram = () => {
-    return (
-      <div className="relative w-32 h-32 mx-auto my-4 border rounded-md bg-white">
-        {/* Centro */}
-        <div 
-          className={`absolute inset-1/4 rounded-full transition-colors duration-200 border ${
-            surfaces?.includes("center") ? 'bg-primary/20 border-primary' : 'bg-transparent border-gray-300'
-          }`}
-          onClick={() => handleSurfaceToggle("center")}
-        />
-        
-        {/* Superior */}
-        <div 
-          className={`absolute top-0 left-1/4 right-1/4 h-1/4 transition-colors duration-200 border ${
-            surfaces?.includes("top") ? 'bg-primary/20 border-primary' : 'bg-transparent border-gray-300'
-          }`}
-          onClick={() => handleSurfaceToggle("top")}
-        />
-        
-        {/* Inferior */}
-        <div 
-          className={`absolute bottom-0 left-1/4 right-1/4 h-1/4 transition-colors duration-200 border ${
-            surfaces?.includes("bottom") ? 'bg-primary/20 border-primary' : 'bg-transparent border-gray-300'
-          }`}
-          onClick={() => handleSurfaceToggle("bottom")}
-        />
-        
-        {/* Izquierda */}
-        <div 
-          className={`absolute left-0 top-1/4 bottom-1/4 w-1/4 transition-colors duration-200 border ${
-            surfaces?.includes("left") ? 'bg-primary/20 border-primary' : 'bg-transparent border-gray-300'
-          }`}
-          onClick={() => handleSurfaceToggle("left")}
-        />
-        
-        {/* Derecha */}
-        <div 
-          className={`absolute right-0 top-1/4 bottom-1/4 w-1/4 transition-colors duration-200 border ${
-            surfaces?.includes("right") ? 'bg-primary/20 border-primary' : 'bg-transparent border-gray-300'
-          }`}
-          onClick={() => handleSurfaceToggle("right")}
-        />
-        
-        {/* Número de diente */}
-        <div className="absolute inset-0 flex items-center justify-center">
-          <span className="text-lg font-bold">{toothNumber}</span>
-        </div>
-      </div>
-    );
-  };
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <span className="text-xl">🦷</span> Diente {toothNumber}
-          </DialogTitle>
-          <DialogDescription>
-            Registre la condición actual y las superficies afectadas
-          </DialogDescription>
-        </DialogHeader>
-        
-        <div className="space-y-4 py-4">
-          <Tabs defaultValue="condition" className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="condition">Condición</TabsTrigger>
-              <TabsTrigger value="surfaces">Superficies</TabsTrigger>
-              <TabsTrigger value="history">Historial</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="condition" className="space-y-4 pt-4">
-              <div className="grid grid-cols-2 gap-3">
-                {Object.entries(toothConditionLabels).map(([value, label]) => (
-                  <Button
-                    key={value}
-                    variant={condition === value ? "default" : "outline"}
-                    className={`h-auto py-2 px-3 justify-start gap-2 ${condition === value ? 'border-primary' : ''}`}
-                    onClick={() => setCondition(value as ToothCondition["status"])}
+      {/* El diálogo de condición de diente */}
+      <Dialog open={isToothDialogOpen} onOpenChange={setIsToothDialogOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <ToothIcon className="h-5 w-5" /> Diente {selectedTooth}
+            </DialogTitle>
+            <DialogDescription>
+              Registre la condición actual y las superficies afectadas
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <Tabs defaultValue="condition" className="w-full">
+              <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="condition">Condición</TabsTrigger>
+                <TabsTrigger value="surfaces">Superficies</TabsTrigger>
+                <TabsTrigger value="history">Historial</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="condition" className="space-y-4 pt-4">
+                <div className="grid grid-cols-2 gap-3">
+                  {Object.entries(toothConditionLabels).map(([value, label]) => {
+                    const isSelected = selectedCondition === value;
+                    return (
+                      <Button
+                        key={value}
+                        variant={isSelected ? "default" : "outline"}
+                        className={`h-auto py-2 px-3 justify-start gap-2 ${isSelected ? 'border-primary' : ''}`}
+                        onClick={() => setSelectedCondition(value as ToothCondition["status"])}
+                      >
+                        <div className="w-4 h-4 rounded-full" style={{ backgroundColor: toothConditionColors[value] }}></div>
+                        <span>{label}</span>
+                      </Button>
+                    );
+                  })}
+                </div>
+                
+                <div className="space-y-2 pt-2">
+                  <Label htmlFor="toothNotes">Notas</Label>
+                  <Textarea
+                    id="toothNotes"
+                    placeholder="Notas específicas sobre este diente"
+                    value={toothNotes}
+                    onChange={(e) => setToothNotes(e.target.value)}
+                    className="min-h-[80px]"
+                  />
+                </div>
+              </TabsContent>
+              
+              <TabsContent value="surfaces" className="space-y-4 pt-4">
+                <div className="text-center text-sm text-muted-foreground mb-2">
+                  Seleccione las áreas para marcar las superficies afectadas
+                </div>
+                
+                <div className="relative w-48 h-48 mx-auto my-4 border rounded-md bg-white">
+                  <svg width="100%" height="100%" viewBox="0 0 100 100">
+                    {/* Contorno del diente */}
+                    <path 
+                      d="M50 10 C65 10, 80 20, 80 40 C80 65, 65 90, 50 90 C35 90, 20 65, 20 40 C20 20, 35 10, 50 10 Z" 
+                      fill="white"
+                      stroke="#999"
+                      strokeWidth="1"
+                    />
+                    
+                    {/* Superficies interactivas */}
+                    <path 
+                      d="M35 15 L65 15 C55 25, 45 25, 35 15 Z" 
+                      fill={selectedSurfaces?.includes("top") ? toothConditionColors[selectedCondition] : "transparent"}
+                      stroke="#ddd"
+                      strokeWidth="1"
+                      className="cursor-pointer hover:opacity-70"
+                      onClick={() => handleSurfaceToggle("top")}
+                    />
+                    
+                    <path 
+                      d="M25 35 C25 50, 30 65, 40 80 C35 70, 25 55, 25 35 Z" 
+                      fill={selectedSurfaces?.includes("left") ? toothConditionColors[selectedCondition] : "transparent"}
+                      stroke="#ddd"
+                      strokeWidth="1"
+                      className="cursor-pointer hover:opacity-70"
+                      onClick={() => handleSurfaceToggle("left")}
+                    />
+                    
+                    <path 
+                      d="M75 35 C75 50, 70 65, 60 80 C65 70, 75 55, 75 35 Z" 
+                      fill={selectedSurfaces?.includes("right") ? toothConditionColors[selectedCondition] : "transparent"}
+                      stroke="#ddd"
+                      strokeWidth="1"
+                      className="cursor-pointer hover:opacity-70"
+                      onClick={() => handleSurfaceToggle("right")}
+                    />
+                    
+                    <path 
+                      d="M40 80 L60 80 C55 85, 45 85, 40 80 Z" 
+                      fill={selectedSurfaces?.includes("bottom") ? toothConditionColors[selectedCondition] : "transparent"}
+                      stroke="#ddd"
+                      strokeWidth="1"
+                      className="cursor-pointer hover:opacity-70"
+                      onClick={() => handleSurfaceToggle("bottom")}
+                    />
+                    
+                    <circle 
+                      cx="50" 
+                      cy="50" 
+                      r="15" 
+                      fill={selectedSurfaces?.includes("center") ? toothConditionColors[selectedCondition] : "transparent"}
+                      stroke="#ddd"
+                      strokeWidth="1"
+                      className="cursor-pointer hover:opacity-70"
+                      onClick={() => handleSurfaceToggle("center")}
+                    />
+                    
+                    {/* Número de diente */}
+                    <text x="50" y="50" textAnchor="middle" dominantBaseline="middle" className="font-bold">
+                      {selectedTooth}
+                    </text>
+                  </svg>
+                </div>
+                
+                <div className="grid grid-cols-5 gap-2 mt-4">
+                  <Button 
+                    variant={selectedSurfaces?.includes("top") ? "default" : "outline"} 
+                    size="sm"
+                    onClick={() => handleSurfaceToggle("top")}
+                    className="text-xs"
                   >
-                    <div className="w-4 h-4 rounded-full" style={{ backgroundColor: toothConditionColors[value] }}></div>
-                    <span>{label}</span>
+                    Superior
                   </Button>
-                ))}
-              </div>
-              
-              <div className="space-y-2 pt-2">
-                <Label htmlFor="toothNotes">Notas</Label>
-                <Textarea
-                  id="toothNotes"
-                  placeholder="Notas específicas sobre este diente"
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  className="min-h-[80px]"
-                />
-              </div>
-            </TabsContent>
-            
-            <TabsContent value="surfaces" className="space-y-4 pt-4">
-              <div className="text-center text-sm text-muted-foreground mb-2">
-                Toque las áreas para marcar las superficies afectadas
-              </div>
-              
-              {renderToothDiagram()}
-              
-              <div className="grid grid-cols-5 gap-2 mt-4">
-                <Button 
-                  variant={surfaces?.includes("top") ? "default" : "outline"} 
-                  size="sm"
-                  onClick={() => handleSurfaceToggle("top")}
-                  className="text-xs"
-                >
-                  Superior
-                </Button>
-                <Button 
-                  variant={surfaces?.includes("left") ? "default" : "outline"} 
-                  size="sm"
-                  onClick={() => handleSurfaceToggle("left")}
-                  className="text-xs"
-                >
-                  Izquierda
-                </Button>
-                <Button 
-                  variant={surfaces?.includes("center") ? "default" : "outline"} 
-                  size="sm"
-                  onClick={() => handleSurfaceToggle("center")}
-                  className="text-xs"
-                >
-                  Centro
-                </Button>
-                <Button 
-                  variant={surfaces?.includes("right") ? "default" : "outline"} 
-                  size="sm"
-                  onClick={() => handleSurfaceToggle("right")}
-                  className="text-xs"
-                >
-                  Derecha
-                </Button>
-                <Button 
-                  variant={surfaces?.includes("bottom") ? "default" : "outline"} 
-                  size="sm"
-                  onClick={() => handleSurfaceToggle("bottom")}
-                  className="text-xs"
-                >
-                  Inferior
-                </Button>
-              </div>
-            </TabsContent>
-            
-            <TabsContent value="history" className="pt-4">
-              <div className="text-sm text-muted-foreground mb-4">
-                Historial de tratamientos para este diente
-              </div>
-              
-              {toothHistory.length > 0 ? (
-                <div className="space-y-2">
-                  {toothHistory.map((entry, index) => (
-                    <div key={index} className="flex items-center gap-2 border rounded-md p-2">
-                      <div className="w-3 h-3 rounded-full" style={{ backgroundColor: toothConditionColors[entry.condition] }}></div>
-                      <span className="text-sm font-medium">{format(new Date(entry.date), "dd/MM/yyyy")}</span>
-                      <span className="text-sm">{toothConditionLabels[entry.condition]}</span>
-                    </div>
-                  ))}
+                  <Button 
+                    variant={selectedSurfaces?.includes("left") ? "default" : "outline"} 
+                    size="sm"
+                    onClick={() => handleSurfaceToggle("left")}
+                    className="text-xs"
+                  >
+                    Izquierda
+                  </Button>
+                  <Button 
+                    variant={selectedSurfaces?.includes("center") ? "default" : "outline"} 
+                    size="sm"
+                    onClick={() => handleSurfaceToggle("center")}
+                    className="text-xs"
+                  >
+                    Centro
+                  </Button>
+                  <Button 
+                    variant={selectedSurfaces?.includes("right") ? "default" : "outline"} 
+                    size="sm"
+                    onClick={() => handleSurfaceToggle("right")}
+                    className="text-xs"
+                  >
+                    Derecha
+                  </Button>
+                  <Button 
+                    variant={selectedSurfaces?.includes("bottom") ? "default" : "outline"} 
+                    size="sm"
+                    onClick={() => handleSurfaceToggle("bottom")}
+                    className="text-xs"
+                  >
+                    Inferior
+                  </Button>
                 </div>
-              ) : (
-                <div className="text-center py-8 text-muted-foreground">
-                  No hay historial disponible para este diente
+              </TabsContent>
+              
+              <TabsContent value="history" className="pt-4">
+                <div className="text-sm text-muted-foreground mb-4">
+                  Historial de tratamientos para este diente
                 </div>
-              )}
-            </TabsContent>
-          </Tabs>
-        </div>
-        
-        <DialogFooter className="flex items-center justify-between sm:justify-between">
-          <div className="flex items-center">
-            <div 
-              className="w-6 h-6 rounded-full mr-2" 
-              style={{ backgroundColor: toothConditionColors[condition] }}
-            ></div>
-            <span>{toothConditionLabels[condition]}</span>
+                
+                {toothHistory.length > 0 ? (
+                  <div className="space-y-2">
+                    {toothHistory.map((entry, index) => (
+                      <div key={index} className="flex items-center gap-2 border rounded-md p-2">
+                        <div className="w-3 h-3 rounded-full" style={{ backgroundColor: toothConditionColors[entry.condition] }}></div>
+                        <span className="text-sm font-medium">{format(new Date(entry.date), "dd/MM/yyyy")}</span>
+                        <span className="text-sm">{toothConditionLabels[entry.condition]}</span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    No hay historial disponible para este diente
+                  </div>
+                )}
+              </TabsContent>
+            </Tabs>
           </div>
-          <div>
-            <DialogClose asChild className="mr-2">
-              <Button variant="outline">Cancelar</Button>
-            </DialogClose>
-            <Button onClick={onSave}>Guardar</Button>
-          </div>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+          
+          <DialogFooter className="flex items-center justify-between sm:justify-between">
+            <div className="flex items-center">
+              <div 
+                className="w-6 h-6 rounded-full mr-2" 
+                style={{ backgroundColor: toothConditionColors[selectedCondition] }}
+              ></div>
+              <span>{toothConditionLabels[selectedCondition]}</span>
+            </div>
+            <div>
+              <DialogClose asChild className="mr-2">
+                <Button variant="outline">Cancelar</Button>
+              </DialogClose>
+              <Button onClick={handleSaveToothCondition}>Guardar</Button>
+            </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
   );
 };
 
