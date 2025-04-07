@@ -286,7 +286,7 @@ export function AppointmentForm({
                   }
                 }}
                 initialFocus
-                className="p-3 pointer-events-auto rounded-md border-0"
+                className="p-3 pointer-events-auto"
                 disabled={(date) => {
                   // Deshabilitar fechas pasadas excepto si estamos editando
                   if (!isEditing) {
@@ -299,14 +299,18 @@ export function AppointmentForm({
                 classNames={{
                   day_selected: "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground",
                   day_today: "bg-accent text-accent-foreground",
-                  day_outside: "text-slate-300 opacity-50",
-                  day: "text-slate-600 hover:bg-slate-100 rounded-md",
-                  nav_button_previous: "hover:bg-slate-100 rounded-md",
-                  nav_button_next: "hover:bg-slate-100 rounded-md",
-                  caption: "text-slate-700",
-                  head_cell: "text-slate-500 font-medium",
-                  table: "bg-white rounded-md overflow-hidden",
-                  cell: "p-0",
+                  day: "h-9 w-9 text-center p-0 relative [&:has([aria-selected=true])]:bg-primary/5 first:[&:has([aria-selected=true])]:rounded-l-md last:[&:has([aria-selected=true])]:rounded-r-md text-gray-600",
+                  head_cell: "text-gray-500 font-normal",
+                  table: "border-collapse border-spacing-0",
+                  row: "flex",
+                  cell: "text-center text-sm relative p-0 [&_button]:h-9 [&_button]:w-full [&_button]:p-0",
+                  nav_button: "border-0 hover:bg-gray-100 rounded-md",
+                  nav_button_previous: "absolute left-1",
+                  nav_button_next: "absolute right-1",
+                  caption: "text-sm font-medium justify-center p-2 relative",
+                  caption_label: "text-sm font-medium",
+                  caption_dropdowns: "flex justify-center gap-1",
+                  day_outside: "text-gray-300 opacity-60",
                 }}
               />
             </PopoverContent>
