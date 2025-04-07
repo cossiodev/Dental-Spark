@@ -253,37 +253,30 @@ export const appointmentService = {
       
       console.log('Datos formateados para Supabase:', appointmentData);
       
-      // Usar la función RPC 'create_appointment' definida en Supabase 
-      const { data, error } = await supabase.rpc('create_appointment', {
-        p_patient_id: appointmentData.patient_id,
-        p_doctor_id: appointmentData.doctor_id,
-        p_date: appointmentData.date as string,
-        p_start_time: appointmentData.start_time,
-        p_end_time: appointmentData.end_time,
-        p_treatment_type: appointmentData.treatment_type,
-        p_notes: appointmentData.notes,
-        p_status: appointmentData.status
-      });
+      // Insertar directamente en la tabla appointments
+      const { data: insertedData, error: insertError } = await supabase
+        .from('appointments')
+        .insert(appointmentData)
+        .select('id')
+        .single();
 
-      if (error) {
-        console.error('Error al crear cita en Supabase:', error);
-        throw new Error(`Error al crear cita: ${error.message}`);
+      if (insertError) {
+        console.error('Error al crear cita en Supabase:', insertError);
+        throw new Error(`Error al crear cita: ${insertError.message}`);
       }
       
-      // La función RPC debe devolver el ID de la cita creada
-      if (!data) {
+      if (!insertedData) {
         console.error('No se recibió ID después de crear la cita');
         throw new Error('No se pudo crear la cita');
       }
       
-      const newAppointmentId = data;
+      const newAppointmentId = insertedData.id;
       console.log('Cita creada con ID:', newAppointmentId);
       
       // Breve espera para asegurar que la BD haya procesado completamente la inserción
       await new Promise(resolve => setTimeout(resolve, 1000));
       
       // Construir respuesta usando los datos que ya tenemos
-      // Esto evita tener que hacer una consulta adicional que podría fallar por permisos
       const createdAppointment = {
         id: newAppointmentId,
         patientId: appointment.patientId,

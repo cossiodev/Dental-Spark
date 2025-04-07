@@ -333,3 +333,34 @@ CREATE TRIGGER inventory_min_stock_check
   AFTER UPDATE ON inventory
   FOR EACH ROW
   EXECUTE FUNCTION check_min_stock();
+
+-- Políticas específicas para las citas
+-- Al habilitar RLS, por defecto se deniega todo acceso
+-- Creamos políticas para permitir acciones específicas
+
+-- Permitir a todos los usuarios autenticados ver todas las citas
+CREATE POLICY "Todos pueden ver citas" ON appointments
+    FOR SELECT USING (auth.role() = 'authenticated');
+
+-- Permitir a todos los usuarios autenticados insertar citas
+CREATE POLICY "Todos pueden crear citas" ON appointments
+    FOR INSERT WITH CHECK (auth.role() = 'authenticated');
+
+-- Permitir a todos los usuarios autenticados modificar citas
+CREATE POLICY "Todos pueden modificar citas" ON appointments
+    FOR UPDATE USING (auth.role() = 'authenticated');
+
+-- Permitir a usuarios anónimos ver citas (útil para demo/desarrollo)
+CREATE POLICY "Anónimos pueden ver citas" ON appointments
+    FOR SELECT USING (auth.role() = 'anon');
+
+-- Permitir a usuarios anónimos insertar citas (útil para demo/desarrollo)
+CREATE POLICY "Anónimos pueden crear citas" ON appointments
+    FOR INSERT WITH CHECK (auth.role() = 'anon');
+
+-- Permitir a usuarios anónimos modificar citas (útil para demo/desarrollo)
+CREATE POLICY "Anónimos pueden modificar citas" ON appointments
+    FOR UPDATE USING (auth.role() = 'anon');
+
+-- NOTA: Para entornos de producción, deberías limitar estas políticas
+-- a roles o usuarios específicos

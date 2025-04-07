@@ -360,9 +360,24 @@ const Appointments = () => {
                         <Calendar
                           mode="single"
                           selected={formData.date}
-                          onSelect={(date) => handleChange("date", date)}
+                          onSelect={(date) => {
+                            if (date) {
+                              // Asegurarnos de que solo un día puede estar seleccionado
+                              handleChange("date", date);
+                            }
+                          }}
                           initialFocus
                           className="p-3 pointer-events-auto"
+                          disabled={(date) => {
+                            // Deshabilitar fechas pasadas
+                            const today = new Date();
+                            today.setHours(0, 0, 0, 0);
+                            return date < today;
+                          }}
+                          classNames={{
+                            day_selected: "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground",
+                            day_today: "bg-accent text-accent-foreground",
+                          }}
                         />
                       </PopoverContent>
                     </Popover>
