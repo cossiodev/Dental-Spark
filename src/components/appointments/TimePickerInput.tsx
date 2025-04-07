@@ -82,14 +82,14 @@ export function TimePickerInput({
   ];
   
   return (
-    <div className="flex items-center space-x-2">
-      <div className="flex items-center space-x-1">
+    <div className={cn("flex flex-wrap items-center gap-2", className)}>
+      <div className="flex items-center">
         <Select
           value={hour}
           onValueChange={(val) => updateTime('hour', val)}
           disabled={disabled}
         >
-          <SelectTrigger className="w-[60px] h-9">
+          <SelectTrigger className="w-[4.5rem] rounded-r-none border-r-0">
             <SelectValue placeholder={hour} />
           </SelectTrigger>
           <SelectContent>
@@ -99,14 +99,16 @@ export function TimePickerInput({
           </SelectContent>
         </Select>
         
-        <span>:</span>
+        <div className="flex items-center justify-center h-10 px-2 border border-l-0 border-r-0">
+          :
+        </div>
         
         <Select
           value={minute}
           onValueChange={(val) => updateTime('minute', val)}
           disabled={disabled}
         >
-          <SelectTrigger className="w-[60px] h-9">
+          <SelectTrigger className="w-[4.5rem] rounded-l-none rounded-r-none border-l-0 border-r-0">
             <SelectValue placeholder={minute} />
           </SelectTrigger>
           <SelectContent>
@@ -121,7 +123,7 @@ export function TimePickerInput({
           onValueChange={(val) => updateTime('period', val)}
           disabled={disabled}
         >
-          <SelectTrigger className="w-[70px] h-9">
+          <SelectTrigger className="w-[4.5rem] rounded-l-none border-l-0">
             <SelectValue placeholder={period} />
           </SelectTrigger>
           <SelectContent>
@@ -132,13 +134,12 @@ export function TimePickerInput({
         </Select>
       </div>
       
-      <div className="flex space-x-1">
+      <div className="flex gap-1">
         {timePresets.map((preset) => (
           <Button
             key={preset.label}
             variant="outline"
             size="sm"
-            className="h-9"
             onClick={() => onChange(preset.value)}
             disabled={disabled}
           >
