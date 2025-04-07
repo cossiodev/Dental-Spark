@@ -111,7 +111,7 @@ const APPOINTMENT_STATUS_COLORS = {
   confirmed: "#10b981", // emerald-500 (para 'Confirmada')
   completed: "#22c55e", // green-500 (para 'Completada')
   cancelled: "#ef4444", // red-500 (para 'Cancelada')
-  "no-show": "#f59e0b", // amber-500 (para 'No asistió')
+  "no-show": "#f59e0b" // amber-500 (para 'No asistió')
 };
 
 // Esta función convierte los datos reales de citas en estadísticas para el gráfico
@@ -122,7 +122,7 @@ const calculateAppointmentStatsByStatus = (appointments: Appointment[]) => {
     confirmed: 0,
     completed: 0,
     cancelled: 0,
-    "no-show": 0,
+    "no-show": 0
   };
   
   // Contar citas por estado
@@ -161,7 +161,7 @@ const Dashboard = () => {
     totalPatients: 0,
     totalAppointmentsToday: 0,
     totalTreatments: 0,
-    totalRevenue: 0,
+    totalRevenue: 0
   });
 
   const [appointmentStats, setAppointmentStats] = useState<any[]>([]);
@@ -205,7 +205,7 @@ const Dashboard = () => {
           totalPatients: patients.length,
           totalAppointmentsToday: todayAppointments.length,
           totalTreatments: treatments.length,
-          totalRevenue: paidInvoices.reduce((acc, inv) => acc + inv.total, 0),
+          totalRevenue: paidInvoices.reduce((acc, inv) => acc + inv.total, 0)
         });
 
         setTodayAppointments(
@@ -256,14 +256,14 @@ const Dashboard = () => {
         toast({
           title: "Error",
           description: "Hubo un problema al cargar los datos del dashboard. Usando datos de muestra.",
-          variant: "destructive",
+          variant: "destructive"
         });
         // Inicializar con datos vacíos
         setStats({
           totalPatients: 0,
           totalAppointmentsToday: 0,
           totalTreatments: 0,
-          totalRevenue: 0,
+          totalRevenue: 0
         });
         setTodayAppointments([]);
         setRecentPatients([]);
@@ -393,45 +393,103 @@ const Dashboard = () => {
                 </div>
               </CardContent>
             </Card>
-          </div>
 
+            <Card>
+              <CardHeader>
+                <CardTitle>Inventario bajo</CardTitle>
+                <CardDescription>Productos con stock bajo</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {lowStockItems.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">No hay productos con stock bajo</p>
+                ) : (
+                  <div className="space-y-2">
+                    {lowStockItems.map((item) => (
+                      <div key={item.id} className="flex items-center justify-between border-b pb-2">
+                        <div>
+                          <p className="font-medium">{item.name}</p>
+                          <div className="flex items-center text-sm text-muted-foreground">
+                            <span className="mr-2">{item.category}</span>
+                            <span className="text-dental-warning font-medium">{item.quantity} unidades</span>
+                          </div>
+                        </div>
+                        <p className="text-sm font-medium">
+                          Mínimo: {item.minStock} unidades
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle>Facturas pendientes</CardTitle>
+                  {unpaidInvoices.length > 0 && (
+                    <div className="rounded-full bg-dental-warning/20 text-dental-warning p-1">
+                      <AlertTriangle className="h-4 w-4" />
+                    </div>
+                  )}
+                </div>
+                <CardDescription>Facturas por cobrar</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {unpaidInvoices.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">No hay facturas pendientes</p>
+                ) : (
+                  <div className="space-y-2">
+                    {unpaidInvoices.slice(0, 5).map((invoice) => (
+                      <div key={invoice.id} className="flex items-center justify-between border-b pb-2">
+                        <div>
+                          <p className="font-medium">{invoice.patientName}</p>
+                          <div className="flex items-center text-sm text-muted-foreground">
+                            <span className="mr-2">{format(new Date(invoice.date), "dd/MM/yyyy")}</span>
+                            <span className="text-dental-error font-medium">${invoice.total.toFixed(2)}</span>
+                          </div>
+                        </div>
+                        <div className="text-sm">
+                          <span className="font-medium">Vence: {invoice.dueDate ? format(new Date(invoice.dueDate), "dd/MM/yyyy") : "No especificado"}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="stats" className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2">
             <Card>
               <CardHeader>
-                <CardTitle>Estado de citas</CardTitle>
+                <CardTitle>Citas por estado</CardTitle>
                 <CardDescription>Distribución de citas por estado</CardDescription>
               </CardHeader>
               <CardContent className="h-80">
-                {appointmentStats.length === 0 ? (
-                  <div className="flex h-full items-center justify-center">
-                    <p className="text-muted-foreground">No hay citas registradas en el sistema</p>
-                  </div>
-                ) : (
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={appointmentStats}
-                        cx="50%"
-                        cy="50%"
-                        labelLine={true}
-                        outerRadius={100}
-                        fill="#8884d8"
-                        dataKey="value"
-                        nameKey="name"
-                        label={({ name, value, percent }) => `${name}: ${value} (${(percent * 100).toFixed(0)}%)`}
-                      >
-                        {appointmentStats.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.color || COLORS[index % COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <Tooltip formatter={(value, name) => [`${value} citas`, name]} />
-                      <Legend formatter={(value, entry) => {
-                        const { payload } = entry;
-                        return `${value}: ${payload.value} citas`;
-                      }} />
-                    </PieChart>
-                  </ResponsiveContainer>
-                )}
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={appointmentStats}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      outerRadius={100}
+                      fill="#8884d8"
+                      dataKey="value"
+                      nameKey="name"
+                      label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                    >
+                      {appointmentStats.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color || COLORS[index % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                    <Legend />
+                  </PieChart>
+                </ResponsiveContainer>
               </CardContent>
             </Card>
 
@@ -455,109 +513,39 @@ const Dashboard = () => {
           </div>
         </TabsContent>
 
-        <TabsContent value="stats" className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-2">
-            <Card>
-              <CardHeader>
-                <CardTitle>Tratamientos por tipo</CardTitle>
-                <CardDescription>Distribución de tipos de tratamiento</CardDescription>
-              </CardHeader>
-              <CardContent className="h-80">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={treatmentStats}
-                      cx="50%"
-                      cy="50%"
-                      labelLine={false}
-                      outerRadius={100}
-                      fill="#8884d8"
-                      dataKey="value"
-                      nameKey="name"
-                      label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                    >
-                      {treatmentStats.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                    <Legend />
-                  </PieChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Inventario por categoría</CardTitle>
-                <CardDescription>Distribución de inventario por categorías</CardDescription>
-              </CardHeader>
-              <CardContent className="h-80">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={inventoryStats}
-                      cx="50%"
-                      cy="50%"
-                      labelLine={false}
-                      outerRadius={100}
-                      fill="#8884d8"
-                      dataKey="value"
-                      nameKey="name"
-                      label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                    >
-                      {inventoryStats.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                    <Legend />
-                  </PieChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-
         <TabsContent value="alerts" className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2">
             <Card>
               <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle>Inventario bajo</CardTitle>
+                <div className="flex items-center gap-2">
+                  <CardTitle>Productos con bajo stock</CardTitle>
                   {lowStockItems.length > 0 && (
                     <div className="rounded-full bg-dental-warning/20 text-dental-warning p-1">
                       <AlertTriangle className="h-4 w-4" />
                     </div>
                   )}
                 </div>
-                <CardDescription>Productos con stock por debajo del mínimo</CardDescription>
+                <CardDescription>Productos que necesitan ser reabastecidos</CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="max-h-96 overflow-auto">
                 {lowStockItems.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">No hay productos con bajo stock</p>
+                  <p className="text-sm text-muted-foreground">No hay productos con stock bajo</p>
                 ) : (
                   <div className="space-y-2">
                     {lowStockItems.map((item) => (
                       <div key={item.id} className="flex items-center justify-between border-b pb-2">
                         <div>
                           <p className="font-medium">{item.name}</p>
-                          <p className="text-sm text-muted-foreground">{item.category}</p>
+                          <div className="flex items-center text-sm text-muted-foreground">
+                            <span className="mr-2">{item.category}</span>
+                            <span className="text-dental-warning font-medium">{item.quantity} unidades</span>
+                          </div>
                         </div>
-                        <div className="text-sm">
-                          <span className="font-medium text-dental-warning">
-                            {item.quantity}/{item.minQuantity} {item.unit}
-                          </span>
-                        </div>
+                        <p className="text-sm font-medium">
+                          Mínimo: {item.minStock} unidades
+                        </p>
                       </div>
                     ))}
-                    <div className="pt-2">
-                      <Link to="/inventory">
-                        <Button variant="outline" size="sm" className="w-full">
-                          Ir a Inventario
-                        </Button>
-                      </Link>
-                    </div>
                   </div>
                 )}
               </CardContent>
@@ -565,161 +553,35 @@ const Dashboard = () => {
 
             <Card>
               <CardHeader>
-                <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
                   <CardTitle>Facturas pendientes</CardTitle>
                   {unpaidInvoices.length > 0 && (
-                    <div className="rounded-full bg-dental-warning/20 text-dental-warning p-1">
+                    <div className="rounded-full bg-dental-error/20 text-dental-error p-1">
                       <AlertTriangle className="h-4 w-4" />
                     </div>
                   )}
                 </div>
-                <CardDescription>Facturas por cobrar</CardDescription>
+                <CardDescription>Facturas que necesitan ser pagadas</CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="max-h-96 overflow-auto">
                 {unpaidInvoices.length === 0 ? (
                   <p className="text-sm text-muted-foreground">No hay facturas pendientes</p>
                 ) : (
                   <div className="space-y-2">
-                    {unpaidInvoices.slice(0, 5).map((invoice) => (
+                    {unpaidInvoices.map((invoice) => (
                       <div key={invoice.id} className="flex items-center justify-between border-b pb-2">
                         <div>
                           <p className="font-medium">{invoice.patientName}</p>
-                          <p className="text-sm text-muted-foreground">
-                            {format(new Date(invoice.date), "dd/MM/yyyy")}
-                          </p>
+                          <div className="flex items-center text-sm text-muted-foreground">
+                            <span className="mr-2">{format(new Date(invoice.date), "dd/MM/yyyy")}</span>
+                            <span className="text-dental-error font-medium">${invoice.total.toFixed(2)}</span>
+                          </div>
                         </div>
                         <div className="text-sm">
-                          <span className="font-medium text-dental-error">${invoice.total.toFixed(2)}</span>
+                          <span className="font-medium">Vence: {invoice.dueDate ? format(new Date(invoice.dueDate), "dd/MM/yyyy") : "No especificado"}</span>
                         </div>
                       </div>
                     ))}
-                    <div className="pt-2">
-                      <Link to="/billing">
-                        <Button variant="outline" size="sm" className="w-full">
-                          Ir a Facturación
-                        </Button>
-                      </Link>
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-      </Tabs>
-    </div>
-  );
-};
-
-export default Dashboard;
-
-                        <Button variant="outline" size="sm" className="w-full">
-                          Ir a Inventario
-                        </Button>
-                      </Link>
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle>Facturas pendientes</CardTitle>
-                  {unpaidInvoices.length > 0 && (
-                    <div className="rounded-full bg-dental-warning/20 text-dental-warning p-1">
-                      <AlertTriangle className="h-4 w-4" />
-                    </div>
-                  )}
-                </div>
-                <CardDescription>Facturas por cobrar</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {unpaidInvoices.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">No hay facturas pendientes</p>
-                ) : (
-                  <div className="space-y-2">
-                    {unpaidInvoices.slice(0, 5).map((invoice) => (
-                      <div key={invoice.id} className="flex items-center justify-between border-b pb-2">
-                        <div>
-                          <p className="font-medium">{invoice.patientName}</p>
-                          <p className="text-sm text-muted-foreground">
-                            {format(new Date(invoice.date), "dd/MM/yyyy")}
-                          </p>
-                        </div>
-                        <div className="text-sm">
-                          <span className="font-medium text-dental-error">${invoice.total.toFixed(2)}</span>
-                        </div>
-                      </div>
-                    ))}
-                    <div className="pt-2">
-                      <Link to="/billing">
-                        <Button variant="outline" size="sm" className="w-full">
-                          Ir a Facturación
-                        </Button>
-                      </Link>
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-      </Tabs>
-    </div>
-  );
-};
-
-export default Dashboard;
-
-                        <Button variant="outline" size="sm" className="w-full">
-                          Ir a Inventario
-                        </Button>
-                      </Link>
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle>Facturas pendientes</CardTitle>
-                  {unpaidInvoices.length > 0 && (
-                    <div className="rounded-full bg-dental-warning/20 text-dental-warning p-1">
-                      <AlertTriangle className="h-4 w-4" />
-                    </div>
-                  )}
-                </div>
-                <CardDescription>Facturas por cobrar</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {unpaidInvoices.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">No hay facturas pendientes</p>
-                ) : (
-                  <div className="space-y-2">
-                    {unpaidInvoices.slice(0, 5).map((invoice) => (
-                      <div key={invoice.id} className="flex items-center justify-between border-b pb-2">
-                        <div>
-                          <p className="font-medium">{invoice.patientName}</p>
-                          <p className="text-sm text-muted-foreground">
-                            {format(new Date(invoice.date), "dd/MM/yyyy")}
-                          </p>
-                        </div>
-                        <div className="text-sm">
-                          <span className="font-medium text-dental-error">${invoice.total.toFixed(2)}</span>
-                        </div>
-                      </div>
-                    ))}
-                    <div className="pt-2">
-                      <Link to="/billing">
-                        <Button variant="outline" size="sm" className="w-full">
-                          Ir a Facturación
-                        </Button>
-                      </Link>
-                    </div>
                   </div>
                 )}
               </CardContent>
