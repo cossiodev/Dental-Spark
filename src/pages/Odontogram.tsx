@@ -169,6 +169,7 @@ const Odontogram = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredPatients, setFilteredPatients] = useState<Patient[]>([]);
   const [toothHistory, setToothHistory] = useState<{ date: string, condition: string }[]>([]);
+  const [patientOdontograms, setPatientOdontograms] = useState<any[]>([]);
 
   useEffect(() => {
     const params = new URLSearchParams(search);
@@ -243,8 +244,10 @@ const Odontogram = () => {
           
           // Cargar odontograma existente para la fecha seleccionada
           console.log(`[DIAGNÓSTICO] Buscando odontogramas para paciente ${patient.id} en fecha ${selectedDate}`);
-          const patientOdontograms = await odontogramService.getByPatientId(selectedPatient);
-          const todayOdontogram = patientOdontograms.find(o => o.date === selectedDate);
+          const patientOdogramList = await odontogramService.getByPatientId(selectedPatient);
+          setPatientOdontograms(patientOdogramList);
+          
+          const todayOdontogram = patientOdogramList.find(o => o.date === selectedDate);
           
           if (todayOdontogram) {
             console.log(`[DIAGNÓSTICO] Odontograma encontrado para la fecha:`, todayOdontogram);
@@ -1184,26 +1187,75 @@ const Odontogram = () => {
               )}
             </CardDescription>
             
-            <div className="flex items-center justify-end mt-2">
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className="w-[240px] justify-start text-left font-normal"
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mt-4">
+              <div className="flex items-center gap-2">
+                {patientOdontograms.length > 0 && (
+                  <Select 
+                    value={selectedDate} 
+                    onValueChange={(date) => setSelectedDate(date)}
                   >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {selectedDate ? format(new Date(selectedDate), "PPP", { locale: es }) : <span>Seleccione una fecha</span>}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="end">
-                  <Calendar
-                    mode="single"
-                    selected={selectedDate ? new Date(selectedDate) : undefined}
-                    onSelect={(date) => date && setSelectedDate(format(date, "yyyy-MM-dd"))}
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
+                    <SelectTrigger className="w-[240px]">
+                      <SelectValue>
+                        {selectedDate ? format(new Date(selectedDate), "d 'de' MMMM 'de' yyyy", { locale: es }) : "Seleccionar fecha"}
+                      </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                      <div className="max-h-[300px] overflow-y-auto py-1">
+                        <SelectItem value={format(new Date(), "yyyy-MM-dd")}>
+                          Nuevo odontograma ({format(new Date(), "d 'de' MMMM 'de' yyyy", { locale: es })})
+                        </SelectItem>
+                        
+                        {patientOdontograms.length > 0 && (
+                          <>
+                            <SelectSeparator />
+                            <div className="px-2 py-1.5 text-xs text-muted-foreground">
+                              Odontogramas anteriores
+                            </div>
+                            {patientOdontograms
+                              .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                              .map((odontogram) => (
+                                <SelectItem key={odontogram.date} value={odontogram.date}>
+                                  {format(new Date(odontogram.date), "d 'de' MMMM 'de' yyyy", { locale: es })}
+                                </SelectItem>
+                              ))}
+                          </>
+                        )}
+                      </div>
+                    </SelectContent>
+                  </Select>
+                )}
+                
+                {patientOdontograms.length === 0 && (
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className="w-[240px] justify-start text-left font-normal"
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {selectedDate ? format(new Date(selectedDate), "d 'de' MMMM 'de' yyyy", { locale: es }) : <span>Seleccione una fecha</span>}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={selectedDate ? new Date(selectedDate) : undefined}
+                        onSelect={(date) => date && setSelectedDate(format(date, "yyyy-MM-dd"))}
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
+                )}
+              </div>
+              
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => setSelectedDate(format(new Date(), "yyyy-MM-dd"))}
+              >
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                Nuevo odontograma
+              </Button>
             </div>
           </CardHeader>
           <CardContent className="p-6">
