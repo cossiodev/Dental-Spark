@@ -254,17 +254,29 @@ export const appointmentService = {
       console.log('Datos formateados para Supabase:', appointmentData);
       
       // Primero insertar sin select para evitar el error de seguridad de fila
-      const { error: insertError } = await supabase
+      const { data: insertedData, error: insertError } = await supabase
         .from('appointments')
-        .insert(appointmentData);
+        .insert(appointmentData)
+        .select('id'); // Solo seleccionar el ID para confirmar la inserción
 
       if (insertError) {
         console.error('Error al crear cita en Supabase:', insertError);
         throw new Error(`Error al crear cita: ${insertError.message}`);
       }
       
-      // Luego consultar los datos recién insertados
-      const { data: appointments, error: selectError } = await supabase
+      if (!insertedData || insertedData.length === 0) {
+        console.error('No se devolvió ID después de crear la cita');
+        throw new Error('No se pudo crear la cita');
+      }
+      
+      const newAppointmentId = insertedData[0].id;
+      console.log('Cita creada con ID:', newAppointmentId);
+      
+      // Esperar un momento para que la BD procese la inserción
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Luego consultar los datos completos de la cita recién creada por su ID
+      const { data: appointmentDetail, error: selectError } = await supabase
         .from('appointments')
         .select(`
           *,
@@ -277,19 +289,14 @@ export const appointmentService = {
             last_name
           )
         `)
-        .eq('patient_id', appointment.patientId)
-        .eq('doctor_id', appointment.doctorId)
-        .eq('date', formattedDate)
-        .eq('start_time', appointment.startTime)
-        .eq('end_time', appointment.endTime)
-        .order('created_at', { ascending: false })
-        .limit(1);
+        .eq('id', newAppointmentId)
+        .single();
 
       if (selectError) {
-        console.error('Error al obtener la cita recién creada:', selectError);
-        // Como la inserción ya fue exitosa, podemos construir un objeto de respuesta básico
+        console.error('Error al obtener los detalles de la cita recién creada:', selectError);
+        // Como ya tenemos el ID, podemos construir un objeto básico de respuesta
         return {
-          id: 'pending', // ID temporal
+          id: newAppointmentId,
           patientId: appointment.patientId,
           doctorId: appointment.doctorId,
           patientName: 'Paciente',
@@ -303,11 +310,11 @@ export const appointmentService = {
         };
       }
 
-      if (!appointments || appointments.length === 0) {
-        console.log('No se encontró la cita recién creada, pero se creó exitosamente');
-        // Como la inserción ya fue exitosa, podemos construir un objeto de respuesta básico
+      if (!appointmentDetail) {
+        console.log('No se encontró la cita recién creada, pero se creó exitosamente con ID:', newAppointmentId);
+        // Proporcionar datos básicos usando el ID real
         return {
-          id: 'pending', // ID temporal
+          id: newAppointmentId,
           patientId: appointment.patientId,
           doctorId: appointment.doctorId,
           patientName: 'Paciente',
@@ -321,35 +328,34 @@ export const appointmentService = {
         };
       }
 
-      const newAppointment = appointments[0];
-      console.log('Cita creada exitosamente en Supabase:', newAppointment);
+      console.log('Cita creada exitosamente en Supabase, detalles completos:', appointmentDetail);
       
       // Verificar que los datos relacionados existan
-      const hasPatient = newAppointment.patients && 
-                       newAppointment.patients.first_name && 
-                       newAppointment.patients.last_name;
+      const hasPatient = appointmentDetail.patients && 
+                       appointmentDetail.patients.first_name && 
+                       appointmentDetail.patients.last_name;
       
-      const hasDoctor = newAppointment.doctors && 
-                      newAppointment.doctors.first_name && 
-                      newAppointment.doctors.last_name;
+      const hasDoctor = appointmentDetail.doctors && 
+                      appointmentDetail.doctors.first_name && 
+                      appointmentDetail.doctors.last_name;
       
       // Transformar los datos al formato que espera la aplicación
       const result = {
-        id: newAppointment.id,
-        patientId: newAppointment.patient_id,
+        id: appointmentDetail.id,
+        patientId: appointmentDetail.patient_id,
         patientName: hasPatient 
-          ? `${newAppointment.patients.first_name} ${newAppointment.patients.last_name}`
+          ? `${appointmentDetail.patients.first_name} ${appointmentDetail.patients.last_name}`
           : 'Paciente',
-        doctorId: newAppointment.doctor_id,
+        doctorId: appointmentDetail.doctor_id,
         doctorName: hasDoctor 
-          ? `${newAppointment.doctors.first_name} ${newAppointment.doctors.last_name}`
+          ? `${appointmentDetail.doctors.first_name} ${appointmentDetail.doctors.last_name}`
           : 'Doctor',
-        date: newAppointment.date,
-        startTime: newAppointment.start_time,
-        endTime: newAppointment.end_time,
-        status: newAppointment.status,
-        notes: newAppointment.notes || '',
-        treatmentType: newAppointment.treatment_type || '',
+        date: appointmentDetail.date,
+        startTime: appointmentDetail.start_time,
+        endTime: appointmentDetail.end_time,
+        status: appointmentDetail.status,
+        notes: appointmentDetail.notes || '',
+        treatmentType: appointmentDetail.treatment_type || '',
       };
       
       console.log('Cita creada y formateada para la aplicación:', result);

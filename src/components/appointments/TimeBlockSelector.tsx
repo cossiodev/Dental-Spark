@@ -21,7 +21,7 @@ export function TimeBlockSelector({
   className,
   disabled = false,
 }: TimeBlockSelectorProps) {
-  // Horarios disponibles durante las horas de operación de la clínica (9AM-5PM)
+  // Horarios disponibles durante las horas de operación de la clínica (9AM-6PM)
   const availableHours = [
     { value: "09:00-10:00", label: "9AM - 10AM" },
     { value: "10:00-11:00", label: "10AM - 11AM" },
@@ -31,12 +31,22 @@ export function TimeBlockSelector({
     { value: "14:00-15:00", label: "2PM - 3PM" },
     { value: "15:00-16:00", label: "3PM - 4PM" },
     { value: "16:00-17:00", label: "4PM - 5PM" },
+    { value: "17:00-18:00", label: "5PM - 6PM" },
     { value: "otro", label: "Otro horario" },
   ];
 
   // Manejar el caso de "Otro horario"
   const [showCustomInput, setShowCustomInput] = React.useState(false);
   const [customTime, setCustomTime] = React.useState("");
+
+  // Verificar si se debe mostrar el campo de entrada personalizada al iniciar
+  React.useEffect(() => {
+    // Si el valor actual no está entre las opciones disponibles, mostrar campo personalizado
+    if (value && !availableHours.some(hour => hour.value === value)) {
+      setShowCustomInput(true);
+      setCustomTime(value);
+    }
+  }, [value]);
 
   // Al seleccionar una opción
   const handleSelectChange = (selectedValue: string) => {
@@ -56,6 +66,39 @@ export function TimeBlockSelector({
     onChange(customValue);
   };
 
+  // Obtener una etiqueta legible para mostrar en lugar del valor crudo
+  const getDisplayLabel = () => {
+    const found = availableHours.find(hour => hour.value === value);
+    if (found) return found.label;
+    
+    // Si es un valor personalizado, formatearlo para mostrar
+    if (value && value.includes('-')) {
+      // Intentar formatear en formato amigable
+      try {
+        const [start, end] = value.split('-');
+        // Para hacerlo simple, solo convertimos el formato si tiene el formato HH:MM
+        if (start.includes(':') && end.includes(':')) {
+          const startHour = parseInt(start.split(':')[0]);
+          const startMin = start.split(':')[1];
+          const endHour = parseInt(end.split(':')[0]);
+          const endMin = end.split(':')[1];
+          
+          const formatHour = (hour: number) => {
+            if (hour === 0) return `12${hour < 12 ? 'AM' : 'PM'}`;
+            if (hour > 12) return `${hour-12}${hour < 12 ? 'AM' : 'PM'}`;
+            return `${hour}${hour < 12 ? 'AM' : 'PM'}`;
+          };
+          
+          return `${formatHour(startHour)}${startMin !== '00' ? `:${startMin}` : ''} - ${formatHour(endHour)}${endMin !== '00' ? `:${endMin}` : ''}`;
+        }
+      } catch (e) {
+        // Si hay error en el formato, devolver el valor original
+      }
+    }
+    
+    return value || "Seleccionar horario";
+  };
+
   return (
     <div className={className}>
       <Select
@@ -64,7 +107,9 @@ export function TimeBlockSelector({
         disabled={disabled}
       >
         <SelectTrigger className="w-full">
-          <SelectValue placeholder="Seleccionar horario" />
+          <SelectValue placeholder="Seleccionar horario">
+            {getDisplayLabel()}
+          </SelectValue>
         </SelectTrigger>
         <SelectContent>
           {availableHours.map((hour) => (

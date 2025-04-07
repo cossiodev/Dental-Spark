@@ -99,7 +99,7 @@ const Appointments = () => {
     queryFn: () => appointmentService.getDoctors(),
   });
 
-  // Fetch appointments
+  // Fetch appointments y configuración para actualización
   const { 
     data: appointments = [], 
     isLoading: isLoadingAppointments,
@@ -108,6 +108,7 @@ const Appointments = () => {
     queryKey: ["appointments"],
     queryFn: () => appointmentService.getAll(),
     refetchOnWindowFocus: false,
+    refetchInterval: 10000, // Refrescar automáticamente cada 10 segundos
   });
 
   // Filter appointments based on selected tab
@@ -144,6 +145,16 @@ const Appointments = () => {
   // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validar datos obligatorios
+    if (!formData.patient || !formData.doctor || !formData.date || !formData.timeBlock) {
+      toast({
+        title: "Error",
+        description: "Por favor completa todos los campos obligatorios.",
+        variant: "destructive",
+      });
+      return;
+    }
     
     try {
       const formattedDate = format(formData.date, "yyyy-MM-dd");
@@ -194,6 +205,7 @@ const Appointments = () => {
         treatmentType: formData.treatmentType || ''
       });
       
+      // Crear la cita
       const newAppointment = await appointmentService.create({
         patientId: formData.patient,
         doctorId: formData.doctor,
@@ -222,13 +234,24 @@ const Appointments = () => {
       });
       setOpen(false);
       
-      // Refresh appointments list y automáticamente mostrar "hoy" si la cita es para hoy
+      // Forzar recarga inmediata de la lista de citas
       await refetchAppointments();
-      const today = new Date().toISOString().split("T")[0];
-      if (formattedDate === today && selectedTab !== "today") {
-        setSelectedTab("today");
-      } else {
-        console.log("Cita creada, recargando lista...");
+      
+      // Agregar la cita manualmente a la lista si no aparece por alguna razón
+      if (newAppointment && newAppointment.id !== 'pending') {
+        // Verificar el estado actual de la pestaña
+        const today = new Date().toISOString().split("T")[0];
+        
+        // Si la cita es para hoy y no estamos en la pestaña de hoy, cambiar a la pestaña de hoy
+        if (formattedDate === today && selectedTab !== "today") {
+          setSelectedTab("today");
+        } else {
+          // Intentar volver a cargar después de un breve retraso
+          setTimeout(() => {
+            refetchAppointments();
+            console.log("Recarga adicional de citas después de la creación");
+          }, 1000);
+        }
       }
     } catch (error) {
       console.error("Error creating appointment:", error);
