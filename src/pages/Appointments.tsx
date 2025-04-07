@@ -58,11 +58,14 @@ const formatDisplayDate = (dateString: string) => {
     if (!dateString) return 'Sin fecha';
     
     // Asegurar que la fecha esté en formato YYYY-MM-DD antes de parsear
-    const normalizedDate = dateString.trim();
+    const normalizedDate = dateString.trim().split('T')[0];
     console.log(`Formateando fecha para mostrar: "${normalizedDate}"`);
     
-    // Crear objeto de fecha válido: el constructor de Date acepta YYYY-MM-DD
-    const date = new Date(normalizedDate);
+    // Crear objeto de fecha con timezone local para evitar problemas
+    const [year, month, day] = normalizedDate.split('-').map(Number);
+    
+    // Meses en JavaScript son 0-indexed (0=enero, 1=febrero, etc.)
+    const date = new Date(year, month - 1, day);
     
     // Verificar que la fecha es válida
     if (isNaN(date.getTime())) {
@@ -165,11 +168,16 @@ const Appointments = () => {
 
   // Filter appointments based on selected tab
   const filteredAppointments = useMemo(() => {
-    const today = new Date().toISOString().split("T")[0];
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    const tomorrowStr = tomorrow.toISOString().split("T")[0];
+    // Obtener fechas formateadas con timezone local
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const todayStr = today.toISOString().split('T')[0];
     
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const tomorrowStr = tomorrow.toISOString().split('T')[0];
+    
+    console.log('DEBUG - Fechas de referencia: HOY =', todayStr, 'MAÑANA =', tomorrowStr);
     console.log('FILTRADO - Total de citas cargadas:', appointments.length);
     
     if (appointments.length > 0) {
@@ -177,9 +185,10 @@ const Appointments = () => {
         console.log(`Cita ${idx+1}:`, { 
           id: appt.id, 
           fecha: appt.date, 
-          paciente: appt.patientName, 
-          hoy: today, 
-          mañana: tomorrowStr
+          paciente: appt.patientName,
+          fechaHoy: todayStr,
+          fechaMañana: tomorrowStr,
+          pestaña: selectedTab
         });
       });
     }
@@ -191,26 +200,32 @@ const Appointments = () => {
         return false;
       }
       
-      // Normalizar la fecha para comparación
-      const appointmentDate = typeof appointment.date === 'string' 
-        ? appointment.date.trim() 
-        : (appointment.date instanceof Date 
-          ? appointment.date.toISOString().split('T')[0] 
-          : null);
-      
-      if (!appointmentDate) {
-        console.error('Fecha de cita inválida:', appointment.date);
+      // Normalizar la fecha para comparación - quitar cualquier componente de hora o timezone
+      let appointmentDate;
+      if (typeof appointment.date === 'string') {
+        // Extraer solo la parte de la fecha (YYYY-MM-DD)
+        appointmentDate = appointment.date.trim().split('T')[0];
+      } else if (appointment.date instanceof Date) {
+        appointmentDate = appointment.date.toISOString().split('T')[0];
+      } else {
+        console.error('Fecha de cita con formato desconocido:', appointment.date);
         return false;
       }
       
-      const result = selectedTab === "today" 
-        ? appointmentDate === today
-        : selectedTab === "tomorrow" 
-          ? appointmentDate === tomorrowStr 
-          : appointmentDate >= today;
+      console.log(`Comparando cita ID=${appointment.id}, fecha=${appointmentDate}, contra HOY=${todayStr}, MAÑANA=${tomorrowStr}, pestaña=${selectedTab}`);
       
-      console.log(`COMPARACIÓN - Cita ${appointment.id}: ${appointmentDate} vs ${selectedTab === "today" ? today : selectedTab === "tomorrow" ? tomorrowStr : `>= ${today}`} = ${result ? 'MOSTRAR' : 'OCULTAR'}`);
+      // Comparación exacta de strings para mayor precisión
+      let result;
+      if (selectedTab === "today") {
+        result = appointmentDate === todayStr;
+      } else if (selectedTab === "tomorrow") { 
+        result = appointmentDate === tomorrowStr;
+      } else { // upcoming
+        // La fecha de la cita debe ser mayor o igual que hoy
+        result = appointmentDate >= todayStr;
+      }
       
+      console.log(`Resultado filtro: ${result ? 'MOSTRAR' : 'OCULTAR'}`);
       return result;
     });
     
@@ -261,12 +276,22 @@ const Appointments = () => {
     
     // Normalizar y formatear la fecha para enviar a la API
     let formattedDate;
+    
     if (formData.date instanceof Date) {
-      formattedDate = formData.date.toISOString().split('T')[0]; // Formato YYYY-MM-DD
+      // Crear fecha sin componente de tiempo para evitar problemas de timezone
+      const year = formData.date.getFullYear();
+      const month = (formData.date.getMonth() + 1).toString().padStart(2, '0'); // +1 porque getMonth() es zero-based
+      const day = formData.date.getDate().toString().padStart(2, '0');
+      formattedDate = `${year}-${month}-${day}`;
     } else if (typeof formData.date === 'string') {
-      formattedDate = formData.date.trim();
+      // Si es string, asegurar que tenga el formato correcto
+      formattedDate = formData.date.trim().split('T')[0];
     } else {
-      formattedDate = new Date().toISOString().split('T')[0]; // Usar hoy como fallback
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = (now.getMonth() + 1).toString().padStart(2, '0');
+      const day = now.getDate().toString().padStart(2, '0');
+      formattedDate = `${year}-${month}-${day}`;
     }
     
     console.log('🔍 Fecha seleccionada (original):', formData.date);
@@ -534,8 +559,25 @@ const Appointments = () => {
                           selected={formData.date}
                           onSelect={(date) => {
                             if (date) {
-                              console.log('Fecha seleccionada en calendario:', date.toISOString());
-                              handleChange("date", date);
+                              // Crear fecha sin componente de tiempo para evitar problemas
+                              const localDate = new Date(
+                                date.getFullYear(),
+                                date.getMonth(),
+                                date.getDate(),
+                                0, 0, 0
+                              );
+                              
+                              const formattedDate = 
+                                `${localDate.getFullYear()}-${
+                                  (localDate.getMonth() + 1).toString().padStart(2, '0')
+                                }-${
+                                  localDate.getDate().toString().padStart(2, '0')
+                                }`;
+                                
+                              console.log('Fecha seleccionada en calendario:', localDate);
+                              console.log('Fecha formateada:', formattedDate);
+                              
+                              handleChange("date", localDate);
                             }
                           }}
                           initialFocus
