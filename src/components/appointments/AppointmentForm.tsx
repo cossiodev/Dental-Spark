@@ -286,7 +286,7 @@ export function AppointmentForm({
                   }
                 }}
                 initialFocus
-                className="p-3 pointer-events-auto"
+                className="p-3 pointer-events-auto rounded-md border-0"
                 disabled={(date) => {
                   // Deshabilitar fechas pasadas excepto si estamos editando
                   if (!isEditing) {
@@ -299,6 +299,14 @@ export function AppointmentForm({
                 classNames={{
                   day_selected: "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground",
                   day_today: "bg-accent text-accent-foreground",
+                  day_outside: "text-slate-300 opacity-50",
+                  day: "text-slate-600 hover:bg-slate-100 rounded-md",
+                  nav_button_previous: "hover:bg-slate-100 rounded-md",
+                  nav_button_next: "hover:bg-slate-100 rounded-md",
+                  caption: "text-slate-700",
+                  head_cell: "text-slate-500 font-medium",
+                  table: "bg-white rounded-md overflow-hidden",
+                  cell: "p-0",
                 }}
               />
             </PopoverContent>
