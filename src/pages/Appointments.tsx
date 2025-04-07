@@ -862,7 +862,7 @@ const Appointments = () => {
                       <th className="p-2 border-b w-1/6 text-left">Fecha</th>
                       <th className="p-2 border-b w-1/6 text-left">Hora</th>
                       <th className="p-2 border-b w-1/6 text-left">Tipo</th>
-                      <th className="p-2 border-b w-1/6 text-left">Estado y Acciones</th>
+                      <th className="p-2 border-b w-1/6 text-left">Estado / Acciones</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -883,33 +883,36 @@ const Appointments = () => {
                           : "-"}
                         </td>
                         <td className="p-2">
-                          <div className="flex flex-col gap-2">
+                          <div className="flex flex-col gap-3">
                             <StatusBadge status={appointment.status} />
                             
-                            <div className="flex flex-col gap-2 mt-2">
-                              <button
-                                type="button"
+                            <div className="flex flex-col gap-2 mt-2 border border-gray-300 rounded p-2 bg-gray-50">
+                              <span className="text-xs text-gray-500 font-medium mb-1">Acciones:</span>
+                              <Button 
+                                variant="default"
+                                size="sm" 
                                 onClick={() => {
                                   console.log('⚡ EDITAR CITA ID:', appointment.id);
-                                  alert(`Editando cita ID: ${appointment.id}`);
                                   handleEditAppointment(appointment);
                                 }}
-                                className="bg-blue-600 text-white py-1 px-2 rounded text-xs font-bold hover:bg-blue-700"
+                                className="w-full bg-blue-600 hover:bg-blue-700 text-white"
                               >
-                                ✏️ EDITAR
-                              </button>
+                                <Edit className="h-4 w-4 mr-2" />
+                                Editar
+                              </Button>
                               
-                              <button
-                                type="button"
+                              <Button 
+                                variant="destructive"
+                                size="sm" 
                                 onClick={() => {
                                   console.log('⚡ ELIMINAR CITA ID:', appointment.id);
-                                  alert(`Eliminando cita ID: ${appointment.id}`);
                                   handleDeleteAppointment(appointment.id);
                                 }}
-                                className="bg-red-600 text-white py-1 px-2 rounded text-xs font-bold hover:bg-red-700"
+                                className="w-full bg-red-600 hover:bg-red-700 text-white"
                               >
-                                🗑️ ELIMINAR
-                              </button>
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                Eliminar
+                              </Button>
                             </div>
                           </div>
                         </td>
