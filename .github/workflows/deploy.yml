@@ -21,15 +21,44 @@ jobs:
           cache: 'npm'
           
       - name: Install dependencies
-        run: npm ci
+        run: |
+          echo "Installing dependencies..."
+          npm ci
+          if [ $? -ne 0 ]; then
+            echo "❌ Failed to install dependencies"
+            exit 1
+          fi
         
       - name: Build
-        run: npm run build
+        run: |
+          echo "Building project..."
+          npm run build
+          if [ $? -ne 0 ]; then
+            echo "❌ Build failed"
+            exit 1
+          fi
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
         
+      - name: Verify Environment Variables
+        run: |
+          if [ -z "${{ secrets.VERCEL_TOKEN }}" ]; then
+            echo "❌ VERCEL_TOKEN is not set"
+            exit 1
+          fi
+          if [ -z "${{ secrets.VERCEL_ORG_ID }}" ]; then
+            echo "❌ VERCEL_ORG_ID is not set"
+            exit 1
+          fi
+          if [ -z "${{ secrets.VERCEL_PROJECT_ID }}" ]; then
+            echo "❌ VERCEL_PROJECT_ID is not set"
+            exit 1
+          fi
+          echo "✅ All required Vercel environment variables are set"
+        
       - name: Deploy to Vercel
+        id: deploy
         uses: amondnet/vercel-action@v20
         with:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
@@ -37,12 +66,13 @@ jobs:
           vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
           vercel-args: '--prod'
           working-directory: ./
-          
+        
       - name: Verify Deployment
+        if: always()
         run: |
-          if [ $? -eq 0 ]; then
+          if [ "${{ steps.deploy.outcome }}" == "success" ]; then
             echo "✅ Deployment successful"
           else
             echo "❌ Deployment failed"
             exit 1
-          fi 
+          fi
