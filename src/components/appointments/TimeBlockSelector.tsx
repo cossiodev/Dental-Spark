@@ -21,19 +21,16 @@ export function TimeBlockSelector({
   className,
   disabled = false,
 }: TimeBlockSelectorProps) {
-  // Horarios comunes preestablecidos
-  const commonHours = [
-    { value: "08:00-09:00", label: "8:00 - 9:00" },
-    { value: "09:00-10:00", label: "9:00 - 10:00" },
-    { value: "10:00-11:00", label: "10:00 - 11:00" },
-    { value: "11:00-12:00", label: "11:00 - 12:00" },
-    { value: "12:00-13:00", label: "12:00 - 13:00" },
-    { value: "13:00-14:00", label: "13:00 - 14:00" },
-    { value: "14:00-15:00", label: "14:00 - 15:00" },
-    { value: "15:00-16:00", label: "15:00 - 16:00" },
-    { value: "16:00-17:00", label: "16:00 - 17:00" },
-    { value: "17:00-18:00", label: "17:00 - 18:00" },
-    { value: "18:00-19:00", label: "18:00 - 19:00" },
+  // Horarios disponibles durante las horas de operación de la clínica (9AM-5PM)
+  const availableHours = [
+    { value: "09:00-10:00", label: "9AM - 10AM" },
+    { value: "10:00-11:00", label: "10AM - 11AM" },
+    { value: "11:00-12:00", label: "11AM - 12PM" },
+    { value: "12:00-13:00", label: "12PM - 1PM" },
+    { value: "13:00-14:00", label: "1PM - 2PM" },
+    { value: "14:00-15:00", label: "2PM - 3PM" },
+    { value: "15:00-16:00", label: "3PM - 4PM" },
+    { value: "16:00-17:00", label: "4PM - 5PM" },
     { value: "otro", label: "Otro horario" },
   ];
 
@@ -62,7 +59,7 @@ export function TimeBlockSelector({
   return (
     <div className={className}>
       <Select
-        value={commonHours.some(hour => hour.value === value) ? value : "otro"}
+        value={availableHours.some(hour => hour.value === value) ? value : "otro"}
         onValueChange={handleSelectChange}
         disabled={disabled}
       >
@@ -70,7 +67,7 @@ export function TimeBlockSelector({
           <SelectValue placeholder="Seleccionar horario" />
         </SelectTrigger>
         <SelectContent>
-          {commonHours.map((hour) => (
+          {availableHours.map((hour) => (
             <SelectItem key={hour.value} value={hour.value}>
               {hour.label}
             </SelectItem>
@@ -82,7 +79,7 @@ export function TimeBlockSelector({
         <div className="mt-2">
           <Input
             type="text"
-            placeholder="Ej: 9:30-10:30"
+            placeholder="Ej: 9:30AM-10:30AM"
             value={customTime}
             onChange={handleCustomTimeChange}
             className="w-full"

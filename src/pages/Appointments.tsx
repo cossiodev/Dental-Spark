@@ -81,7 +81,7 @@ const Appointments = () => {
     patient: "",
     doctor: "",
     date: new Date(),
-    timeBlock: "09:00-10:00", // Nuevo campo para bloque de tiempo
+    timeBlock: "09:00-10:00", // Formato para la base de datos que luego se convierte
     status: "scheduled",
     notes: "",
     treatmentType: ""
@@ -149,9 +149,41 @@ const Appointments = () => {
       const formattedDate = format(formData.date, "yyyy-MM-dd");
       
       // Extraer horas de inicio y fin del timeBlock
-      const [startTime, endTime] = formData.timeBlock.split('-');
+      let [startTime, endTime] = formData.timeBlock.split('-');
       
-      console.log('Enviando datos de cita:', {
+      // Convertir formato 12h a 24h si se usó el formato AM/PM
+      const convertTo24Hour = (time: string) => {
+        time = time.trim().toUpperCase();
+        const isPM = time.includes('PM');
+        const isAM = time.includes('AM');
+        
+        if (isPM || isAM) {
+          // Eliminar AM/PM y espacios
+          time = time.replace(/AM|PM/i, '').trim();
+          
+          // Separar hora y minutos
+          let [hours, minutes] = time.split(':').map(part => part.trim());
+          let hoursNum = parseInt(hours);
+          
+          // Convertir a formato 24 horas
+          if (isPM && hoursNum < 12) hoursNum += 12;
+          if (isAM && hoursNum === 12) hoursNum = 0;
+          
+          // Formatear con ceros a la izquierda
+          return `${hoursNum.toString().padStart(2, '0')}:${minutes || '00'}`;
+        }
+        
+        return time; // Ya está en formato 24h
+      };
+      
+      // Convertir los tiempos si es necesario
+      if (startTime.includes('AM') || startTime.includes('PM') || 
+          endTime.includes('AM') || endTime.includes('PM')) {
+        startTime = convertTo24Hour(startTime);
+        endTime = convertTo24Hour(endTime);
+      }
+      
+      console.log('Enviando datos de cita con horario convertido:', {
         patientId: formData.patient,
         doctorId: formData.doctor,
         date: formattedDate,
