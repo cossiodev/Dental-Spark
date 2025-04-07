@@ -956,7 +956,8 @@ const Odontogram = () => {
                   </defs>
                   <g>
                     <path 
-                      d="M18 16 C18 12, 24 8, 32 8 C40 8, 46 12, 46 16 L46 36 C46 48, 40 56, 32 56 C24 56, 18 48, 18 36 Z" 
+                      d="M18 16 C18 12, 24 8, 32 8 C40 8, 46 12, 46 16 
+                         L46 36 C46 48, 40 56, 32 56 C24 56, 18 48, 18 36 Z" 
                       fill="#ffffff"
                       stroke="#666"
                       strokeWidth="1"
@@ -968,7 +969,8 @@ const Odontogram = () => {
                       strokeWidth="0.5"
                     />
                     <path 
-                      d="M20 18 L44 18 L44 34 C44 44, 38 50, 32 50 C26 50, 20 44, 20 34 Z" 
+                      d="M20 18 L44 18 L44 34 C44 44, 38 50, 32 50 
+                         C26 50, 20 44, 20 34 Z" 
                       fill="url(#molarGradientDemo)"
                       stroke="none"
                     />
@@ -1089,12 +1091,6 @@ const Odontogram = () => {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Odontograma</h1>
           <p className="text-muted-foreground">Visualiza y edita el odontograma de tus pacientes.</p>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={loadPatients} className="h-10">
-            <RefreshCw className="mr-2 h-4 w-4" />
-            <span>Actualizar Pacientes</span>
-          </Button>
         </div>
       </div>
 
