@@ -469,105 +469,171 @@ const Odontogram = () => {
   };
 
   const getToothIcon = (toothNumber: number) => {
-    // Dental numbering system groups:
-    // Incisors: 11, 12, 21, 22, 31, 32, 41, 42
-    // Canines: 13, 23, 33, 43
-    // Premolars: 14, 15, 24, 25, 34, 35, 44, 45
-    // Molars: 16, 17, 18, 26, 27, 28, 36, 37, 38, 46, 47, 48
-    
-    // Determine if it's an upper or lower tooth
+    // Dental numbering system groups
     const isUpper = [11, 12, 13, 14, 15, 16, 17, 18, 21, 22, 23, 24, 25, 26, 27, 28].includes(toothNumber);
     
+    // Common styling for all teeth
+    const commonStroke = "#555";
+    const strokeWidth = "1.2";
+    
     if ([11, 12, 21, 22, 31, 32, 41, 42].includes(toothNumber)) {
-      // Incisor shape - more anatomically correct
+      // Incisor - simplified, professional design
       if (isUpper) {
         // Upper incisor
         return (
-          <path 
-            d="M32 8 C38 8, 44 12, 44 32 C44 45, 38 56, 32 56 C26 56, 20 45, 20 32 C20 12, 26 8, 32 8 Z
-               M26 10 L38 10 L36 14 L28 14 Z" 
-            stroke="#666"
-            strokeWidth="1"
-          />
+          <>
+            <path 
+              d="M32 10 C42 10, 46 14, 46 26 C46 42, 40 54, 32 54 C24 54, 18 42, 18 26 C18 14, 22 10, 32 10 Z" 
+              stroke={commonStroke}
+              strokeWidth={strokeWidth}
+            />
+            <path 
+              d="M26 14 L38 14 L38 16 C38 18, 32 20, 26 18 L26 14 Z" 
+              stroke={commonStroke}
+              strokeWidth={strokeWidth}
+              fill="none"
+            />
+          </>
         );
       } else {
         // Lower incisor
         return (
-          <path 
-            d="M32 8 C38 8, 44 18, 44 45 C44 52, 38 56, 32 56 C26 56, 20 52, 20 45 C20 18, 26 8, 32 8 Z
-               M26 52 L38 52 L36 48 L28 48 Z" 
-            stroke="#666"
-            strokeWidth="1"
-          />
+          <>
+            <path 
+              d="M32 10 C42 10, 46 18, 46 38 C46 48, 40 54, 32 54 C24 54, 18 48, 18 38 C18 18, 22 10, 32 10 Z" 
+              stroke={commonStroke}
+              strokeWidth={strokeWidth}
+            />
+            <path 
+              d="M26 50 L38 50 L38 48 C38 46, 32 44, 26 46 L26 50 Z" 
+              stroke={commonStroke}
+              strokeWidth={strokeWidth}
+              fill="none"
+            />
+          </>
         );
       }
     } else if ([13, 23, 33, 43].includes(toothNumber)) {
-      // Canine shape - sharper cusp
+      // Canine - distinctive pointed cusp
       if (isUpper) {
         // Upper canine
         return (
-          <path 
-            d="M32 4 C38 4, 45 10, 46 32 C46 45, 38 56, 32 56 C26 56, 18 45, 18 32 C19 10, 26 4, 32 4 Z
-               M32 4 L32 10 M26 9 L38 9" 
-            stroke="#666"
-            strokeWidth="1"
-          />
+          <>
+            <path 
+              d="M32 8 C40 8, 47 14, 47 30 C47 44, 40 56, 32 56 C24 56, 17 44, 17 30 C17 14, 24 8, 32 8 Z" 
+              stroke={commonStroke}
+              strokeWidth={strokeWidth}
+            />
+            <path 
+              d="M32 8 L32 14 M27 12 L37 12" 
+              stroke={commonStroke}
+              strokeWidth={strokeWidth}
+              fill="none"
+            />
+          </>
         );
       } else {
         // Lower canine
         return (
-          <path 
-            d="M32 6 C38 6, 46 14, 46 42 C46 52, 38 58, 32 58 C26 58, 18 52, 18 42 C18 14, 26 6, 32 6 Z
-               M32 58 L32 52 M26 54 L38 54" 
-            stroke="#666"
-            strokeWidth="1"
-          />
+          <>
+            <path 
+              d="M32 8 C40 8, 47 16, 47 38 C47 50, 40 56, 32 56 C24 56, 17 50, 17 38 C17 16, 24 8, 32 8 Z" 
+              stroke={commonStroke}
+              strokeWidth={strokeWidth}
+            />
+            <path 
+              d="M32 56 L32 50 M27 52 L37 52" 
+              stroke={commonStroke}
+              strokeWidth={strokeWidth}
+              fill="none"
+            />
+          </>
         );
       }
     } else if ([14, 15, 24, 25, 34, 35, 44, 45].includes(toothNumber)) {
-      // Premolar shape - with two distinct cusps
+      // Premolar - with two cusps
       if (isUpper) {
         // Upper premolar
         return (
-          <path 
-            d="M32 8 C42 8, 48 12, 48 32 C48 45, 39 56, 32 56 C25 56, 16 45, 16 32 C16 12, 22 8, 32 8 Z" 
-            stroke="#666"
-            strokeWidth="1"
-          />
+          <>
+            <path 
+              d="M32 10 C43 10, 48 16, 48 30 C48 46, 40 54, 32 54 C24 54, 16 46, 16 30 C16 16, 21 10, 32 10 Z" 
+              stroke={commonStroke}
+              strokeWidth={strokeWidth}
+            />
+            <path 
+              d="M26 16 C26 12, 28 10, 30 14 M38 16 C38 12, 36 10, 34 14" 
+              stroke={commonStroke}
+              strokeWidth={strokeWidth}
+              fill="none"
+            />
+          </>
         );
       } else {
         // Lower premolar
         return (
-          <path 
-            d="M32 8 C42 8, 48 14, 48 40 C48 50, 39 58, 32 58 C25 58, 16 50, 16 40 C16 14, 22 8, 32 8 Z" 
-            stroke="#666"
-            strokeWidth="1"
-          />
+          <>
+            <path 
+              d="M32 10 C43 10, 48 20, 48 38 C48 48, 40 54, 32 54 C24 54, 16 48, 16 38 C16 20, 21 10, 32 10 Z" 
+              stroke={commonStroke}
+              strokeWidth={strokeWidth}
+            />
+            <path 
+              d="M26 48 C26 52, 28 54, 30 50 M38 48 C38 52, 36 54, 34 50" 
+              stroke={commonStroke}
+              strokeWidth={strokeWidth}
+              fill="none"
+            />
+          </>
         );
       }
     } else {
-      // Molar shape - with multiple cusps
+      // Molar - rectangular with cusps
       if (isUpper) {
-        // Upper molar
+        // Upper molar - more realistic crown shape
         return (
-          <path 
-            d="M18 14 L46 14 L46 50 C46 54, 40 58, 32 58 C24 58, 18 54, 18 50 Z
-               M18 14 C18 10, 24 6, 32 6 C40 6, 46 10, 46 14
-               M25 14 L25 8 M39 14 L39 8" 
-            stroke="#666"
-            strokeWidth="1"
-          />
+          <>
+            <path 
+              d="M18 16 L46 16 L46 46 C46 50, 40 54, 32 54 C24 54, 18 50, 18 46 Z" 
+              stroke={commonStroke}
+              strokeWidth={strokeWidth}
+            />
+            <path 
+              d="M18 16 C18 12, 24 8, 32 8 C40 8, 46 12, 46 16" 
+              stroke={commonStroke}
+              strokeWidth={strokeWidth}
+              fill="none"
+            />
+            <path 
+              d="M25 16 C25 13, 28 10, 32 12 M39 16 C39 13, 36 10, 32 12" 
+              stroke={commonStroke}
+              strokeWidth={strokeWidth}
+              fill="none"
+            />
+          </>
         );
       } else {
-        // Lower molar
+        // Lower molar - with clear cusps
         return (
-          <path 
-            d="M18 14 C18 10, 24 6, 32 6 C40 6, 46 10, 46 14 L46 50 L18 50 Z
-               M18 50 C18 54, 24 58, 32 58 C40 58, 46 54, 46 50
-               M25 50 L25 56 M39 50 L39 56" 
-            stroke="#666"
-            strokeWidth="1"
-          />
+          <>
+            <path 
+              d="M18 18 C18 14, 24 10, 32 10 C40 10, 46 14, 46 18 L46 48 L18 48 Z" 
+              stroke={commonStroke}
+              strokeWidth={strokeWidth}
+            />
+            <path 
+              d="M18 48 C18 52, 24 54, 32 54 C40 54, 46 52, 46 48" 
+              stroke={commonStroke}
+              strokeWidth={strokeWidth}
+              fill="none"
+            />
+            <path 
+              d="M25 48 C25 51, 28 54, 32 52 M39 48 C39 51, 36 54, 32 52" 
+              stroke={commonStroke}
+              strokeWidth={strokeWidth}
+              fill="none"
+            />
+          </>
         );
       }
     }
@@ -1059,49 +1125,49 @@ const Odontogram = () => {
                   Seleccione las áreas para marcar las superficies afectadas
                 </div>
                 
-                <div className="relative w-48 h-48 mx-auto my-4 border rounded-md bg-white">
+                <div className="relative w-48 h-48 mx-auto my-4 border rounded-md bg-white shadow-sm">
                   <svg width="100%" height="100%" viewBox="0 0 100 100">
-                    {/* Improved tooth contour for the dialog */}
+                    {/* Professional tooth contour for the dialog */}
                     <path 
-                      d="M50 10 C65 10, 80 20, 80 45 C80 65, 65 90, 50 90 C35 90, 20 65, 20 45 C20 20, 35 10, 50 10 Z" 
+                      d="M50 10 C65 10, 80 20, 80 50 C80 70, 65 90, 50 90 C35 90, 20 70, 20 50 C20 20, 35 10, 50 10 Z" 
                       fill="white"
-                      stroke="#666"
+                      stroke="#555"
                       strokeWidth="1.5"
                     />
                     
-                    {/* Surfaces with improved anatomical accuracy */}
+                    {/* Surface indicators with cleaner design */}
                     <path 
                       d="M35 15 L65 15 C60 25, 40 25, 35 15 Z" 
                       fill={selectedSurfaces?.includes("top") ? toothConditionColors[selectedCondition] : "transparent"}
                       stroke="#ddd"
-                      strokeWidth="1"
+                      strokeWidth="1.2"
                       className="cursor-pointer hover:opacity-70"
                       onClick={() => handleSurfaceToggle("top")}
                     />
                     
                     <path 
-                      d="M25 35 C25 50, 30 65, 40 80 C35 70, 25 55, 25 35 Z" 
+                      d="M25 35 C25 50, 30 70, 40 85 C35 75, 25 60, 25 35 Z" 
                       fill={selectedSurfaces?.includes("left") ? toothConditionColors[selectedCondition] : "transparent"}
                       stroke="#ddd"
-                      strokeWidth="1"
+                      strokeWidth="1.2"
                       className="cursor-pointer hover:opacity-70"
                       onClick={() => handleSurfaceToggle("left")}
                     />
                     
                     <path 
-                      d="M75 35 C75 50, 70 65, 60 80 C65 70, 75 55, 75 35 Z" 
+                      d="M75 35 C75 50, 70 70, 60 85 C65 75, 75 60, 75 35 Z" 
                       fill={selectedSurfaces?.includes("right") ? toothConditionColors[selectedCondition] : "transparent"}
                       stroke="#ddd"
-                      strokeWidth="1"
+                      strokeWidth="1.2"
                       className="cursor-pointer hover:opacity-70"
                       onClick={() => handleSurfaceToggle("right")}
                     />
                     
                     <path 
-                      d="M40 80 L60 80 C55 88, 45 88, 40 80 Z" 
+                      d="M40 85 L60 85 C55 93, 45 93, 40 85 Z" 
                       fill={selectedSurfaces?.includes("bottom") ? toothConditionColors[selectedCondition] : "transparent"}
                       stroke="#ddd"
-                      strokeWidth="1"
+                      strokeWidth="1.2"
                       className="cursor-pointer hover:opacity-70"
                       onClick={() => handleSurfaceToggle("bottom")}
                     />
@@ -1109,16 +1175,24 @@ const Odontogram = () => {
                     <circle 
                       cx="50" 
                       cy="50" 
-                      r="15" 
+                      r="18" 
                       fill={selectedSurfaces?.includes("center") ? toothConditionColors[selectedCondition] : "transparent"}
                       stroke="#ddd"
-                      strokeWidth="1"
+                      strokeWidth="1.2"
                       className="cursor-pointer hover:opacity-70"
                       onClick={() => handleSurfaceToggle("center")}
                     />
                     
-                    {/* Número de diente */}
-                    <text x="50" y="50" textAnchor="middle" dominantBaseline="middle" className="font-bold">
+                    {/* Tooth number with improved typography */}
+                    <text 
+                      x="50" 
+                      y="50" 
+                      textAnchor="middle" 
+                      dominantBaseline="middle" 
+                      className="font-bold"
+                      fill="#444"
+                      fontSize="14"
+                    >
                       {selectedTooth}
                     </text>
                   </svg>
