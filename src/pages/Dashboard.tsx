@@ -105,8 +105,18 @@ const treatmentService = {
   getAll: async () => []
 };
 
+// Los colores deben coincidir con los definidos en Appointments.tsx para cada estado
+const APPOINTMENT_STATUS_COLORS = {
+  scheduled: "#3b82f6", // blue-500 (para 'Programada')
+  confirmed: "#10b981", // emerald-500 (para 'Confirmada')
+  completed: "#22c55e", // green-500 (para 'Completada')
+  cancelled: "#ef4444", // red-500 (para 'Cancelada')
+  "no-show": "#f59e0b", // amber-500 (para 'No asistió')
+};
+
 // Esta función convierte los datos reales de citas en estadísticas para el gráfico
 const calculateAppointmentStatsByStatus = (appointments: Appointment[]) => {
+  // Inicializar contadores para cada estado
   const statusCounts = {
     scheduled: 0,
     confirmed: 0,
@@ -119,17 +129,26 @@ const calculateAppointmentStatsByStatus = (appointments: Appointment[]) => {
   appointments.forEach(appointment => {
     if (appointment.status && statusCounts.hasOwnProperty(appointment.status)) {
       statusCounts[appointment.status as keyof typeof statusCounts]++;
+    } else {
+      // Si el estado no está en la lista, lo consideramos como programado por defecto
+      statusCounts.scheduled++;
     }
   });
   
-  // Convertir a formato requerido por el gráfico
-  return [
-    { name: "Programada", value: statusCounts.scheduled },
-    { name: "Confirmada", value: statusCounts.confirmed },
-    { name: "Completada", value: statusCounts.completed },
-    { name: "Cancelada", value: statusCounts.cancelled },
-    { name: "No asistió", value: statusCounts["no-show"] }
+  console.log("Conteo de citas por estado:", statusCounts);
+  
+  // Convertir a formato requerido por el gráfico y asignar los colores correctos
+  const statusStats = [
+    { name: "Programada", value: statusCounts.scheduled, color: APPOINTMENT_STATUS_COLORS.scheduled },
+    { name: "Confirmada", value: statusCounts.confirmed, color: APPOINTMENT_STATUS_COLORS.confirmed },
+    { name: "Completada", value: statusCounts.completed, color: APPOINTMENT_STATUS_COLORS.completed },
+    { name: "Cancelada", value: statusCounts.cancelled, color: APPOINTMENT_STATUS_COLORS.cancelled },
+    { name: "No asistió", value: statusCounts["no-show"], color: APPOINTMENT_STATUS_COLORS["no-show"] }
   ].filter(item => item.value > 0); // Solo incluir estados con al menos una cita
+  
+  console.log("Estadísticas de citas generadas:", statusStats);
+  
+  return statusStats;
 };
 
 const Dashboard = () => {
@@ -402,7 +421,7 @@ const Dashboard = () => {
                         label={({ name, value, percent }) => `${name}: ${value} (${(percent * 100).toFixed(0)}%)`}
                       >
                         {appointmentStats.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                          <Cell key={`cell-${index}`} fill={entry.color || COLORS[index % COLORS.length]} />
                         ))}
                       </Pie>
                       <Tooltip formatter={(value, name) => [`${value} citas`, name]} />
