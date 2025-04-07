@@ -672,12 +672,12 @@ const Odontogram = () => {
     
     const renderToothGroup = (teethGroup: typeof upperTeeth) => {
       return teethGroup.map((tooth) => {
-      const condition = teethConditions[tooth.number];
-      const fillColor = condition ? toothConditionColors[condition.status] : "white";
-      const isSelected = selectedTooth === tooth.number;
-      const hasSurfaces = condition && condition.surfaces && condition.surfaces.length > 0;
-      
-      return (
+        const condition = teethConditions[tooth.number];
+        const fillColor = condition ? toothConditionColors[condition.status] : "white";
+        const isSelected = selectedTooth === tooth.number;
+        const hasSurfaces = condition && condition.surfaces && condition.surfaces.length > 0;
+        
+        return (
           <button
             key={tooth.number}
             className={`relative group p-0 w-16 h-20 flex items-center justify-center border rounded-md 
@@ -726,54 +726,54 @@ const Odontogram = () => {
                 )}
                 
                 {/* Render surfaces if needed */}
-          {hasSurfaces && (
-            <>
-              {condition.surfaces?.includes("top") && (
-                <path
+                {hasSurfaces && (
+                  <>
+                    {condition.surfaces?.includes("top") && (
+                      <path
                         d="M24 12 L40 12 C36 18, 28 18, 24 12 Z" 
                         fill={fillColor} 
-                />
-              )}
+                      />
+                    )}
                     {condition.surfaces?.includes("left") && (
-                <path
+                      <path
                         d="M18 20 C18 30, 22 40, 26 50 C22 44, 18 35, 18 20 Z" 
                         fill={fillColor} 
-                />
-              )}
+                      />
+                    )}
                     {condition.surfaces?.includes("right") && (
-                <path
+                      <path
                         d="M46 20 C46 30, 42 40, 38 50 C42 44, 46 35, 46 20 Z" 
                         fill={fillColor} 
-                />
-              )}
+                      />
+                    )}
                     {condition.surfaces?.includes("bottom") && (
-                <path
+                      <path
                         d="M26 50 L38 50 C36 54, 28 54, 26 50 Z" 
                         fill={fillColor} 
-                />
-              )}
-              {condition.surfaces?.includes("center") && (
-                <circle
+                      />
+                    )}
+                    {condition.surfaces?.includes("center") && (
+                      <circle
                         cx="32" 
                         cy="32" 
                         r="10" 
                         fill={fillColor} 
-                />
-              )}
-            </>
-          )}
-          
-          <text
+                      />
+                    )}
+                  </>
+                )}
+                
+                <text
                   x="32"
                   y="58"
-            textAnchor="middle"
+                  textAnchor="middle"
                   fill="#444"
                   fontSize="11"
                   fontWeight="bold"
                   className="font-sans"
-          >
-            {tooth.number}
-          </text>
+                >
+                  {tooth.number}
+                </text>
               </svg>
             </div>
             
@@ -782,8 +782,8 @@ const Odontogram = () => {
                 <div className="w-3 h-3 rounded-full" style={{ backgroundColor: toothConditionColors[condition.status] }} />
               </div>
             )}
-          
-          {condition?.notes && (
+            
+            {condition?.notes && (
               <div className="absolute bottom-1 right-1 text-xs text-blue-500">
                 <span className="w-3 h-3 flex items-center justify-center rounded-full bg-blue-100 text-blue-500">i</span>
               </div>
@@ -799,11 +799,11 @@ const Odontogram = () => {
               )}
             </div>
           </button>
-      );
-    });
-  };
+        );
+      });
+    };
 
-  return (
+    return (
       <div className="space-y-12">
         <div className="space-y-4">
           <div className="flex items-center gap-2 pb-2 border-b">
@@ -814,8 +814,8 @@ const Odontogram = () => {
           </div>
           <div className="grid grid-cols-8 gap-1 mt-4 justify-items-center">
             {renderToothGroup(upperTeethToRender)}
+          </div>
         </div>
-      </div>
 
         <div className="space-y-4">
           <div className="flex items-center gap-2 pb-2 border-b">
@@ -997,12 +997,106 @@ const Odontogram = () => {
     );
   };
 
+  const handlePatientChange = (value: string) => {
+    console.log("[DIAGNÓSTICO] Cambiando paciente seleccionado a:", value);
+    setSelectedPatient(value);
+    
+    // Buscar el paciente en la lista y actualizar si es pediátrico
+    const patient = patients.find(p => p.id === value);
+    if (patient) {
+      console.log("[DIAGNÓSTICO] ¿Es paciente pediátrico?", patient.isPediatric ? "Sí" : "No");
+      setIsPediatric(!!patient.isPediatric);
+      // Actualizar automáticamente el tipo de dientes según el paciente
+      setTeethType(patient.isPediatric ? "child" : "adult");
+    }
+  };
+
+  const loadPatients = async () => {
+    try {
+      setIsLoading(true);
+      toast({
+        title: "Actualizando pacientes",
+        description: "Cargando lista de pacientes...",
+      });
+      
+      console.log("[DIAGNÓSTICO] Actualizando lista de pacientes...");
+      const patientsData = await patientService.getAll();
+      console.log("[DIAGNÓSTICO] Pacientes obtenidos correctamente:", patientsData.length);
+      setPatients(patientsData);
+      
+      // Aplicar filtro si hay query de búsqueda
+      if (searchQuery) {
+        const filtered = patientsData.filter(patient => 
+          `${patient.firstName} ${patient.lastName}`.toLowerCase().includes(searchQuery.toLowerCase())
+        );
+        setFilteredPatients(filtered);
+      } else {
+        setFilteredPatients(patientsData);
+      }
+      
+      toast({
+        title: "Pacientes actualizados",
+        description: `Se han cargado ${patientsData.length} pacientes`,
+      });
+    } catch (error) {
+      console.error("Error updating patients:", error);
+      toast({
+        title: "Error",
+        description: "No se pudieron actualizar los pacientes",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const saveTeethConditions = async () => {
+    if (!selectedPatient) {
+      toast({
+        title: "Error",
+        description: "Por favor seleccione un paciente",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    try {
+      const odontogramData = {
+        patientId: selectedPatient,
+        date: selectedDate,
+        teeth: teethConditions,
+        notes: generalNotes,
+        isPediatric: isPediatric,
+      };
+      
+      const savedOdontogram = await odontogramService.create(odontogramData);
+      
+      toast({
+        title: "Odontograma guardado",
+        description: "El odontograma ha sido guardado exitosamente",
+      });
+      
+      // Si hay tratamientos sugeridos, mostrarlos
+      const suggestions = generateTreatmentSuggestions();
+      if (suggestions.length > 0) {
+        setSuggestedTreatments(suggestions);
+      }
+    } catch (error) {
+      console.error("Error saving odontogram:", error);
+      toast({
+        title: "Error",
+        description: "No se pudo guardar el odontograma",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <div className="container py-8 space-y-8">
       <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">
-            Odontograma {currentPatient && `de ${currentPatient.firstName} ${currentPatient.lastName}`}
+            Odontograma
           </h1>
           <p className="text-muted-foreground">Visualiza y edita el odontograma de tus pacientes.</p>
         </div>
@@ -1021,12 +1115,9 @@ const Odontogram = () => {
             />
           </div>
           <div className="w-full md:w-80">
-            <Label htmlFor="patient-selector" className="text-sm font-medium mb-1 block">
-              Seleccionar paciente
-            </Label>
             <Select value={selectedPatient} onValueChange={handlePatientChange}>
-              <SelectTrigger id="patient-selector">
-                <SelectValue placeholder="Buscar y seleccionar" />
+              <SelectTrigger>
+                <SelectValue placeholder="Seleccione un paciente" />
               </SelectTrigger>
               <SelectContent>
                 {filteredPatients.length > 0 ? (
@@ -1073,7 +1164,7 @@ const Odontogram = () => {
                 Pediátrico
               </ToggleGroupItem>
             </ToggleGroup>
-            </div>
+          </div>
         </div>
       </div>
 
