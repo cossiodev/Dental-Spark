@@ -1115,7 +1115,7 @@ const Odontogram = () => {
             />
           </div>
           <div className="w-full md:w-80">
-            <Select value={selectedPatient} onValueChange={handlePatientChange}>
+            <Select value={selectedPatient || ""} onValueChange={handlePatientChange}>
               <SelectTrigger>
                 <SelectValue placeholder="Seleccione un paciente" />
               </SelectTrigger>
