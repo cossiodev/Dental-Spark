@@ -648,39 +648,39 @@ const Appointments = () => {
     });
   };
 
-  // Función para obtener el color según el estado
-  const getStatusColor = (status: string): string => {
-    switch (status) {
-      case 'scheduled':
-        return 'bg-blue-100 text-blue-800';
-      case 'confirmed':
-        return 'bg-emerald-100 text-emerald-800';
-      case 'completed':
-        return 'bg-green-100 text-green-800';
-      case 'cancelled':
-        return 'bg-red-100 text-red-800';
-      case 'no-show':
-        return 'bg-amber-100 text-amber-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
-  };
-
   // Función para obtener la variante del Badge según el estado
   const getStatusVariant = (status: string): string => {
     switch (status) {
       case 'scheduled':
-        return 'blue';
+        return 'outline';
       case 'confirmed':
-        return 'emerald';
+        return 'outline';
       case 'completed':
-        return 'green';
+        return 'outline';
       case 'cancelled':
-        return 'destructive';
+        return 'outline';
       case 'no-show':
-        return 'amber';
+        return 'outline';
       default:
-        return 'secondary';
+        return 'outline';
+    }
+  };
+
+  // Función para obtener el color personalizado según el estado
+  const getStatusClassNames = (status: string): string => {
+    switch (status) {
+      case 'scheduled':
+        return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'confirmed':
+        return 'bg-emerald-100 text-emerald-800 border-emerald-200';
+      case 'completed':
+        return 'bg-green-100 text-green-800 border-green-200';
+      case 'cancelled':
+        return 'bg-red-100 text-red-800 border-red-200';
+      case 'no-show':
+        return 'bg-amber-100 text-amber-800 border-amber-200';
+      default:
+        return 'bg-gray-100 text-gray-800 border-gray-200';
     }
   };
 
@@ -883,6 +883,7 @@ const Appointments = () => {
                         <SelectItem value="confirmed">Confirmada</SelectItem>
                         <SelectItem value="completed">Completada</SelectItem>
                         <SelectItem value="cancelled">Cancelada</SelectItem>
+                        <SelectItem value="no-show">No asistió</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -992,7 +993,7 @@ const Appointments = () => {
                         <TableCell>
                           <Badge 
                             variant={getStatusVariant(appointment.status) as any}
-                            className="font-normal"
+                            className={`font-normal ${getStatusClassNames(appointment.status)}`}
                           >
                             {getStatusText(appointment.status)}
                           </Badge>
