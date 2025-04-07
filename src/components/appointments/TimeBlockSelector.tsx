@@ -41,10 +41,12 @@ export function TimeBlockSelector({
 
   // Verificar si se debe mostrar el campo de entrada personalizada al iniciar
   React.useEffect(() => {
-    // Si el valor actual no está entre las opciones disponibles, mostrar campo personalizado
+    // Si el valor actual no está entre las opciones disponibles y no es vacío, mostrar campo personalizado
     if (value && !availableHours.some(hour => hour.value === value)) {
       setShowCustomInput(true);
       setCustomTime(value);
+    } else {
+      setShowCustomInput(value === "otro");
     }
   }, [value]);
 
@@ -52,6 +54,7 @@ export function TimeBlockSelector({
   const handleSelectChange = (selectedValue: string) => {
     if (selectedValue === "otro") {
       setShowCustomInput(true);
+      // No actualizar el valor principal hasta que se ingrese algo en el campo personalizado
       return;
     }
     
@@ -63,40 +66,11 @@ export function TimeBlockSelector({
   const handleCustomTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const customValue = e.target.value;
     setCustomTime(customValue);
-    onChange(customValue);
-  };
-
-  // Obtener una etiqueta legible para mostrar en lugar del valor crudo
-  const getDisplayLabel = () => {
-    const found = availableHours.find(hour => hour.value === value);
-    if (found) return found.label;
     
-    // Si es un valor personalizado, formatearlo para mostrar
-    if (value && value.includes('-')) {
-      // Intentar formatear en formato amigable
-      try {
-        const [start, end] = value.split('-');
-        // Para hacerlo simple, solo convertimos el formato si tiene el formato HH:MM
-        if (start.includes(':') && end.includes(':')) {
-          const startHour = parseInt(start.split(':')[0]);
-          const startMin = start.split(':')[1];
-          const endHour = parseInt(end.split(':')[0]);
-          const endMin = end.split(':')[1];
-          
-          const formatHour = (hour: number) => {
-            if (hour === 0) return `12${hour < 12 ? 'AM' : 'PM'}`;
-            if (hour > 12) return `${hour-12}${hour < 12 ? 'AM' : 'PM'}`;
-            return `${hour}${hour < 12 ? 'AM' : 'PM'}`;
-          };
-          
-          return `${formatHour(startHour)}${startMin !== '00' ? `:${startMin}` : ''} - ${formatHour(endHour)}${endMin !== '00' ? `:${endMin}` : ''}`;
-        }
-      } catch (e) {
-        // Si hay error en el formato, devolver el valor original
-      }
+    // Solo actualizar el valor principal si hay algo válido
+    if (customValue && customValue.includes('-')) {
+      onChange(customValue);
     }
-    
-    return value || "Seleccionar horario";
   };
 
   return (
@@ -108,7 +82,7 @@ export function TimeBlockSelector({
       >
         <SelectTrigger className="w-full">
           <SelectValue placeholder="Seleccionar horario">
-            {getDisplayLabel()}
+            {availableHours.find(hour => hour.value === value)?.label || (value || "Seleccionar horario")}
           </SelectValue>
         </SelectTrigger>
         <SelectContent>
@@ -124,12 +98,15 @@ export function TimeBlockSelector({
         <div className="mt-2">
           <Input
             type="text"
-            placeholder="Ej: 9:30AM-10:30AM"
+            placeholder="Ej: 09:00-10:00"
             value={customTime}
             onChange={handleCustomTimeChange}
             className="w-full"
             disabled={disabled}
           />
+          <p className="text-xs text-muted-foreground mt-1">
+            Ingresa el horario en formato 24h (HH:MM-HH:MM)
+          </p>
         </div>
       )}
     </div>

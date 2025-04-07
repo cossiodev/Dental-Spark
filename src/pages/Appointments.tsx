@@ -46,10 +46,7 @@ import { useToast } from "@/hooks/use-toast";
 import { appointmentService, patientService } from "@/lib/data-service";
 import type { Appointment, Patient } from "@/lib/models/types";
 
-// Importar el nuevo componente TimePickerInput
-import { TimePickerInput } from "@/components/appointments/TimePickerInput";
-
-// Importar el nuevo componente TimeBlockSelector
+// Importar el componente TimeBlockSelector
 import { TimeBlockSelector } from "@/components/appointments/TimeBlockSelector";
 
 // Helper function to format date

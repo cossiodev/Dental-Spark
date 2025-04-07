@@ -45,6 +45,7 @@ export function TimePickerInput({
         period
       };
     } catch (e) {
+      console.error("Error parsing time value:", value, e);
       return { hour: "09", minute: "00", period: "AM" };
     }
   };
@@ -60,8 +61,10 @@ export function TimePickerInput({
     if (type === 'minute') current.minute = newValue;
     if (type === 'period') current.period = newValue;
     
-    // Convertir a formato 24 horas
+    // Convertir a formato 24 horas para asegurar consistencia
     let hours = parseInt(current.hour);
+    
+    // Ajustar para AM/PM
     if (current.period === 'PM' && hours < 12) hours += 12;
     if (current.period === 'AM' && hours === 12) hours = 0;
     
@@ -74,7 +77,7 @@ export function TimePickerInput({
   const minuteOptions = ["00", "15", "30", "45"];
   const periodOptions = ["AM", "PM"];
   
-  // Atajos de horarios comunes
+  // Atajos para horarios comunes de la clínica dental
   const timePresets = [
     { label: "9AM", value: "09:00" },
     { label: "12PM", value: "12:00" },
@@ -82,7 +85,7 @@ export function TimePickerInput({
   ];
   
   return (
-    <div className={cn("flex flex-wrap items-center gap-2", className)}>
+    <div className={cn("flex flex-col space-y-2", className)}>
       <div className="flex items-center">
         <Select
           value={hour}
@@ -134,7 +137,7 @@ export function TimePickerInput({
         </Select>
       </div>
       
-      <div className="flex gap-1">
+      <div className="flex gap-1 mt-1">
         {timePresets.map((preset) => (
           <Button
             key={preset.label}
