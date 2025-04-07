@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { format } from "date-fns";
@@ -54,8 +54,28 @@ import { AppointmentForm } from "@/components/appointments/AppointmentForm";
 
 // Helper para formatear fecha para mostrar
 const formatDisplayDate = (dateString: string) => {
-  const date = new Date(dateString);
-  return format(date, "PPP", { locale: es });
+  try {
+    if (!dateString) return 'Sin fecha';
+    
+    // Asegurar que la fecha esté en formato YYYY-MM-DD antes de parsear
+    const normalizedDate = dateString.trim();
+    console.log(`Formateando fecha para mostrar: "${normalizedDate}"`);
+    
+    // Crear objeto de fecha válido: el constructor de Date acepta YYYY-MM-DD
+    const date = new Date(normalizedDate);
+    
+    // Verificar que la fecha es válida
+    if (isNaN(date.getTime())) {
+      console.error(`Fecha inválida: "${normalizedDate}"`);
+      return normalizedDate; // Devolver el string original si no se puede parsear
+    }
+    
+    // Aplicar formato localizado
+    return format(date, "PPP", { locale: es });
+  } catch (error) {
+    console.error(`Error al formatear fecha "${dateString}":`, error);
+    return dateString || 'Sin fecha';
+  }
 };
 
 // Helper para formatear fecha para la BD
@@ -108,6 +128,9 @@ const Appointments = () => {
   const [appointmentToEdit, setAppointmentToEdit] = useState<Appointment | null>(null);
   const [showEditForm, setShowEditForm] = useState(false);
 
+  // Estado para indicar si se está enviando el formulario
+  const [isLoading, setIsLoading] = useState(false);
+
   // Fetch patients
   const { data: patients = [] } = useQuery({
     queryKey: ["patients"],
@@ -141,23 +164,60 @@ const Appointments = () => {
   const [forceRefresh, setForceRefresh] = useState(0);
 
   // Filter appointments based on selected tab
-  const filteredAppointments = appointments.filter((appointment) => {
+  const filteredAppointments = useMemo(() => {
     const today = new Date().toISOString().split("T")[0];
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
     const tomorrowStr = tomorrow.toISOString().split("T")[0];
     
-    console.log(`Filtrando cita - fecha: ${appointment.date}, today: ${today}, tomorrow: ${tomorrowStr}, tab: ${selectedTab}`);
+    console.log('FILTRADO - Total de citas cargadas:', appointments.length);
     
-    if (selectedTab === "today") {
-      return appointment.date === today;
-    } else if (selectedTab === "tomorrow") {
-      return appointment.date === tomorrowStr;
-    } else if (selectedTab === "upcoming") {
-      return appointment.date >= today;
+    if (appointments.length > 0) {
+      appointments.forEach((appt, idx) => {
+        console.log(`Cita ${idx+1}:`, { 
+          id: appt.id, 
+          fecha: appt.date, 
+          paciente: appt.patientName, 
+          hoy: today, 
+          mañana: tomorrowStr
+        });
+      });
     }
-    return true;
-  });
+    
+    const filtered = appointments.filter((appointment) => {
+      // Validar que appointment.date existe y es un string válido
+      if (!appointment.date) {
+        console.error('Cita sin fecha:', appointment);
+        return false;
+      }
+      
+      // Normalizar la fecha para comparación
+      const appointmentDate = typeof appointment.date === 'string' 
+        ? appointment.date.trim() 
+        : (appointment.date instanceof Date 
+          ? appointment.date.toISOString().split('T')[0] 
+          : null);
+      
+      if (!appointmentDate) {
+        console.error('Fecha de cita inválida:', appointment.date);
+        return false;
+      }
+      
+      const result = selectedTab === "today" 
+        ? appointmentDate === today
+        : selectedTab === "tomorrow" 
+          ? appointmentDate === tomorrowStr 
+          : appointmentDate >= today;
+      
+      console.log(`COMPARACIÓN - Cita ${appointment.id}: ${appointmentDate} vs ${selectedTab === "today" ? today : selectedTab === "tomorrow" ? tomorrowStr : `>= ${today}`} = ${result ? 'MOSTRAR' : 'OCULTAR'}`);
+      
+      return result;
+    });
+    
+    console.log(`RESULTADO - Citas filtradas para "${selectedTab}":`, filtered.length);
+    
+    return filtered;
+  }, [appointments, selectedTab]);
   
   // Efecto para recargar las citas al cambiar de pestaña o cuando se fuerza un refresco
   useEffect(() => {
@@ -199,8 +259,18 @@ const Appointments = () => {
       return;
     }
     
-    const formattedDate = formatISODate(formData.date);
-    console.log('Fecha seleccionada para la cita:', formattedDate);
+    // Normalizar y formatear la fecha para enviar a la API
+    let formattedDate;
+    if (formData.date instanceof Date) {
+      formattedDate = formData.date.toISOString().split('T')[0]; // Formato YYYY-MM-DD
+    } else if (typeof formData.date === 'string') {
+      formattedDate = formData.date.trim();
+    } else {
+      formattedDate = new Date().toISOString().split('T')[0]; // Usar hoy como fallback
+    }
+    
+    console.log('🔍 Fecha seleccionada (original):', formData.date);
+    console.log('🔍 Fecha formateada para enviar:', formattedDate);
     
     // Validar horas
     let [startTime, endTime] = formData.timeBlock.split('-');
@@ -213,7 +283,7 @@ const Appointments = () => {
       endTime = convert12To24Format(endTime);
     }
     
-    console.log(`Enviando cita con fecha ${formattedDate} y horas ${startTime}-${endTime}`);
+    console.log(`🔍 Enviando cita con fecha ${formattedDate} y horas ${startTime}-${endTime}`);
     
     setIsLoading(true);
     
@@ -223,11 +293,13 @@ const Appointments = () => {
       date: formattedDate,
       startTime,
       endTime,
+      status: formData.status || 'scheduled',
       notes: formData.notes || '',
       treatmentType: formData.treatmentType || '',
     })
       .then((newAppointment) => {
-        setLastCreatedAppointment(newAppointment);
+        console.log('✅ Cita creada exitosamente:', newAppointment);
+        setLastCreatedAppointment(newAppointment.id);
         setOpen(false);
         resetForm();
         toast({
@@ -244,7 +316,7 @@ const Appointments = () => {
         setTimeout(() => refetchAppointments(), 5000);
       })
       .catch((error) => {
-        console.error("Error al crear cita:", error);
+        console.error("❌ Error al crear cita:", error);
         toast({
           title: "Error",
           description: error.message || "Error al crear la cita",
@@ -354,6 +426,19 @@ const Appointments = () => {
     setIsEditingAppointment(false);
     setAppointmentToEdit(null);
     setShowEditForm(false);
+  };
+
+  // Función para restablecer el formulario
+  const resetForm = () => {
+    setFormData({
+      patient: "",
+      doctor: "",
+      date: new Date(),
+      timeBlock: "09:00-10:00", 
+      status: "scheduled",
+      notes: "",
+      treatmentType: ""
+    });
   };
 
   return (
@@ -536,8 +621,18 @@ const Appointments = () => {
                 </div>
               </div>
               <DialogFooter>
-                <Button type="submit" className="w-full sm:w-auto">
-                  Crear Cita
+                <Button type="submit" className="w-full sm:w-auto" disabled={isLoading}>
+                  {isLoading ? (
+                    <>
+                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Creando...
+                    </>
+                  ) : (
+                    "Crear Cita"
+                  )}
                 </Button>
               </DialogFooter>
             </form>
