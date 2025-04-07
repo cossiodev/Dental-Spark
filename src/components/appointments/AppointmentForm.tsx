@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { CalendarIcon } from "lucide-react";
+import { CalendarIcon, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 // UI Components
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -52,6 +54,10 @@ export function AppointmentForm({
   const [doctors, setDoctors] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Estado para manejar notas como tags
+  const [notesInput, setNotesInput] = useState('');
+  const [notesTags, setNotesTags] = useState<string[]>([]);
 
   // Cargar datos iniciales si estamos editando
   useEffect(() => {
@@ -71,6 +77,11 @@ export function AppointmentForm({
         notes: initialData.notes || "",
         treatmentType: initialData.treatmentType || ""
       });
+      
+      // Inicializar notas como tags si existen
+      if (initialData.notes) {
+        setNotesTags(initialData.notes.split(',').map(note => note.trim()).filter(Boolean));
+      }
     }
   }, [initialData]);
 
@@ -103,6 +114,35 @@ export function AppointmentForm({
     });
   };
 
+  // Función para añadir una nota como tag
+  const addNoteTag = () => {
+    if (notesInput.trim()) {
+      const newTags = [...notesTags, notesInput.trim()];
+      setNotesTags(newTags);
+      setNotesInput('');
+      
+      // Actualizar el campo notes en formData
+      handleChange('notes', newTags.join(', '));
+    }
+  };
+
+  // Manejar tecla Enter para añadir nota
+  const handleNotesKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && notesInput.trim()) {
+      e.preventDefault();
+      addNoteTag();
+    }
+  };
+
+  // Eliminar una nota
+  const removeNoteTag = (indexToRemove: number) => {
+    const newTags = notesTags.filter((_, index) => index !== indexToRemove);
+    setNotesTags(newTags);
+    
+    // Actualizar el campo notes en formData
+    handleChange('notes', newTags.join(', '));
+  };
+
   // Handle form submission
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -127,10 +167,6 @@ export function AppointmentForm({
     
     // Enviar datos al componente padre
     onSubmit(appointmentData);
-    
-    // Note: La función onSubmit es asíncrona y debería manejar el estado de isSubmitting
-    // pero como no tenemos acceso directo al resultado, dejamos que el componente padre
-    // maneje el estado de carga después de la llamada
   };
 
   if (loading) {
@@ -138,11 +174,17 @@ export function AppointmentForm({
   }
 
   return (
-    <form onSubmit={handleSubmit}>
-      <Card>
-        <CardContent className="p-4 space-y-4">
+    <Card className="border shadow-sm">
+      <CardHeader className="pb-3">
+        <CardTitle>{isEditing ? "Editar Detalles de la Cita" : "Agregar Nueva Cita"}</CardTitle>
+        <CardDescription>
+          {isEditing ? "Actualice la información de la cita" : "Complete el formulario para agregar una nueva cita al sistema"}
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="pt-0">
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
+            <div>
               <Label htmlFor="patient" className="font-medium">
                 Paciente *
               </Label>
@@ -151,7 +193,7 @@ export function AppointmentForm({
                 onValueChange={(value) => handleChange("patientId", value)}
                 disabled={isEditing || isSubmitting}
               >
-                <SelectTrigger id="patient">
+                <SelectTrigger id="patient" className="mt-1.5">
                   <SelectValue placeholder="Seleccione un paciente" />
                 </SelectTrigger>
                 <SelectContent>
@@ -164,7 +206,7 @@ export function AppointmentForm({
               </Select>
             </div>
             
-            <div className="space-y-2">
+            <div>
               <Label htmlFor="doctor" className="font-medium">
                 Doctor *
               </Label>
@@ -173,7 +215,7 @@ export function AppointmentForm({
                 onValueChange={(value) => handleChange("doctorId", value)}
                 disabled={isSubmitting}
               >
-                <SelectTrigger id="doctor">
+                <SelectTrigger id="doctor" className="mt-1.5">
                   <SelectValue placeholder="Seleccione un doctor" />
                 </SelectTrigger>
                 <SelectContent>
@@ -185,10 +227,8 @@ export function AppointmentForm({
                 </SelectContent>
               </Select>
             </div>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
+            
+            <div>
               <Label htmlFor="date" className="font-medium">
                 Fecha *
               </Label>
@@ -198,14 +238,14 @@ export function AppointmentForm({
                     id="date"
                     variant={"outline"}
                     className={cn(
-                      "w-full justify-start text-left font-normal",
+                      "w-full justify-start text-left font-normal mt-1.5",
                       !formData.date && "text-muted-foreground"
                     )}
                     type="button"
                     disabled={isSubmitting}
                   >
                     <CalendarIcon className="mr-2 h-4 w-4" />
-                    {formData.date ? format(formData.date, "PPP", { locale: es }) : <span>Selecciona una fecha</span>}
+                    {formData.date ? format(formData.date, "dd/MM/yyyy", { locale: es }) : <span>Selecciona una fecha</span>}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">
@@ -237,7 +277,7 @@ export function AppointmentForm({
               </Popover>
             </div>
             
-            <div className="space-y-2">
+            <div>
               <Label htmlFor="treatmentType" className="font-medium">
                 Tipo de Tratamiento
               </Label>
@@ -246,7 +286,7 @@ export function AppointmentForm({
                 onValueChange={(value) => handleChange("treatmentType", value)}
                 disabled={isSubmitting}
               >
-                <SelectTrigger id="treatmentType">
+                <SelectTrigger id="treatmentType" className="mt-1.5">
                   <SelectValue placeholder="Seleccione un tipo" />
                 </SelectTrigger>
                 <SelectContent>
@@ -260,21 +300,20 @@ export function AppointmentForm({
                 </SelectContent>
               </Select>
             </div>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
+            
+            <div>
               <Label htmlFor="timeBlock" className="font-medium">
                 Horario *
               </Label>
               <TimeBlockSelector
-                value={formData.timeBlock || ""}
+                className="mt-1.5"
+                value={formData.timeBlock || "09:00-10:00"}
                 onChange={(value) => handleChange("timeBlock", value)}
                 disabled={isSubmitting}
               />
             </div>
             
-            <div className="space-y-2">
+            <div>
               <Label htmlFor="status" className="font-medium">
                 Estado *
               </Label>
@@ -283,7 +322,7 @@ export function AppointmentForm({
                 onValueChange={(value) => handleChange("status", value)}
                 disabled={isSubmitting}
               >
-                <SelectTrigger id="status">
+                <SelectTrigger id="status" className="mt-1.5">
                   <SelectValue placeholder="Seleccione un estado" />
                 </SelectTrigger>
                 <SelectContent>
@@ -291,44 +330,81 @@ export function AppointmentForm({
                   <SelectItem value="confirmed">Confirmada</SelectItem>
                   <SelectItem value="completed">Completada</SelectItem>
                   <SelectItem value="cancelled">Cancelada</SelectItem>
+                  <SelectItem value="no-show">No asistió</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
           
-          <div className="space-y-2">
+          <div>
             <Label htmlFor="notes" className="font-medium">
               Notas
             </Label>
-            <Textarea 
-              id="notes" 
-              placeholder="Información adicional sobre la cita" 
-              value={formData.notes || ""}
-              onChange={(e) => handleChange("notes", e.target.value)}
-              disabled={isSubmitting}
-            />
+            <div className="mt-1.5">
+              <div className="flex gap-2 mb-2">
+                <Input
+                  id="notes-input"
+                  value={notesInput}
+                  onChange={(e) => setNotesInput(e.target.value)}
+                  onKeyDown={handleNotesKeyDown}
+                  placeholder="Añadir nota y presionar Enter"
+                  className="flex-1"
+                  disabled={isSubmitting}
+                />
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={addNoteTag}
+                  disabled={!notesInput.trim() || isSubmitting}
+                >
+                  Añadir
+                </Button>
+              </div>
+              
+              {notesTags.length > 0 && (
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {notesTags.map((tag, index) => (
+                    <Badge 
+                      key={index} 
+                      variant="outline" 
+                      className="py-1.5 pl-2 pr-1.5 flex items-center gap-1 bg-slate-100"
+                    >
+                      {tag}
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-5 w-5 rounded-full hover:bg-slate-200"
+                        onClick={() => removeNoteTag(index)}
+                        disabled={isSubmitting}
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </Badge>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
           
-          <div className="flex justify-end space-x-2 pt-2">
-            <Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting}>
+          <div className="flex justify-end gap-2 pt-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onCancel}
+              disabled={isSubmitting}
+            >
               Cancelar
             </Button>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? (
-                <>
-                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  {isEditing ? "Actualizando..." : "Creando..."}
-                </>
-              ) : (
-                isEditing ? "Actualizar Cita" : "Crear Cita"
-              )}
+            <Button 
+              type="submit"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? 'Guardando...' : isEditing ? 'Guardar Cambios' : 'Guardar Cita'}
             </Button>
           </div>
-        </CardContent>
-      </Card>
-    </form>
+        </form>
+      </CardContent>
+    </Card>
   );
 } 

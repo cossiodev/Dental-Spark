@@ -7,6 +7,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
+import { Clock } from "lucide-react";
 
 interface TimeBlockSelectorProps {
   value: string; // Formato: "HH:MM-HH:MM" (ej. "09:00-10:00")
@@ -81,6 +82,7 @@ export function TimeBlockSelector({
         disabled={disabled}
       >
         <SelectTrigger className="w-full">
+          <Clock className="mr-2 h-4 w-4 text-muted-foreground" />
           <SelectValue placeholder="Seleccionar horario">
             {availableHours.find(hour => hour.value === value)?.label || (value || "Seleccionar horario")}
           </SelectValue>

@@ -714,208 +714,63 @@ const Appointments = () => {
               Nueva Cita
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-[600px]">
+          <DialogContent className="sm:max-w-[700px]">
             <DialogHeader>
-              <DialogTitle>Crear Nueva Cita</DialogTitle>
+              <DialogTitle>Agregar Nueva Cita</DialogTitle>
               <DialogDescription>
-                Completa la información para agendar una nueva cita.
+                Complete el formulario para agregar un nuevo paciente al sistema.
               </DialogDescription>
             </DialogHeader>
             
-            <form onSubmit={handleSubmit}>
-              <div className="grid gap-4 py-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="patient" className="font-medium">
-                      Paciente *
-                    </Label>
-                    <Select 
-                      value={formData.patient} 
-                      onValueChange={(value) => handleChange("patient", value)}
-                      required
-                    >
-                      <SelectTrigger id="patient">
-                        <SelectValue placeholder="Seleccione un paciente" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {patients.map((patient) => (
-                          <SelectItem key={patient.id} value={patient.id}>
-                            {patient.firstName} {patient.lastName}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="doctor" className="font-medium">
-                      Doctor *
-                    </Label>
-                    <Select 
-                      value={formData.doctor} 
-                      onValueChange={(value) => handleChange("doctor", value)}
-                      required
-                    >
-                      <SelectTrigger id="doctor">
-                        <SelectValue placeholder="Seleccione un doctor" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {doctors.map((doctor) => (
-                          <SelectItem key={doctor.id} value={doctor.id}>
-                            {doctor.firstName} {doctor.lastName}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="date" className="font-medium">
-                      Fecha *
-                    </Label>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button
-                          id="date"
-                          variant={"outline"}
-                          className={cn(
-                            "w-full justify-start text-left font-normal",
-                            !formData.date && "text-muted-foreground"
-                          )}
-                        >
-                          <CalendarIcon className="mr-2 h-4 w-4" />
-                          {formData.date ? format(formData.date, "PPP", { locale: es }) : <span>Selecciona una fecha</span>}
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                          mode="single"
-                          selected={formData.date}
-                          onSelect={(date) => {
-                            if (date) {
-                              // CORRECCIÓN: Preservar la fecha seleccionada sin conversiones
-                              // Esto evita problemas de timezone al guardar
-                              const year = date.getFullYear();
-                              const month = date.getMonth();
-                              const day = date.getDate();
-                              
-                              // Crear una nueva fecha a mediodía UTC para evitar conversiones
-                              const localDate = new Date(Date.UTC(year, month, day, 12, 0, 0));
-                              
-                              const formattedDate = 
-                                `${localDate.getUTCFullYear()}-${
-                                  (localDate.getUTCMonth() + 1).toString().padStart(2, '0')
-                                }-${
-                                  localDate.getUTCDate().toString().padStart(2, '0')
-                                }`;
-                                
-                              console.log('Fecha seleccionada en calendario:', localDate);
-                              console.log('Fecha UTC:', localDate.toUTCString());
-                              console.log('Fecha ISO:', localDate.toISOString());
-                              console.log('Fecha formateada:', formattedDate);
-                              
-                              handleChange("date", localDate);
-                            }
-                          }}
-                          initialFocus
-                          className="p-3 pointer-events-auto"
-                          disabled={(date) => {
-                            // Deshabilitar fechas pasadas
-                            const today = new Date();
-                            today.setHours(0, 0, 0, 0);
-                            return date < today;
-                          }}
-                          classNames={{
-                            day_selected: "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground",
-                            day_today: "bg-accent text-accent-foreground",
-                          }}
-                        />
-                      </PopoverContent>
-                    </Popover>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="treatmentType" className="font-medium">
-                      Tipo de Tratamiento
-                    </Label>
-                    <Select 
-                      value={formData.treatmentType} 
-                      onValueChange={(value) => handleChange("treatmentType", value)}
-                    >
-                      <SelectTrigger id="treatmentType">
-                        <SelectValue placeholder="Seleccione un tipo" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="consultation">Consulta</SelectItem>
-                        <SelectItem value="cleaning">Limpieza</SelectItem>
-                        <SelectItem value="filling">Empaste</SelectItem>
-                        <SelectItem value="extraction">Extracción</SelectItem>
-                        <SelectItem value="rootcanal">Endodoncia</SelectItem>
-                        <SelectItem value="orthodontics">Ortodoncia</SelectItem>
-                        <SelectItem value="other">Otro</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="startTime" className="font-medium">
-                      Horario *
-                    </Label>
-                    <TimeBlockSelector
-                      value={formData.timeBlock}
-                      onChange={(value) => handleChange("timeBlock", value)}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="status" className="font-medium">
-                      Estado *
-                    </Label>
-                    <Select 
-                      value={formData.status} 
-                      onValueChange={(value) => handleChange("status", value)}
-                      required
-                    >
-                      <SelectTrigger id="status">
-                        <SelectValue placeholder="Seleccione un estado" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="scheduled">Programada</SelectItem>
-                        <SelectItem value="confirmed">Confirmada</SelectItem>
-                        <SelectItem value="completed">Completada</SelectItem>
-                        <SelectItem value="cancelled">Cancelada</SelectItem>
-                        <SelectItem value="no-show">No asistió</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="notes" className="font-medium">
-                    Notas
-                  </Label>
-                  <Textarea 
-                    id="notes" 
-                    placeholder="Información adicional sobre la cita" 
-                    value={formData.notes}
-                    onChange={(e) => handleChange("notes", e.target.value)}
-                  />
-                </div>
-              </div>
-              <DialogFooter>
-                <Button type="submit" className="w-full sm:w-auto" disabled={isLoading}>
-                  {isLoading ? (
-                    <>
-                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                      Creando...
-                    </>
-                  ) : (
-                    "Crear Cita"
-                  )}
-                </Button>
-              </DialogFooter>
-            </form>
+            <AppointmentForm
+              onSubmit={(data) => {
+                const [startTime, endTime] = data.timeBlock?.split('-') || ["09:00", "10:00"];
+                
+                const appointmentData = {
+                  patientId: data.patientId,
+                  doctorId: data.doctorId,
+                  date: data.date instanceof Date 
+                    ? formatDateToYYYYMMDD(data.date) 
+                    : typeof data.date === 'string' ? data.date : '',
+                  startTime,
+                  endTime,
+                  status: data.status as AppointmentStatus || 'scheduled',
+                  notes: data.notes || '',
+                  treatmentType: data.treatmentType || '',
+                };
+                
+                setIsLoading(true);
+                
+                appointmentService.create(appointmentData)
+                  .then((newAppointment) => {
+                    console.log('✅ Cita creada exitosamente:', newAppointment);
+                    setLastCreatedAppointment(newAppointment.id);
+                    setOpen(false);
+                    resetForm();
+                    toast({
+                      title: "Éxito",
+                      description: "Cita creada correctamente",
+                    });
+                    
+                    // Forzar recarga de citas
+                    setForceRefresh(prev => prev + 1);
+                    setTimeout(() => refetchAppointments(), 1000);
+                  })
+                  .catch((error) => {
+                    console.error("❌ Error al crear cita:", error);
+                    toast({
+                      title: "Error",
+                      description: error.message || "Error al crear la cita",
+                      variant: "destructive",
+                    });
+                  })
+                  .finally(() => {
+                    setIsLoading(false);
+                  });
+              }}
+              onCancel={() => setOpen(false)}
+              isEditing={false}
+            />
           </DialogContent>
         </Dialog>
       </div>
@@ -923,10 +778,6 @@ const Appointments = () => {
       {/* Formulario de edición de cita */}
       {showEditForm && appointmentToEdit && (
         <div className="my-6">
-          <div className="mb-4">
-            <h2 className="text-xl font-semibold">Editar Cita</h2>
-            <p className="text-muted-foreground">Modifica los detalles de la cita seleccionada.</p>
-          </div>
           <AppointmentForm 
             initialData={appointmentToEdit}
             onSubmit={handleUpdateAppointment}
