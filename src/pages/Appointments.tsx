@@ -49,6 +49,9 @@ import type { Appointment, Patient } from "@/lib/models/types";
 // Importar el nuevo componente TimePickerInput
 import { TimePickerInput } from "@/components/appointments/TimePickerInput";
 
+// Importar el nuevo componente TimeBlockSelector
+import { TimeBlockSelector } from "@/components/appointments/TimeBlockSelector";
+
 // Helper function to format date
 const formatDate = (dateString: string) => {
   const date = new Date(dateString);
@@ -78,8 +81,7 @@ const Appointments = () => {
     patient: "",
     doctor: "",
     date: new Date(),
-    startTime: "",
-    endTime: "",
+    timeBlock: "09:00-10:00", // Nuevo campo para bloque de tiempo
     status: "scheduled",
     notes: "",
     treatmentType: ""
@@ -146,15 +148,29 @@ const Appointments = () => {
     try {
       const formattedDate = format(formData.date, "yyyy-MM-dd");
       
+      // Extraer horas de inicio y fin del timeBlock
+      const [startTime, endTime] = formData.timeBlock.split('-');
+      
+      console.log('Enviando datos de cita:', {
+        patientId: formData.patient,
+        doctorId: formData.doctor,
+        date: formattedDate,
+        startTime,
+        endTime,
+        status: formData.status,
+        notes: formData.notes || '',
+        treatmentType: formData.treatmentType || ''
+      });
+      
       const newAppointment = await appointmentService.create({
         patientId: formData.patient,
         doctorId: formData.doctor,
         date: formattedDate,
-        startTime: formData.startTime,
-        endTime: formData.endTime,
+        startTime,
+        endTime,
         status: formData.status,
-        notes: formData.notes,
-        treatmentType: formData.treatmentType
+        notes: formData.notes || '',
+        treatmentType: formData.treatmentType || ''
       });
 
       toast({
@@ -167,8 +183,7 @@ const Appointments = () => {
         patient: "",
         doctor: "",
         date: new Date(),
-        startTime: "",
-        endTime: "",
+        timeBlock: "09:00-10:00",
         status: "scheduled",
         notes: "",
         treatmentType: ""
@@ -313,42 +328,33 @@ const Appointments = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="startTime" className="font-medium">
-                      Hora de Inicio *
+                      Bloque de Tiempo *
                     </Label>
-                    <TimePickerInput
-                      value={formData.startTime}
-                      onChange={(value) => handleChange("startTime", value)}
+                    <TimeBlockSelector
+                      value={formData.timeBlock}
+                      onChange={(value) => handleChange("timeBlock", value)}
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="endTime" className="font-medium">
-                      Hora de Fin *
+                    <Label htmlFor="status" className="font-medium">
+                      Estado *
                     </Label>
-                    <TimePickerInput
-                      value={formData.endTime}
-                      onChange={(value) => handleChange("endTime", value)}
-                    />
+                    <Select 
+                      value={formData.status} 
+                      onValueChange={(value) => handleChange("status", value)}
+                      required
+                    >
+                      <SelectTrigger id="status">
+                        <SelectValue placeholder="Seleccione un estado" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="scheduled">Programada</SelectItem>
+                        <SelectItem value="confirmed">Confirmada</SelectItem>
+                        <SelectItem value="completed">Completada</SelectItem>
+                        <SelectItem value="cancelled">Cancelada</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="status" className="font-medium">
-                    Estado *
-                  </Label>
-                  <Select 
-                    value={formData.status} 
-                    onValueChange={(value) => handleChange("status", value)}
-                    required
-                  >
-                    <SelectTrigger id="status">
-                      <SelectValue placeholder="Seleccione un estado" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="scheduled">Programada</SelectItem>
-                      <SelectItem value="confirmed">Confirmada</SelectItem>
-                      <SelectItem value="completed">Completada</SelectItem>
-                      <SelectItem value="cancelled">Cancelada</SelectItem>
-                    </SelectContent>
-                  </Select>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="notes" className="font-medium">
