@@ -157,94 +157,60 @@ export const appointmentService = {
   getAll: async (): Promise<Appointment[]> => {
     try {
       console.log('Obteniendo todas las citas...');
-      
-      // Asegurar que siempre obtenemos datos actualizados
-      const { data: appointments, error } = await supabase
+      const { data, error } = await supabase
         .from('appointments')
         .select(`
           *,
-          doctors:doctor_id (*),
-          patients:patient_id (*)
+          patients!appointments_patientId_fkey (
+            firstName,
+            lastName
+          ),
+          doctors!appointments_doctorId_fkey (
+            firstName,
+            lastName
+          )
         `)
-        .order('date', { ascending: true })
-        .order('start_time', { ascending: true });
+        .order('date', { ascending: true });
 
       if (error) {
-        console.error('Error al obtener todas las citas:', error);
+        console.error('Error al obtener citas:', error);
         throw new Error(`Error al obtener citas: ${error.message}`);
       }
 
-      if (!appointments || appointments.length === 0) {
-        console.log('No se encontraron citas en la base de datos');
-        return [];
-      }
-
-      console.log('DATOS DE SUPABASE (SIN PROCESAR):', JSON.stringify(appointments, null, 2));
+      // Mapear los resultados al modelo de Appointment
+      console.log(`Recuperadas ${data.length} citas de Supabase`);
       
-      // Mapear los resultados al formato esperado por la aplicación
-      const result = appointments.map(appointment => {
-        try {
-          // Verificar que los datos relacionados existan
-          const hasPatient = appointment.patients && 
-                            typeof appointment.patients === 'object' &&
-                            appointment.patients.first_name && 
-                            appointment.patients.last_name;
-          
-          const hasDoctor = appointment.doctors && 
-                            typeof appointment.doctors === 'object' &&
-                            appointment.doctors.first_name && 
-                            appointment.doctors.last_name;
-          
-          // Acceder directamente a la fecha como viene de la base de datos
-          const rawDate = appointment.date;
-          console.log('FECHA ORIGINAL DE SUPABASE:', rawDate);
-          
-          // NO convertir la fecha - mantenerla exactamente como viene de Supabase
-          // Solo asegurarse de que sea un string en formato YYYY-MM-DD
-          const dateStr = rawDate ? String(rawDate).trim().split('T')[0] : '';
-          console.log('FECHA PROCESADA:', dateStr);
-          
-          return {
-            id: appointment.id,
-            patientId: appointment.patient_id,
-            patientName: hasPatient 
-              ? `${appointment.patients.first_name} ${appointment.patients.last_name}`
-              : 'Paciente sin nombre',
-            doctorId: appointment.doctor_id,
-            doctorName: hasDoctor 
-              ? `${appointment.doctors.first_name} ${appointment.doctors.last_name}`
-              : 'Doctor sin nombre',
-            date: dateStr,
-            startTime: appointment.start_time,
-            endTime: appointment.end_time,
-            status: appointment.status || 'scheduled',
-            notes: appointment.notes || '',
-            treatmentType: appointment.treatment_type || '',
-          };
-        } catch (err) {
-          console.error('Error procesando cita:', appointment, err);
-          // Devolver un objeto básico para no romper la aplicación
-          return {
-            id: appointment.id || 'error',
-            patientId: appointment.patient_id || '',
-            patientName: 'Error al cargar datos',
-            doctorId: appointment.doctor_id || '',
-            doctorName: 'Error al cargar datos',
-            date: appointment.date || new Date().toISOString().split('T')[0],
-            startTime: appointment.start_time || '00:00',
-            endTime: appointment.end_time || '00:00',
-            status: appointment.status || 'scheduled',
-            notes: '',
-            treatmentType: '',
-          };
-        }
+      // Imprimir todas las fechas para debugging
+      data.forEach(item => {
+        console.log(`FECHA DB [${item.id}]: "${item.date}"`);
       });
       
-      console.log('Datos de citas procesados correctamente:', result);
-      return result;
+      const appointments = data.map(item => {
+        // IMPORTANTE: Mantener la fecha exactamente como viene de Supabase
+        const originalDate = item.date;
+        console.log(`Procesando cita ID=${item.id}, fecha original="${originalDate}"`);
+        
+        return {
+          id: item.id,
+          patientId: item.patientId,
+          patientName: item.patients ? `${item.patients.firstName} ${item.patients.lastName}` : '',
+          doctorId: item.doctorId,
+          doctorName: item.doctors ? `${item.doctors.firstName} ${item.doctors.lastName}` : '',
+          date: originalDate, // Usar la fecha original sin conversiones
+          startTime: item.startTime,
+          endTime: item.endTime,
+          status: item.status,
+          notes: item.notes,
+          treatmentType: item.treatmentType,
+          createdAt: item.created_at,
+          updatedAt: item.updated_at
+        } as Appointment;
+      });
+
+      return appointments;
     } catch (error) {
-      console.error('Error al obtener todas las citas:', error);
-      return []; // Devolver array vacío en lugar de propagar el error
+      console.error('Error en getAll:', error);
+      throw error;
     }
   },
 
