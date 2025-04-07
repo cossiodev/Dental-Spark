@@ -688,72 +688,78 @@ const Appointments = () => {
           <h1 className="text-3xl font-bold tracking-tight">Citas</h1>
           <p className="text-muted-foreground">Gestiona las citas de los pacientes en el sistema.</p>
         </div>
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <PlusCircle className="mr-2 h-4 w-4" />
-              Nueva Cita
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[700px]">
-            <DialogHeader>
-              <DialogTitle>Agregar Nueva Cita</DialogTitle>
-              <DialogDescription>
-                Complete el formulario para agregar una nueva cita al sistema.
-              </DialogDescription>
-            </DialogHeader>
-            
-            <AppointmentForm
-              onSubmit={(data) => {
-                const [startTime, endTime] = data.timeBlock?.split('-') || ["09:00", "10:00"];
-                
-                const appointmentData = {
-                  patientId: data.patientId,
-                  doctorId: data.doctorId,
-                  date: data.date instanceof Date 
-                    ? formatDateToYYYYMMDD(data.date) 
-                    : typeof data.date === 'string' ? data.date : '',
-                  startTime,
-                  endTime,
-                  status: data.status as AppointmentStatus || 'scheduled',
-                  notes: data.notes || '',
-                  treatmentType: data.treatmentType || '',
-                };
-                
-                setIsLoading(true);
-                
-                appointmentService.create(appointmentData)
-                  .then((newAppointment) => {
-                    console.log('✅ Cita creada exitosamente:', newAppointment);
-                    setLastCreatedAppointment(newAppointment.id);
-                    setOpen(false);
-                    resetForm();
-                    toast({
-                      title: "Éxito",
-                      description: "Cita creada correctamente",
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => refetchAppointments()} className="h-10">
+            <RefreshCw className="mr-2 h-4 w-4" />
+            Actualizar Lista
+          </Button>
+          <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+              <Button className="h-10">
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Nueva Cita
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[700px]">
+              <DialogHeader>
+                <DialogTitle>Agregar Nueva Cita</DialogTitle>
+                <DialogDescription>
+                  Complete el formulario para agregar una nueva cita al sistema.
+                </DialogDescription>
+              </DialogHeader>
+              
+              <AppointmentForm
+                onSubmit={(data) => {
+                  const [startTime, endTime] = data.timeBlock?.split('-') || ["09:00", "10:00"];
+                  
+                  const appointmentData = {
+                    patientId: data.patientId,
+                    doctorId: data.doctorId,
+                    date: data.date instanceof Date 
+                      ? formatDateToYYYYMMDD(data.date) 
+                      : typeof data.date === 'string' ? data.date : '',
+                    startTime,
+                    endTime,
+                    status: data.status as AppointmentStatus || 'scheduled',
+                    notes: data.notes || '',
+                    treatmentType: data.treatmentType || '',
+                  };
+                  
+                  setIsLoading(true);
+                  
+                  appointmentService.create(appointmentData)
+                    .then((newAppointment) => {
+                      console.log('✅ Cita creada exitosamente:', newAppointment);
+                      setLastCreatedAppointment(newAppointment.id);
+                      setOpen(false);
+                      resetForm();
+                      toast({
+                        title: "Éxito",
+                        description: "Cita creada correctamente",
+                      });
+                      
+                      // Forzar recarga de citas
+                      setForceRefresh(prev => prev + 1);
+                      setTimeout(() => refetchAppointments(), 1000);
+                    })
+                    .catch((error) => {
+                      console.error("❌ Error al crear cita:", error);
+                      toast({
+                        title: "Error",
+                        description: error.message || "Error al crear la cita",
+                        variant: "destructive",
+                      });
+                    })
+                    .finally(() => {
+                      setIsLoading(false);
                     });
-                    
-                    // Forzar recarga de citas
-                    setForceRefresh(prev => prev + 1);
-                    setTimeout(() => refetchAppointments(), 1000);
-                  })
-                  .catch((error) => {
-                    console.error("❌ Error al crear cita:", error);
-                    toast({
-                      title: "Error",
-                      description: error.message || "Error al crear la cita",
-                      variant: "destructive",
-                    });
-                  })
-                  .finally(() => {
-                    setIsLoading(false);
-                  });
-              }}
-              onCancel={() => setOpen(false)}
-              isEditing={false}
-            />
-          </DialogContent>
-        </Dialog>
+                }}
+                onCancel={() => setOpen(false)}
+                isEditing={false}
+              />
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
       {/* Diálogo de edición de cita */}
@@ -787,13 +793,6 @@ const Appointments = () => {
             <TabsTrigger value="tomorrow">Mañana</TabsTrigger>
             <TabsTrigger value="upcoming">Próximas</TabsTrigger>
           </TabsList>
-          
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={() => refetchAppointments()}>
-              <RefreshCw className="mr-2 h-4 w-4" />
-              Actualizar Lista
-            </Button>
-          </div>
         </div>
         
         <Card>
