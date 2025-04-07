@@ -21,7 +21,13 @@ export default defineConfig(({ mode }) => ({
       },
     },
     // Asegurar que se genere una carpeta dist limpia en cada build
-    emptyOutDir: true
+    emptyOutDir: true,
+    // Disable sourcemap in production to reduce build time
+    sourcemap: mode !== 'production',
+    // Ensure minification works
+    minify: mode === 'production',
+    // Make Vercel builds faster
+    reportCompressedSize: false
   },
   plugins: [
     react(),
@@ -33,4 +39,11 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  // Optimization for faster builds
+  optimizeDeps: {
+    include: ['react', 'react-dom'],
+    esbuildOptions: {
+      target: 'es2020'
+    }
+  }
 }));

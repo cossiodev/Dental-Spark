@@ -1,16 +1,19 @@
 {
   "version": 2,
   "framework": "vite",
-  "build": {
-    "env": {
-      "NODE_VERSION": "18.x"
-    }
-  },
-  "installCommand": "npm install",
+  "installCommand": "npm install --legacy-peer-deps",
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "routes": [
     { "handle": "filesystem" },
     { "src": "/(.*)", "dest": "/index.html" }
-  ]
+  ],
+  "github": {
+    "silent": true
+  },
+  "build": {
+    "env": {
+      "NODE_VERSION": "18.x"
+    }
+  }
 } 
